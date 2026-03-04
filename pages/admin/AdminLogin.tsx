@@ -5,6 +5,7 @@ import { auth } from '../../src/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { getUserProfileByFirebaseUid } from '../../src/api/userApi';
 import { getAuthErrorMessage } from '../../src/utils/authErrors';
+import { getMissingSupabaseTableName, isMissingSupabaseTableError } from '../../src/utils/supabaseErrors';
 
 export const AdminLogin: React.FC = () => {
     const navigate = useNavigate();
@@ -32,7 +33,6 @@ export const AdminLogin: React.FC = () => {
             if (!profile) {
                 await auth.signOut();
                 setError('등록되지 않은 계정입니다.');
-                setLoading(false);
                 return;
             }
 
@@ -42,13 +42,11 @@ export const AdminLogin: React.FC = () => {
                 if (!profile.is_approved) {
                     await auth.signOut();
                     setError('아직 관리자 승인이 완료되지 않았습니다. 승인 후 다시 시도해주세요.');
-                    setLoading(false);
                     return;
                 }
                 // 일반 사용자는 관리자 페이지 접근 불가
                 await auth.signOut();
                 setError('관리자 권한이 없는 계정입니다.');
-                setLoading(false);
                 return;
             }
 
@@ -56,6 +54,16 @@ export const AdminLogin: React.FC = () => {
             navigate(from, { replace: true });
         } catch (error: any) {
             console.error('Admin login failed:', error);
+            if (isMissingSupabaseTableError(error)) {
+                await auth.signOut().catch(() => undefined);
+                const tableName = getMissingSupabaseTableName(error) || 'public.user_profiles';
+                setError(
+                    `DB 테이블(${tableName})이 없어 관리자 권한 검증을 할 수 없습니다. ` +
+                    `Supabase 초기 스키마 SQL 실행이 필요합니다.`
+                );
+                return;
+            }
+
             setError(getAuthErrorMessage(error.code));
         } finally {
             setLoading(false);
@@ -67,7 +75,7 @@ export const AdminLogin: React.FC = () => {
             <div className="w-full max-w-md">
                 {/* Logo/Header */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-[#006CA3] rounded-2xl mb-4">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-[#001E45] rounded-2xl mb-4">
                         <Shield className="text-white" size={32} />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900">관리자 로그인</h1>
@@ -92,7 +100,7 @@ export const AdminLogin: React.FC = () => {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#006CA3] focus:border-transparent outline-none transition-all"
+                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#001E45] focus:border-transparent outline-none transition-all"
                                 placeholder="admin@humanpartner.co.kr"
                             />
                         </div>
@@ -107,7 +115,7 @@ export const AdminLogin: React.FC = () => {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
-                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#006CA3] focus:border-transparent outline-none transition-all pr-12"
+                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#001E45] focus:border-transparent outline-none transition-all pr-12"
                                     placeholder="••••••••"
                                 />
                                 <button
@@ -123,7 +131,7 @@ export const AdminLogin: React.FC = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-3 bg-[#006CA3] text-white rounded-lg font-semibold hover:bg-[#002d66] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                            className="w-full py-3 bg-[#001E45] text-white rounded-lg font-semibold hover:bg-[#002d66] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                         >
                             {loading ? (
                                 <>
@@ -139,7 +147,7 @@ export const AdminLogin: React.FC = () => {
                     <div className="mt-6 pt-6 border-t border-gray-200">
                         <p className="text-center text-sm text-gray-600">
                             아직 계정이 없으신가요?{' '}
-                            <Link to="/admin/signup" className="text-[#006CA3] font-semibold hover:underline">
+                            <Link to="/admin/signup" className="text-[#001E45] font-semibold hover:underline">
                                 회원가입
                             </Link>
                         </p>
@@ -149,7 +157,7 @@ export const AdminLogin: React.FC = () => {
                 <div className="text-center mt-6">
                     <a
                         href="/"
-                        className="text-sm text-gray-500 hover:text-[#006CA3] transition-colors"
+                        className="text-sm text-gray-500 hover:text-[#001E45] transition-colors"
                     >
                         ← 메인 사이트로 돌아가기
                     </a>

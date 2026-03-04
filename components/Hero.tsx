@@ -117,36 +117,36 @@ export const Hero: React.FC = () => {
             {/* Content Area */}
             <Container className="relative h-full flex flex-col justify-center text-white z-20">
               <div className="max-w-4xl">
-                {/* Brand Pill */}
-                <div className={`inline-flex items-center gap-2 px-2 py-1 md:px-3 md:py-1.5 rounded-full bg-black/20 backdrop-blur-lg border border-white/10 text-[8px] md:text-[9px] font-medium text-[#006CA3] transition-all duration-1000 delay-300 transform uppercase tracking-[0.2em] mb-6 md:mb-8
+                {/* Brand Text */}
+                <div className={`text-white text-[20px] font-medium mb-6 md:mb-8
                   ${index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
                 `}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#006CA3] shadow-[0_0_8px_#006CA3] animate-pulse"></span>
-                  {slide.brand_text || 'Premium Solution'}
+                  {slide.brand_text?.trim() && slide.brand_text?.trim().toLowerCase() !== 'premium solution'
+                    ? slide.brand_text
+                    : 'Humanpartner'}
                 </div>
 
                 {/* Main Title */}
-                <h1 className={`text-3xl md:text-5xl lg:text-6xl font-bold leading-[1.05] tracking-tighter text-white mb-6 md:mb-8 transition-all duration-1000 delay-500 transform drop-shadow-2xl
+                <h1 className={`text-3xl md:text-5xl lg:text-6xl font-medium leading-[1.05] tracking-tighter text-white mb-6 md:mb-8 transition-all duration-1000 delay-500 transform drop-shadow-2xl
                   ${index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
                 `}>
                   {slide.title}
                 </h1>
 
                 {/* Subtitle */}
-                <p className={`text-sm md:text-base font-normal text-slate-100/80 leading-relaxed break-keep max-w-xl transition-all duration-1000 delay-700 transform drop-shadow-lg
+                <p className={`text-[24px] font-normal text-white/90 leading-relaxed break-keep max-w-2xl transition-all duration-1000 delay-700 transform drop-shadow-lg
                   ${index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
                 `}>
                   {slide.subtitle}
                 </p>
 
-                {/* Action - Minimal Hint (Option B) */}
+                {/* Action CTA */}
                 <div className={`mt-10 md:mt-14 transition-all duration-1000 delay-1000 transform
                   ${index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
                 `}>
-                  <div className="flex flex-col gap-2">
-                    <div className="text-white/60 text-xs font-bold transition-all group-hover/slide:text-[#006CA3] group-hover/slide:translate-x-2 flex items-center gap-2">
-                      자세히 보기 <ArrowRight size={14} />
-                    </div>
+                  <div className="inline-flex items-center justify-center gap-2 w-[190px] md:w-[250px] h-[48px] md:h-[56px] rounded-lg bg-white text-[#001E45] text-sm md:text-base font-medium shadow-lg transition-all duration-300 group-hover/slide:-translate-y-0.5 group-hover/slide:bg-[#f4f7fb]">
+                    {slide.button_text?.trim() || '바로가기'}
+                    <ArrowRight size={18} />
                   </div>
                 </div>
               </div>
@@ -208,7 +208,7 @@ export const Hero: React.FC = () => {
             aria-label={`Go to slide ${index + 1}`}
           >
             <div className={`h-1 transition-all duration-500 rounded-full
-              ${index === currentSlide ? 'w-10 bg-[#006CA3]' : 'w-6 bg-white/30 group-hover:bg-white/50'}
+              ${index === currentSlide ? 'w-10 bg-[#001E45]' : 'w-6 bg-white/30 group-hover:bg-white/50'}
             `} />
           </button>
         ))}

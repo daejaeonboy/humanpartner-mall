@@ -115,7 +115,7 @@ export const MainPage: React.FC = () => {
 
             {loading ? (
                 <div className="flex items-center justify-center py-20">
-                    <Loader2 className="animate-spin text-[#006CA3]" size={40} />
+                    <Loader2 className="animate-spin text-[#001E45]" size={40} />
                 </div>
             ) : sectionsWithProducts.length > 0 ? (
                 <>
@@ -128,7 +128,7 @@ export const MainPage: React.FC = () => {
                                 title={section.name}
                                 categories={getSectionCategories(section, products)}
                                 products={formattedProducts}
-                                layoutMode="grid-2"
+                                layoutMode="grid-4"
                             />
                         );
                     })}
@@ -139,11 +139,11 @@ export const MainPage: React.FC = () => {
                     title="전체 상품"
                     categories={getCategories(allProducts)}
                     products={formatProducts(allProducts)}
-                    layoutMode="grid-2"
+                    layoutMode="grid-4"
                 />
             ) : (
                 <div className="text-center py-20 text-slate-400">
-                    등록된 상품이 없습니다. <Link to="/admin/products" className="text-[#006CA3] underline">Admin에서 상품을 추가</Link>해주세요.
+                    등록된 상품이 없습니다. <Link to="/admin/products" className="text-[#001E45] underline">Admin에서 상품을 추가</Link>해주세요.
                 </div>
             )}
         </main>

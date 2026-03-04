@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendEmailVerification = void 0;
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v1");
 const nodemailer = require("nodemailer");
 const cors = require("cors");
 const dotenv = require("dotenv");
@@ -47,7 +47,7 @@ exports.sendEmailVerification = functions.https.onRequest((req, res) => {
             transporterConfig = {
                 host: smtpHost,
                 port: smtpPort,
-                secure: smtpSecure, // true for 465, false for other ports
+                secure: smtpSecure,
                 auth: {
                     user: emailUser,
                     pass: emailPass,

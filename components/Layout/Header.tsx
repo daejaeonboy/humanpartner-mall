@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Container } from "../ui/Container";
@@ -42,13 +42,13 @@ const NotificationDropdown = ({
   return (
     <div className="relative z-50">
       <button
-        className={`w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-slate-600 transition-colors rounded-xl md:rounded-full hover:bg-slate-100 ${isOpen ? "text-[#006CA3] bg-sky-50" : ""}`}
+        className={`w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-slate-600 transition-colors rounded-xl md:rounded-full hover:bg-slate-100 ${isOpen ? "text-[#001E45] bg-sky-50" : ""}`}
         onClick={() => setIsOpen(!isOpen)}
       >
         <BellIcon className="w-6 h-6 md:w-7 md:h-7" />
         {/* Badge - Only show if unreadCount > 0 */}
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-[#006CA3] rounded-full ring-1 ring-white"></span>
+          <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-[#001E45] rounded-full ring-1 ring-white"></span>
         )}
       </button>
 
@@ -65,7 +65,7 @@ const NotificationDropdown = ({
               {unreadCount > 0 && (
                 <button
                   onClick={onMarkAllRead}
-                  className="text-xs text-gray-400 hover:text-[#006CA3]"
+                  className="text-xs text-gray-400 hover:text-[#001E45]"
                 >
                   모두 읽음
                 </button>
@@ -84,7 +84,7 @@ const NotificationDropdown = ({
                       className={`w-full text-left p-3 hover:bg-gray-50 transition-colors flex gap-3 ${!noti.is_read ? "bg-sky-50" : ""}`}
                     >
                       <div
-                        className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!noti.is_read ? "bg-[#006CA3]" : "bg-gray-200"}`}
+                        className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!noti.is_read ? "bg-[#001E45]" : "bg-gray-200"}`}
                       />
                       <div>
                         <p
@@ -126,39 +126,6 @@ export const Header: React.FC = () => {
   // Removed showNotifications state as it is now inside NotificationDropdown
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isVisible, setIsVisible] = useState(true);
-  // Smart Sticky Header Logic
-  // Smart Sticky Header Logic
-  const lastScrollYRef = useRef(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY =
-        window.pageYOffset || document.documentElement.scrollTop;
-      const diff = currentScrollY - lastScrollYRef.current;
-
-      // 1. Top Zone Logic - Always show
-      if (currentScrollY < 120) {
-        setIsVisible(true);
-        lastScrollYRef.current = currentScrollY;
-        return;
-      }
-
-      // 2. Scroll Direction Logic
-      if (diff < -2) {
-        // Scrolling UP - Instant Reveal
-        setIsVisible(true);
-        lastScrollYRef.current = currentScrollY;
-      } else if (diff > 40) {
-        // Scrolling DOWN - Hide after threshold
-        setIsVisible(false);
-        lastScrollYRef.current = currentScrollY;
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   // Fetch notifications
   useEffect(() => {
@@ -220,16 +187,7 @@ export const Header: React.FC = () => {
 
   return (
     <header className="w-full bg-white">
-      {/* Spacer for Fixed Header (Prevents content jump) */}
-      <div className="h-[112px] md:h-[175px]"></div>
-
-      {/* Smart Reveal Header Container - SWITCHED TO FIXED */}
-      <div
-        className={`
-        fixed top-0 left-0 w-full z-40 transition-all duration-300 ease-in-out bg-white border-b border-gray-200
-        ${isVisible ? "translate-y-0 shadow-sm" : "-translate-y-full shadow-none"}
-      `}
-      >
+      <div className="w-full bg-white border-b border-gray-200 shadow-sm">
         {/* Top Utility Links - Premium Subtle Style */}
         <div className="hidden md:block bg-[#F8F9FA] border-b border-gray-100 py-2">
           <Container>
@@ -280,9 +238,9 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Main Header Area */}
-        <div className="py-3 md:py-4 bg-white/80 backdrop-blur-md border-b border-gray-100 relative z-50">
-          <Container>
-            <div className="flex items-center justify-between gap-4 md:gap-8">
+        <div className="h-[72px] bg-white/80 backdrop-blur-md border-b border-gray-100 relative z-50">
+          <Container className="h-full">
+            <div className="h-full flex items-center justify-between gap-4 md:gap-8">
               {/* Logo and Subtitle */}
               <a
                 href="/"
@@ -291,11 +249,8 @@ export const Header: React.FC = () => {
                 <img
                   src="/logo.png"
                   alt="휴먼파트너"
-                  className="h-[22px] md:h-6 object-contain"
+                  className="h-[34px] md:h-10 object-contain"
                 />
-                <span className="text-[0.8rem] text-gray-400 font-medium mt-0.5 whitespace-nowrap hidden sm:block tracking-[1px]">
-                  | 대전형 MICE 행사 통합운영 플랫폼
-                </span>
               </a>
 
               <div className="hidden md:block flex-1" />
@@ -307,7 +262,7 @@ export const Header: React.FC = () => {
                   <input
                     type="text"
                     placeholder="무엇을 도와드릴까요?"
-                    className="w-full h-[44px] md:h-auto pl-4 md:pl-5 pr-10 md:pr-12 py-0 md:py-2.5 rounded-xl bg-[#F1F5F9] border border-slate-200 focus:border-[#006CA3] focus:ring-1 focus:ring-[#006CA3] focus:bg-white transition-all text-[14px] md:text-sm text-slate-700 placeholder-slate-400 text-ellipsis overflow-hidden whitespace-nowrap"
+                    className="w-full h-[44px] md:h-auto pl-4 md:pl-5 pr-10 md:pr-12 py-0 md:py-2.5 rounded-xl bg-[#F1F5F9] border border-slate-200 focus:border-[#001E45] focus:ring-1 focus:ring-[#001E45] focus:bg-white transition-all text-[14px] md:text-sm text-slate-700 placeholder-slate-400 text-ellipsis overflow-hidden whitespace-nowrap"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         const target = e.target as HTMLInputElement;
@@ -359,7 +314,7 @@ export const Header: React.FC = () => {
                   onMouseLeave={() => setShowDesktopMenu(false)}
                 >
                   <button
-                    className={`flex items-center gap-2 whitespace-nowrap text-[15px] font-[550] px-4 py-4 border-b-2 transition-all ${showDesktopMenu ? "text-[#006CA3] border-[#006CA3]" : "text-gray-900 border-transparent hover:text-[#006CA3] hover:border-[#006CA3]"}`}
+                    className={`flex items-center gap-2 whitespace-nowrap text-[15px] font-[550] px-4 py-4 border-b-2 transition-all ${showDesktopMenu ? "text-[#001E45] border-[#001E45]" : "text-gray-900 border-transparent hover:text-[#001E45] hover:border-[#001E45]"}`}
                   >
                     <MenuIcon className="w-[18px] h-[18px]" /> 전체 서비스
                   </button>
@@ -368,8 +323,8 @@ export const Header: React.FC = () => {
                 <Link
                   to="/alliance"
                   className={`whitespace-nowrap text-[14px] min-[357px]:text-[15px] font-[550] transition-all px-0.5 min-[375px]:px-2 sm:px-4 py-4 border-b-2 ${location.pathname === '/alliance'
-                    ? 'text-[#006CA3] border-[#006CA3]'
-                    : 'text-gray-900 border-transparent hover:text-[#006CA3] hover:border-[#006CA3]'
+                    ? 'text-[#001E45] border-[#001E45]'
+                    : 'text-gray-900 border-transparent hover:text-[#001E45] hover:border-[#001E45]'
                     }`}
                 >
                   MICE 회원사

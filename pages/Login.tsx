@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { auth } from '../src/firebase';
 import { signInWithEmailAndPassword, setPersistence, browserSessionPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getAuthErrorMessage } from '../src/utils/authErrors';
+import { getMissingSupabaseTableName, isMissingSupabaseTableError } from '../src/utils/supabaseErrors';
 
 export const Login: React.FC = () => {
     const navigate = useNavigate();
@@ -50,18 +51,34 @@ export const Login: React.FC = () => {
             const { getUserProfileByFirebaseUid } = await import('../src/api/userApi');
             const profile = await getUserProfileByFirebaseUid(userCredential.user.uid);
 
-            if (profile && !profile.is_approved) {
+            if (!profile) {
+                await auth.signOut();
+                alert('회원 프로필이 등록되지 않았습니다. 관리자에게 문의해주세요.');
+                return;
+            }
+
+            if (!profile.is_approved) {
                 await auth.signOut();
                 alert('관리자 승인이 필요한 계정입니다. 승인 완료 후 이용해주세요.');
-                setLoading(false);
                 return;
             }
 
             navigate('/');
         } catch (error: any) {
             console.error('Login failed', error);
+            if (isMissingSupabaseTableError(error)) {
+                await auth.signOut().catch(() => undefined);
+                const tableName = getMissingSupabaseTableName(error) || 'public.user_profiles';
+                alert(
+                    `로그인은 되었지만 DB 테이블(${tableName})이 없어 인증 검증을 완료할 수 없습니다.\n` +
+                    `Supabase에서 초기 스키마 SQL을 먼저 실행해주세요.`
+                );
+                return;
+            }
+
             const message = getAuthErrorMessage(error.code);
-            alert('로그인에 실패했습니다: ' + message);
+            alert(`로그인에 실패했습니다: ${message}`);
+        } finally {
             setLoading(false);
         }
     };
@@ -82,7 +99,7 @@ export const Login: React.FC = () => {
                                 type="email"
                                 name="email"
                                 required
-                                className="w-full px-4 py-3 md:px-5 md:py-4 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#006CA3] focus:border-transparent outline-none transition-all text-base md:text-lg"
+                                className="w-full px-4 py-3 md:px-5 md:py-4 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#001E45] focus:border-transparent outline-none transition-all text-base md:text-lg"
                                 placeholder="example@email.com"
                                 value={formData.email}
                                 onChange={handleChange}
@@ -95,7 +112,7 @@ export const Login: React.FC = () => {
                                 type="password"
                                 name="password"
                                 required
-                                className="w-full px-4 py-3 md:px-5 md:py-4 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#006CA3] focus:border-transparent outline-none transition-all text-base md:text-lg"
+                                className="w-full px-4 py-3 md:px-5 md:py-4 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#001E45] focus:border-transparent outline-none transition-all text-base md:text-lg"
                                 placeholder="비밀번호를 입력하세요"
                                 value={formData.password}
                                 onChange={handleChange}
@@ -112,7 +129,7 @@ export const Login: React.FC = () => {
                                             checked={rememberId}
                                             onChange={(e) => setRememberId(e.target.checked)}
                                         />
-                                        <div className="w-4 h-4 md:w-5 md:h-5 border-2 border-gray-300 rounded peer-checked:bg-[#006CA3] peer-checked:border-[#006CA3] transition-all"></div>
+                                        <div className="w-4 h-4 md:w-5 md:h-5 border-2 border-gray-300 rounded peer-checked:bg-[#001E45] peer-checked:border-[#001E45] transition-all"></div>
                                         <svg className="absolute w-2.5 h-2.5 md:w-3 md:h-3 text-white left-0.5 top-0.5 md:left-1 md:top-1 opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
                                             <polyline points="20 6 9 17 4 12"></polyline>
                                         </svg>
@@ -128,7 +145,7 @@ export const Login: React.FC = () => {
                                             checked={keepLoggedIn}
                                             onChange={(e) => setKeepLoggedIn(e.target.checked)}
                                         />
-                                        <div className="w-4 h-4 md:w-5 md:h-5 border-2 border-gray-300 rounded peer-checked:bg-[#006CA3] peer-checked:border-[#006CA3] transition-all"></div>
+                                        <div className="w-4 h-4 md:w-5 md:h-5 border-2 border-gray-300 rounded peer-checked:bg-[#001E45] peer-checked:border-[#001E45] transition-all"></div>
                                         <svg className="absolute w-2.5 h-2.5 md:w-3 md:h-3 text-white left-0.5 top-0.5 md:left-1 md:top-1 opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
                                             <polyline points="20 6 9 17 4 12"></polyline>
                                         </svg>
@@ -141,18 +158,17 @@ export const Login: React.FC = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full text-white py-3 md:py-4 rounded-lg font-bold transition-all mt-4 md:mt-6 ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#006CA3] hover:bg-[#005A87]'}`}
+                            className={`w-full text-white py-3 md:py-4 rounded-lg font-bold transition-all mt-4 md:mt-6 ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#001E45] hover:bg-[#002D66]'}`}
                         >
                             {loading ? '로그인 중...' : '로그인하기'}
                         </button>
                     </form>
 
                     <div className="mt-6 text-center text-sm text-gray-500">
-                        계정이 없으신가요? <Link to="/signup" className="text-[#006CA3] font-bold hover:underline">회원가입</Link>
+                        계정이 없으신가요? <Link to="/signup" className="text-[#001E45] font-bold hover:underline">회원가입</Link>
                     </div>
                 </div>
             </Container>
         </div>
     );
 };
-

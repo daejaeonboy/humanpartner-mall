@@ -68,7 +68,7 @@ export const PromoSection: React.FC = () => {
   if (loading) {
     return (
       <div className="pb-16 bg-white flex items-center justify-center py-12">
-        <Loader2 className="animate-spin text-[#006CA3]" size={32} />
+        <Loader2 className="animate-spin text-[#001E45]" size={32} />
       </div>
     );
   }
@@ -92,7 +92,7 @@ export const PromoSection: React.FC = () => {
                   transform: `translateX(${tabs.findIndex(t => t.id === activeTabId) * 100}%)`,
                 }}
               >
-                <div className="h-full bg-[#006CA3] rounded-xl shadow-lg shadow-[#006CA3]/20 mx-0.5" />
+                <div className="h-full bg-[#001E45] rounded-xl shadow-lg shadow-[#001E45]/20 mx-0.5" />
               </div>
             )}
           </div>
@@ -115,7 +115,7 @@ export const PromoSection: React.FC = () => {
         {/* Banners Slider */}
         {loadingBanners ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="animate-spin text-[#006CA3]" size={32} />
+            <Loader2 className="animate-spin text-[#001E45]" size={32} />
           </div>
         ) : banners.length === 0 ? (
           <div className="text-center py-16 text-slate-400">
@@ -128,7 +128,7 @@ export const PromoSection: React.FC = () => {
             {/* Left Button */}
             <button
               onClick={scrollPrev}
-              className="absolute left-0 top-[calc(50%-8px)] -translate-y-1/2 -translate-x-3 md:-translate-x-4 z-10 w-12 h-12 bg-white/95 backdrop-blur-sm border border-slate-200 rounded-full shadow-xl flex items-center justify-center text-slate-500 hover:bg-white hover:border-slate-400 hover:text-[#006CA3] hover:scale-105 transition-all opacity-0 group-hover/slider:opacity-100"
+              className="absolute left-0 top-[calc(50%-8px)] -translate-y-1/2 -translate-x-3 md:-translate-x-4 z-10 w-12 h-12 bg-white/95 backdrop-blur-sm border border-slate-200 rounded-full shadow-xl flex items-center justify-center text-slate-500 hover:bg-white hover:border-slate-400 hover:text-[#001E45] hover:scale-105 transition-all opacity-0 group-hover/slider:opacity-100"
               aria-label="Previous slide"
             >
               <ChevronLeft size={24} />
@@ -137,7 +137,7 @@ export const PromoSection: React.FC = () => {
             {/* Right Button */}
             <button
               onClick={scrollNext}
-              className="absolute right-0 top-[calc(50%-8px)] -translate-y-1/2 translate-x-3 md:translate-x-4 z-10 w-12 h-12 bg-white/95 backdrop-blur-sm border border-slate-200 rounded-full shadow-xl flex items-center justify-center text-slate-500 hover:bg-white hover:border-slate-400 hover:text-[#006CA3] hover:scale-105 transition-all opacity-0 group-hover/slider:opacity-100"
+              className="absolute right-0 top-[calc(50%-8px)] -translate-y-1/2 translate-x-3 md:translate-x-4 z-10 w-12 h-12 bg-white/95 backdrop-blur-sm border border-slate-200 rounded-full shadow-xl flex items-center justify-center text-slate-500 hover:bg-white hover:border-slate-400 hover:text-[#001E45] hover:scale-105 transition-all opacity-0 group-hover/slider:opacity-100"
               aria-label="Next slide"
             >
               <ChevronRight size={24} />
@@ -164,17 +164,14 @@ export const PromoSection: React.FC = () => {
                     </div>
 
                     {/* Text Content */}
-                    <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-end text-white z-10 pointer-events-none">
-                      <h3 className="text-xl md:text-2xl font-bold whitespace-pre-line mb-1.5 text-white tracking-[-0.03em] leading-tight">
-                        {item.title}
-                      </h3>
-                      <p className="text-[13px] md:text-sm opacity-90 mb-4 text-slate-100 font-medium">
-                        {item.subtitle}
-                      </p>
-
-                      <div className="self-start flex items-center gap-1.5 px-4 py-2 bg-[#006CA3] text-white text-[12px] font-black rounded-lg shadow-lg shadow-[#006CA3]/20 hover:bg-[#005A87] transition-all transform group-hover:scale-105 active:scale-95 pointer-events-auto group/btn">
-                        {item.button_text || '바로가기'}
-                        <ChevronRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
+                    <div className="absolute inset-0 px-5 pb-8 pt-6 md:px-7 md:pb-10 md:pt-8 flex items-end justify-start text-white z-10 pointer-events-none">
+                      <div className="w-[78%] max-w-[320px] md:max-w-[420px] text-left">
+                        <h3 className="text-2xl md:text-3xl font-medium whitespace-pre-line mb-2 text-white tracking-[-0.02em] leading-[1.1]">
+                          {item.title}
+                        </h3>
+                        <p className="text-sm md:text-lg opacity-90 mb-0 text-slate-100 font-normal">
+                          {item.subtitle}
+                        </p>
                       </div>
                     </div>
                   </>

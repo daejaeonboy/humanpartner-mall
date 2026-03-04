@@ -36,7 +36,7 @@ export const AdminDashboard = () => {
     return (
         <div className="min-h-screen bg-white">
             {/* Admin Header */}
-            <header className="bg-gradient-to-r from-[#006CA3] to-[#2A8FC2] text-white py-4 px-6 flex items-center justify-between shadow-lg">
+            <header className="bg-gradient-to-r from-[#001E45] to-[#2A8FC2] text-white py-4 px-6 flex items-center justify-between shadow-lg">
                 <div className="flex items-center gap-4">
                     <Link to="/" className="flex items-center gap-2 text-white/70 hover:text-white transition-colors">
                         <ArrowLeft size={20} />
@@ -77,7 +77,7 @@ export const AdminDashboard = () => {
                                         <Link
                                             to={item.path}
                                             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${active
-                                                ? 'bg-[#006CA3] text-white shadow-md'
+                                                ? 'bg-[#001E45] text-white shadow-md'
                                                 : 'text-slate-600 hover:bg-slate-100'
                                                 }`}
                                         >
@@ -105,14 +105,14 @@ export const AdminDashboard = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 <Link
                                     to="/admin/cms"
-                                    className="group bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#006CA3]/30"
+                                    className="group bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#001E45]/30"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="p-4 bg-gradient-to-br from-[#006CA3]/10 to-[#006CA3]/5 rounded-xl group-hover:from-[#006CA3] group-hover:to-[#FF8A8E] transition-all duration-300">
-                                            <Settings className="text-[#006CA3] group-hover:text-white transition-colors" size={28} />
+                                        <div className="p-4 bg-gradient-to-br from-[#001E45]/10 to-[#001E45]/5 rounded-xl group-hover:from-[#001E45] group-hover:to-[#FF8A8E] transition-all duration-300">
+                                            <Settings className="text-[#001E45] group-hover:text-white transition-colors" size={28} />
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#006CA3] transition-colors">CMS 관리</h3>
+                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#001E45] transition-colors">CMS 관리</h3>
                                             <p className="text-slate-500 text-sm">아이콘, 탭, 배너 편집</p>
                                         </div>
                                     </div>
@@ -120,14 +120,14 @@ export const AdminDashboard = () => {
 
                                 <Link
                                     to="/admin/sections"
-                                    className="group bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#006CA3]/30"
+                                    className="group bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#001E45]/30"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="p-4 bg-gradient-to-br from-[#006CA3]/10 to-[#006CA3]/5 rounded-xl group-hover:from-[#006CA3] group-hover:to-[#FF8A8E] transition-all duration-300">
-                                            <Layers className="text-[#006CA3] group-hover:text-white transition-colors" size={28} />
+                                        <div className="p-4 bg-gradient-to-br from-[#001E45]/10 to-[#001E45]/5 rounded-xl group-hover:from-[#001E45] group-hover:to-[#FF8A8E] transition-all duration-300">
+                                            <Layers className="text-[#001E45] group-hover:text-white transition-colors" size={28} />
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#006CA3] transition-colors">섹션 관리</h3>
+                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#001E45] transition-colors">섹션 관리</h3>
                                             <p className="text-slate-500 text-sm">메인 페이지 섹션 편집</p>
                                         </div>
                                     </div>
@@ -135,14 +135,14 @@ export const AdminDashboard = () => {
 
                                 <Link
                                     to="/admin/products"
-                                    className="group bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#006CA3]/30"
+                                    className="group bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#001E45]/30"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="p-4 bg-gradient-to-br from-[#006CA3]/10 to-[#006CA3]/5 rounded-xl group-hover:from-[#006CA3] group-hover:to-[#FF8A8E] transition-all duration-300">
-                                            <Package className="text-[#006CA3] group-hover:text-white transition-colors" size={28} />
+                                        <div className="p-4 bg-gradient-to-br from-[#001E45]/10 to-[#001E45]/5 rounded-xl group-hover:from-[#001E45] group-hover:to-[#FF8A8E] transition-all duration-300">
+                                            <Package className="text-[#001E45] group-hover:text-white transition-colors" size={28} />
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#006CA3] transition-colors">상품 관리</h3>
+                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#001E45] transition-colors">상품 관리</h3>
                                             <p className="text-slate-500 text-sm">상품 추가, 수정, 삭제</p>
                                         </div>
                                     </div>
@@ -150,14 +150,14 @@ export const AdminDashboard = () => {
 
                                 <Link
                                     to="/admin/bookings"
-                                    className="group bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#006CA3]/30"
+                                    className="group bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#001E45]/30"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="p-4 bg-gradient-to-br from-[#006CA3]/10 to-[#006CA3]/5 rounded-xl group-hover:from-[#006CA3] group-hover:to-[#FF8A8E] transition-all duration-300">
-                                            <CalendarCheck className="text-[#006CA3] group-hover:text-white transition-colors" size={28} />
+                                        <div className="p-4 bg-gradient-to-br from-[#001E45]/10 to-[#001E45]/5 rounded-xl group-hover:from-[#001E45] group-hover:to-[#FF8A8E] transition-all duration-300">
+                                            <CalendarCheck className="text-[#001E45] group-hover:text-white transition-colors" size={28} />
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#006CA3] transition-colors">예약 확인</h3>
+                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#001E45] transition-colors">예약 확인</h3>
                                             <p className="text-slate-500 text-sm">고객 예약 목록 확인</p>
                                         </div>
                                     </div>
@@ -165,14 +165,14 @@ export const AdminDashboard = () => {
 
                                 <Link
                                     to="/admin/users"
-                                    className="group bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#006CA3]/30"
+                                    className="group bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#001E45]/30"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="p-4 bg-gradient-to-br from-[#006CA3]/10 to-[#006CA3]/5 rounded-xl group-hover:from-[#006CA3] group-hover:to-[#FF8A8E] transition-all duration-300">
-                                            <Users className="text-[#006CA3] group-hover:text-white transition-colors" size={28} />
+                                        <div className="p-4 bg-gradient-to-br from-[#001E45]/10 to-[#001E45]/5 rounded-xl group-hover:from-[#001E45] group-hover:to-[#FF8A8E] transition-all duration-300">
+                                            <Users className="text-[#001E45] group-hover:text-white transition-colors" size={28} />
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#006CA3] transition-colors">회원 관리</h3>
+                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#001E45] transition-colors">회원 관리</h3>
                                             <p className="text-slate-500 text-sm">가입 회원 목록 관리</p>
                                         </div>
                                     </div>
@@ -180,14 +180,14 @@ export const AdminDashboard = () => {
 
                                 <Link
                                     to="/admin/menus"
-                                    className="group bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#006CA3]/30"
+                                    className="group bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#001E45]/30"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="p-4 bg-gradient-to-br from-[#006CA3]/10 to-[#006CA3]/5 rounded-xl group-hover:from-[#006CA3] group-hover:to-[#FF8A8E] transition-all duration-300">
-                                            <Menu className="text-[#006CA3] group-hover:text-white transition-colors" size={28} />
+                                        <div className="p-4 bg-gradient-to-br from-[#001E45]/10 to-[#001E45]/5 rounded-xl group-hover:from-[#001E45] group-hover:to-[#FF8A8E] transition-all duration-300">
+                                            <Menu className="text-[#001E45] group-hover:text-white transition-colors" size={28} />
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#006CA3] transition-colors">전체 메뉴 관리</h3>
+                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#001E45] transition-colors">전체 메뉴 관리</h3>
                                             <p className="text-slate-500 text-sm">네비게이션 메뉴 설정</p>
                                         </div>
                                     </div>
@@ -195,14 +195,14 @@ export const AdminDashboard = () => {
 
                                 <Link
                                     to="/admin/faqs"
-                                    className="group bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#006CA3]/30"
+                                    className="group bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#001E45]/30"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="p-4 bg-gradient-to-br from-[#006CA3]/10 to-[#006CA3]/5 rounded-xl group-hover:from-[#006CA3] group-hover:to-[#FF8A8E] transition-all duration-300">
-                                            <HelpCircle className="text-[#006CA3] group-hover:text-white transition-colors" size={28} />
+                                        <div className="p-4 bg-gradient-to-br from-[#001E45]/10 to-[#001E45]/5 rounded-xl group-hover:from-[#001E45] group-hover:to-[#FF8A8E] transition-all duration-300">
+                                            <HelpCircle className="text-[#001E45] group-hover:text-white transition-colors" size={28} />
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#006CA3] transition-colors">FAQ 관리</h3>
+                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#001E45] transition-colors">FAQ 관리</h3>
                                             <p className="text-slate-500 text-sm">고객센터 자주 묻는 질문 편집</p>
                                         </div>
                                     </div>
@@ -210,14 +210,14 @@ export const AdminDashboard = () => {
                                 
                                 <Link
                                     to="/admin/inquiries"
-                                    className="group bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#006CA3]/30"
+                                    className="group bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#001E45]/30"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="p-4 bg-gradient-to-br from-[#006CA3]/10 to-[#006CA3]/5 rounded-xl group-hover:from-[#006CA3] group-hover:to-[#FF8A8E] transition-all duration-300">
-                                            <MessageSquare className="text-[#006CA3] group-hover:text-white transition-colors" size={28} />
+                                        <div className="p-4 bg-gradient-to-br from-[#001E45]/10 to-[#001E45]/5 rounded-xl group-hover:from-[#001E45] group-hover:to-[#FF8A8E] transition-all duration-300">
+                                            <MessageSquare className="text-[#001E45] group-hover:text-white transition-colors" size={28} />
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#006CA3] transition-colors">1:1 문의 관리</h3>
+                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#001E45] transition-colors">1:1 문의 관리</h3>
                                             <p className="text-slate-500 text-sm">고객 1:1 문의 확인 및 답변</p>
                                         </div>
                                     </div>

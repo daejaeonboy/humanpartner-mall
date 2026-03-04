@@ -96,7 +96,7 @@ export const CSCenter: React.FC = () => {
                                 className={`
                                     whitespace-nowrap px-4 py-2.5 rounded-full text-sm font-bold transition-all
                                     ${activeCategory === cat
-                                        ? 'bg-[#006CA3] text-white shadow-md shadow-[#006CA3]/20'
+                                        ? 'bg-[#001E45] text-white shadow-md shadow-[#001E45]/20'
                                         : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                                     }
                                 `}
@@ -110,7 +110,7 @@ export const CSCenter: React.FC = () => {
                     <div className="border-t border-slate-100">
                         {loading ? (
                             <div className="py-20 flex justify-center">
-                                <Loader2 className="animate-spin text-[#006CA3]" size={40} />
+                                <Loader2 className="animate-spin text-[#001E45]" size={40} />
                             </div>
                         ) : filteredFAQ.length > 0 ? (
                             filteredFAQ.map(item => (
@@ -119,7 +119,7 @@ export const CSCenter: React.FC = () => {
                                         onClick={() => toggleAccordion(item.id!)}
                                         className="w-full py-5 flex items-center gap-3 text-left hover:bg-slate-50/50 transition-colors px-2"
                                     >
-                                        <span className="text-[#006CA3] font-bold text-lg">Q</span>
+                                        <span className="text-[#001E45] font-bold text-lg">Q</span>
                                         <span className="flex-1 font-bold text-slate-800 text-[15px] md:text-base leading-snug">
                                             {item.question}
                                         </span>

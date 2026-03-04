@@ -28,6 +28,8 @@ export const getAuthErrorMessage = (errorCode: string): string => {
             return '이메일/비밀번호 로그인이 활성화되지 않았습니다.';
         case 'auth/requires-recent-login':
             return '보안을 위해 다시 로그인한 후 시도해주세요.';
+        case 'PGRST205':
+            return '서비스 데이터베이스 테이블이 준비되지 않았습니다. 초기 스키마 설정이 필요합니다.';
 
         default:
             return '인증 처리 중 오류가 발생했습니다. 다시 시도해주세요.';

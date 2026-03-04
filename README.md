@@ -69,3 +69,11 @@ npm run dev
 ```bash
 firebase use --add
 ```
+
+## 4) Supabase 초기 스키마 (필수)
+
+신규 Supabase 프로젝트를 연결했다면 `supabase_bootstrap_schema.sql`을 SQL Editor에서 1회 실행하세요.
+
+실행하지 않으면 로그인 시 아래와 같은 오류가 발생할 수 있습니다.
+- `PGRST205`
+- `Could not find the table 'public.user_profiles' in the schema cache`

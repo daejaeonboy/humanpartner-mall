@@ -8,6 +8,11 @@ dotenv.config();
 // Firebase Admin SDK 초기화
 if (!admin.apps.length) {
     try {
+        const envProjectId = process.env.FIREBASE_PROJECT_ID?.trim();
+        const envClientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim();
+        const envPrivateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+        const hasFullServiceAccountEnv = Boolean(envProjectId && envClientEmail && envPrivateKey);
+
         // 방법 1: 서비스 계정 JSON 파일 사용
         const serviceAccountPath = path.join(__dirname, '../../serviceAccountKey.json');
         if (fs.existsSync(serviceAccountPath)) {
@@ -26,15 +31,20 @@ if (!admin.apps.length) {
             console.log('[Firebase Admin] 환경변수(JSON)로 초기화됨');
         }
         // 방법 3: 개별 환경변수
-        else if (process.env.FIREBASE_PROJECT_ID) {
+        else if (hasFullServiceAccountEnv) {
             admin.initializeApp({
                 credential: admin.credential.cert({
-                    projectId: process.env.FIREBASE_PROJECT_ID,
-                    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-                    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
+                    projectId: envProjectId,
+                    clientEmail: envClientEmail,
+                    privateKey: envPrivateKey
                 })
             });
             console.log('[Firebase Admin] 개별 환경변수로 초기화됨');
+        }
+        // 방법 4: 프로젝트 ID만 지정 (ADC/기본 자격증명 사용)
+        else if (envProjectId) {
+            admin.initializeApp({ projectId: envProjectId });
+            console.log('[Firebase Admin] projectId만으로 초기화됨 (ADC 필요)');
         }
         // 기본 자격증명
         else {
@@ -48,4 +58,3 @@ if (!admin.apps.length) {
 
 export const firebaseAdmin = admin;
 export const auth = admin.auth();
-

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { getUserProfileByFirebaseUid, UserProfile } from '../api/userApi';
+import { getMissingSupabaseTableName, isMissingSupabaseTableError } from '../utils/supabaseErrors';
 
 interface AuthContextType {
     user: User | null;
@@ -31,9 +32,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchProfile = async (firebaseUser: User) => {
         try {
             const profile = await getUserProfileByFirebaseUid(firebaseUser.uid);
+
+            // 프로필이 없으면 미등록 계정으로 간주하고 로그아웃 처리
+            if (!profile) {
+                await signOut(auth);
+                setUser(null);
+                setUserProfile(null);
+                return;
+            }
             
             // 승인되지 않은 사용자 로그아웃 처리
-            if (profile && !profile.is_approved) {
+            if (!profile.is_approved) {
                 await signOut(auth);
                 setUser(null);
                 setUserProfile(null);
@@ -44,6 +53,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUserProfile(profile);
         } catch (error) {
             console.error('Failed to fetch user profile:', error);
+            if (isMissingSupabaseTableError(error)) {
+                const tableName = getMissingSupabaseTableName(error) || 'public.user_profiles';
+                console.error(`[AuthContext] Supabase table missing: ${tableName}`);
+            }
+            await signOut(auth).catch(() => undefined);
+            setUser(null);
             setUserProfile(null);
         }
     };

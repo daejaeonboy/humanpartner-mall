@@ -150,8 +150,8 @@ export const ProductListPage: React.FC = () => {
                             onClick={() => setActiveCategory(cat)}
                             className={`h-[40px] min-w-[100px] px-4 rounded-lg text-[14px] md:text-[15px] font-semibold transition-all border
                                 ${activeCategory === cat
-                                    ? 'bg-[#006CA3] text-white border-[#006CA3] shadow-sm'
-                                    : 'bg-white text-slate-600 border-slate-200 hover:border-[#006CA3] hover:text-[#006CA3]'
+                                    ? 'bg-[#001E45] text-white border-[#001E45] shadow-sm'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:border-[#001E45] hover:text-[#001E45]'
                                 }`}
                         >
                             {cat}
@@ -162,17 +162,17 @@ export const ProductListPage: React.FC = () => {
                 {/* Product Grid */}
                 {loading ? (
                     <div className="py-20 flex justify-center">
-                        <Loader2 className="animate-spin text-[#006CA3]" size={40} />
+                        <Loader2 className="animate-spin text-[#001E45]" size={40} />
                     </div>
                 ) : filteredProducts.length === 0 ? (
                     <div className="py-20 text-center text-gray-500">
-                        등록된 상품이 없습니다. <Link to="/admin/products" className="text-[#006CA3] underline">Admin에서 상품 추가</Link>
+                        등록된 상품이 없습니다. <Link to="/admin/products" className="text-[#001E45] underline">Admin에서 상품 추가</Link>
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {filteredProducts.map((product) => (
                             <Link to={`/products/${product.id}`} key={product.id} className="group cursor-pointer">
-                                <div className="relative aspect-[16/10] overflow-hidden bg-gray-100 mb-4 rounded-lg">
+                                <div className="relative aspect-square overflow-hidden bg-gray-100 mb-4 rounded-lg">
                                     <img
                                         src={product.image_url || 'https://picsum.photos/seed/product/400/500'}
                                         alt={product.name}
