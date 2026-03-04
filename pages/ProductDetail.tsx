@@ -848,7 +848,7 @@ export const ProductDetailPage: React.FC = () => {
         <meta
           property="og:image"
           content={
-            product.image_url || "https://human-partner.web.app/logo.png"
+            product.image_url || "/logo.png"
           }
         />
       </Helmet>

@@ -15,7 +15,6 @@
         }
     ],
     "hosting": {
-        "site": "human-partner",
         "public": "dist",
         "ignore": [
             "firebase.json",

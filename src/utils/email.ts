@@ -43,18 +43,16 @@ export const sendVerificationEmail = async (toName: string, toEmail: string, cod
             </div>
             
             <div style="text-align: center; margin-top: 20px; color: #aaa; font-size: 12px;">
-                &copy; 2026 Hangsaeottae. All rights reserved.
+                &copy; 2026 Humanpartner. All rights reserved.
             </div>
         </div>
     `;
 
     try {
-        // 로컬 환경(localhost)에서는 클라우드 함수 URL 직접 호출
-        // 배포 환경(firebase hosting)에서는 rewrites 규칙에 따라 상대 경로 호출
+        const directFunctionUrl = import.meta.env.VITE_EMAIL_VERIFY_FUNCTION_URL?.trim();
+        const verifyEndpoint = import.meta.env.VITE_EMAIL_VERIFY_ENDPOINT?.trim() || '/api/email/verify';
         const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const apiUrl = isLocalhost
-            ? 'https://us-central1-human-partner.cloudfunctions.net/sendEmailVerification'
-            : '/api/email/verify';
+        const apiUrl = isLocalhost && directFunctionUrl ? directFunctionUrl : verifyEndpoint;
 
         const response = await fetch(apiUrl, {
             method: 'POST',

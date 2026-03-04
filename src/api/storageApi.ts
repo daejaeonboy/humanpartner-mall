@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 
-const BUCKET_NAME = 'Humanpartner';
+const BUCKET_NAME = import.meta.env.VITE_SUPABASE_STORAGE_BUCKET || 'humanpartner';
 
 /**
  * 이미지 파일을 Supabase Storage에 업로드

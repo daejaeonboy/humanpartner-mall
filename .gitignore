@@ -22,6 +22,7 @@ yarn-error.log*
 # IDE
 .idea/
 .vscode/
+.agent/
 *.swp
 *.swo
 
@@ -32,6 +33,11 @@ Thumbs.db
 # Firebase
 .firebase/
 firebase-debug.log
+firebase-debug.*.log
+server/serviceAccountKey.json
 
 # Testing
 coverage/
+
+# Windows
+desktop.ini

@@ -1,19 +1,29 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, type FirebaseOptions } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// TODO: Replace with your actual Firebase User Configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyCvLPDKERNs8P27ipJjLwmZ7a_kJlgJSlg",
-    authDomain: "human-partner.firebaseapp.com",
-    projectId: "human-partner",
-    storageBucket: "human-partner.firebasestorage.app",
-    messagingSenderId: "36770228350",
-    appId: "1:36770228350:web:f5e37c9acad11ebf18d02f",
-    measurementId: "G-CVV7XF7E86"
+const getRequiredEnv = (key: keyof ImportMetaEnv): string => {
+    const value = import.meta.env[key]?.trim();
+    if (!value) {
+        throw new Error(`Missing required Firebase env: ${key}`);
+    }
+    return value;
 };
 
-// Initialize Firebase
+const firebaseConfig: FirebaseOptions = {
+    apiKey: getRequiredEnv('VITE_FIREBASE_API_KEY'),
+    authDomain: getRequiredEnv('VITE_FIREBASE_AUTH_DOMAIN'),
+    projectId: getRequiredEnv('VITE_FIREBASE_PROJECT_ID'),
+    storageBucket: getRequiredEnv('VITE_FIREBASE_STORAGE_BUCKET'),
+    messagingSenderId: getRequiredEnv('VITE_FIREBASE_MESSAGING_SENDER_ID'),
+    appId: getRequiredEnv('VITE_FIREBASE_APP_ID'),
+};
+
+const measurementId = import.meta.env.VITE_FIREBASE_MEASUREMENT_ID?.trim();
+if (measurementId) {
+    firebaseConfig.measurementId = measurementId;
+}
+
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);

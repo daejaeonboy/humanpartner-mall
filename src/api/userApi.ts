@@ -93,7 +93,7 @@ export const searchUsers = async (query: string): Promise<UserProfile[]> => {
 };
 
 // 서버 API 기본 URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/$/, '');
 
 // Firebase 이메일 변경 (서버 API 호출)
 export const updateFirebaseEmail = async (firebaseUid: string, newEmail: string): Promise<void> => {
