@@ -104,9 +104,9 @@ export const MainPage: React.FC = () => {
     return (
         <main>
             <Helmet>
-                <title>행사어때 | 종합 행사 장비 렌탈 플랫폼</title>
-                <meta name="description" content="행사에 필요한 모든 것, 행사어때에서 한 번에 렌탈하세요. 음향, 조명, 영상, 무대 장비 등 프리미엄 장비 렌탈 서비스." />
-                <link rel="canonical" href="https://micepartner.co.kr/" />
+                <title>휴먼파트너 | 종합 행사 장비 렌탈 플랫폼</title>
+                <meta name="description" content="행사에 필요한 모든 것, 휴먼파트너에서 한 번에 렌탈하세요. 음향, 조명, 영상, 무대 장비 등 프리미엄 장비 렌탈 서비스." />
+                <link rel="canonical" href="https://humanpartner.co.kr/" />
             </Helmet>
             <PopupManager />
             <Hero />
@@ -115,7 +115,7 @@ export const MainPage: React.FC = () => {
 
             {loading ? (
                 <div className="flex items-center justify-center py-20">
-                    <Loader2 className="animate-spin text-[#FF5B60]" size={40} />
+                    <Loader2 className="animate-spin text-[#006CA3]" size={40} />
                 </div>
             ) : sectionsWithProducts.length > 0 ? (
                 <>
@@ -143,7 +143,7 @@ export const MainPage: React.FC = () => {
                 />
             ) : (
                 <div className="text-center py-20 text-slate-400">
-                    등록된 상품이 없습니다. <Link to="/admin/products" className="text-[#FF5B60] underline">Admin에서 상품을 추가</Link>해주세요.
+                    등록된 상품이 없습니다. <Link to="/admin/products" className="text-[#006CA3] underline">Admin에서 상품을 추가</Link>해주세요.
                 </div>
             )}
         </main>

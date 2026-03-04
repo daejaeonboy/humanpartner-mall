@@ -111,7 +111,7 @@ const OptionItem = ({
         <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5 line-clamp-2 sm:line-clamp-1">
           {item.short_description || item.description || item.model_name || "상세 설명 없음"}
         </p>
-        <p className="text-sm font-bold text-[#FF5B60] mt-0.5">
+        <p className="text-sm font-bold text-[#006CA3] mt-0.5">
           {item.price ? `${item.price.toLocaleString()}원` : "가격문의"}
         </p>
       </div>
@@ -122,7 +122,7 @@ const OptionItem = ({
           <button
             onClick={() => onUpdate(isInCart ? 0 : 1)}
             className={`flex items-center gap-2 px-4 h-9 rounded-lg text-sm font-bold transition-all border
-              ${isInCart ? "bg-[#FF5B60] text-white border-[#FF5B60] shadow-md" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}`}
+              ${isInCart ? "bg-[#006CA3] text-white border-[#006CA3] shadow-md" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}`}
           >
             <Check size={16} /> {isInCart ? "추가완료" : "추가"}
           </button>
@@ -161,7 +161,7 @@ const OptionItem = ({
                 onClick={handleUpdate}
                 disabled={!isChanged}
                 className={`px-4 h-9 rounded-lg text-sm font-bold transition-all
-                  ${isChanged ? "bg-[#FF5B60] text-white shadow-md" : "bg-gray-900 text-white"}`}
+                  ${isChanged ? "bg-[#006CA3] text-white shadow-md" : "bg-gray-900 text-white"}`}
               >
                 {isChanged ? "수정" : <Check size={18} />}
               </button>
@@ -183,7 +183,7 @@ const OptionItem = ({
           <button
             onClick={() => onUpdate(isInCart ? 0 : 1)}
             className={`flex items-center justify-center w-8 h-8 rounded-full transition-all border
-              ${isInCart ? "bg-[#FF5B60] text-white border-[#FF5B60]" : "bg-gray-50 text-gray-400 border-gray-200"}`}
+              ${isInCart ? "bg-[#006CA3] text-white border-[#006CA3]" : "bg-gray-50 text-gray-400 border-gray-200"}`}
           >
             <Check size={16} />
           </button>
@@ -363,7 +363,7 @@ const OptionListTypeA = ({
             onClick={() => setLocalActiveCategory(group.name)}
             className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all border
                      ${localActiveCategory === group.name
-                ? "bg-[#FF5B60] text-white border-[#FF5B60]"
+                ? "bg-[#006CA3] text-white border-[#006CA3]"
                 : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}`}
           >
             {group.name}
@@ -766,7 +766,7 @@ export const ProductDetailPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="animate-spin text-[#FF5B60]" size={40} />
+        <Loader2 className="animate-spin text-[#006CA3]" size={40} />
       </div>
     );
   }
@@ -832,18 +832,18 @@ export const ProductDetailPage: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>{product.name} - 행사어때 렌탈</title>
+        <title>{product.name} - 휴먼파트너 렌탈</title>
         <meta
           name="description"
           content={
             product.description ||
-            `${product.name} 렌탈 서비스. 행사어때에서 합리적인 가격으로 만나보세요.`
+            `${product.name} 렌탈 서비스. 휴먼파트너에서 합리적인 가격으로 만나보세요.`
           }
         />
-        <meta property="og:title" content={`${product.name} - 행사어때`} />
+        <meta property="og:title" content={`${product.name} - 휴먼파트너`} />
         <meta
           property="og:description"
-          content={product.description || "최고의 파트너 행사어때"}
+          content={product.description || "최고의 파트너 휴먼파트너"}
         />
         <meta
           property="og:image"
@@ -868,7 +868,7 @@ export const ProductDetailPage: React.FC = () => {
                   <li>
                     <a
                       href="/"
-                      className="hover:text-[#FF5B60] transition-colors"
+                      className="hover:text-[#006CA3] transition-colors"
                     >
                       홈
                     </a>
@@ -881,7 +881,7 @@ export const ProductDetailPage: React.FC = () => {
                       <li>
                         <a
                           href={`/products?category=${encodeURIComponent(parentCategoryName)}`}
-                          className="hover:text-[#FF5B60] transition-colors"
+                          className="hover:text-[#006CA3] transition-colors"
                         >
                           {parentCategoryName}
                         </a>
@@ -896,7 +896,7 @@ export const ProductDetailPage: React.FC = () => {
                       <li>
                         <a
                           href={`/products?category=${encodeURIComponent(product.category)}`}
-                          className="hover:text-[#FF5B60] transition-colors"
+                          className="hover:text-[#006CA3] transition-colors"
                         >
                           {product.category}
                         </a>
@@ -928,7 +928,7 @@ export const ProductDetailPage: React.FC = () => {
 
               {/* Product Info */}
               <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <span className="text-[#FF5B60] font-bold text-sm mb-2 block">
+                <span className="text-[#006CA3] font-bold text-sm mb-2 block">
                   {product.category}
                 </span>
                 <h1 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-2">
@@ -966,7 +966,7 @@ export const ProductDetailPage: React.FC = () => {
                       setStartDate(sd);
                       setEndDate(ed);
                     }}
-                    className="text-sm text-gray-400 hover:text-[#FF5B60] transition-colors flex items-center gap-1"
+                    className="text-sm text-gray-400 hover:text-[#006CA3] transition-colors flex items-center gap-1"
                   >
                     <RotateCcw size={14} />
                     일정 초기화
@@ -1027,7 +1027,7 @@ export const ProductDetailPage: React.FC = () => {
                         onBlur={() => {
                           if (expectedPeople === "" || expectedPeople === 0) setExpectedPeople(1);
                         }}
-                        className="w-12 text-center font-bold text-gray-900 text-lg border-b border-transparent focus:border-[#FF5B60] focus:outline-none bg-transparent p-0"
+                        className="w-12 text-center font-bold text-gray-900 text-lg border-b border-transparent focus:border-[#006CA3] focus:outline-none bg-transparent p-0"
                         placeholder="0"
                       />
                       <span className="font-medium text-gray-700">명</span>
@@ -1062,7 +1062,7 @@ export const ProductDetailPage: React.FC = () => {
                       className="w-full flex items-center justify-between pb-2 text-left"
                     >
                       <div className="flex items-center gap-2">
-                        <span className="bg-[#FF5B60] text-white px-2 py-0.5 rounded text-xs font-bold">
+                        <span className="bg-[#006CA3] text-white px-2 py-0.5 rounded text-xs font-bold">
                           기본
                         </span>
                         <h3 className="font-bold text-gray-900 text-lg">
@@ -1157,8 +1157,8 @@ export const ProductDetailPage: React.FC = () => {
                         }}
                         className={`flex-1 py-4 font-bold text-sm transition-all relative
                                  ${activeOptionTab === tab.id
-                            ? "text-[#FF5B60]"
-                            : "text-gray-400 hover:text-[#FF5B60]"}`}
+                            ? "text-[#006CA3]"
+                            : "text-gray-400 hover:text-[#006CA3]"}`}
                       >
                         <div className="flex items-center justify-center gap-2">
                           <tab.icon size={18} />
@@ -1166,7 +1166,7 @@ export const ProductDetailPage: React.FC = () => {
                           {tab.count > 0 && <span className="bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-full">{tab.count}</span>}
                         </div>
                         {activeOptionTab === tab.id && (
-                          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#FF5B60]" />
+                          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#006CA3]" />
                         )}
                       </button>
                     ))}
@@ -1198,11 +1198,11 @@ export const ProductDetailPage: React.FC = () => {
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
                       className={`flex-1 py-4 font-semibold text-sm transition-colors relative
-                                                ${activeTab === tab.id ? "text-[#FF5B60]" : "text-gray-500 hover:text-gray-700"}`}
+                                                ${activeTab === tab.id ? "text-[#006CA3]" : "text-gray-500 hover:text-gray-700"}`}
                     >
                       {tab.label}
                       {activeTab === tab.id && (
-                        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#FF5B60]" />
+                        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#006CA3]" />
                       )}
                     </button>
                   ))}
@@ -1247,7 +1247,7 @@ export const ProductDetailPage: React.FC = () => {
               <div className="sticky top-24 space-y-4">
                 <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
                   <h3 className="font-bold text-lg text-gray-900 mb-2 flex items-center gap-2">
-                    <ShoppingBag size={20} className="text-[#FF5B60]" />
+                    <ShoppingBag size={20} className="text-[#006CA3]" />
                     예약 요약
                   </h3>
                   <p className="text-[14px] text-gray-500 leading-[1.4] mb-6">
@@ -1307,7 +1307,7 @@ export const ProductDetailPage: React.FC = () => {
                       <span className="font-bold text-gray-900">
                         예상 견적 비용
                       </span>
-                      <span className="text-2xl font-bold text-[#FF5B60]">
+                      <span className="text-2xl font-bold text-[#006CA3]">
                         {totalPrice.toLocaleString()}원
                       </span>
                     </div>
@@ -1317,7 +1317,7 @@ export const ProductDetailPage: React.FC = () => {
                   <button
                     onClick={handleBooking}
                     disabled={isBooking || product.stock === 0}
-                    className="w-full mt-6 bg-[#FF5B60] text-white py-4 rounded-xl font-bold hover:bg-[#FF5B60]/90 transition-all flex items-center justify-center gap-2 disabled:bg-gray-400 shadow-lg"
+                    className="w-full mt-6 bg-[#006CA3] text-white py-4 rounded-xl font-bold hover:bg-[#006CA3]/90 transition-all flex items-center justify-center gap-2 disabled:bg-gray-400 shadow-lg"
                   >
                     {isBooking ? (
                       <>
@@ -1350,7 +1350,7 @@ export const ProductDetailPage: React.FC = () => {
                   <div className="mt-4 pt-4 border-t border-gray-100">
                     <button
                       onClick={() => setShowQuoteModal(true)}
-                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-[#FF5B60] text-[#FF5B60] font-semibold hover:bg-red-50 transition-all"
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-[#006CA3] text-[#006CA3] font-semibold hover:bg-sky-50 transition-all"
                     >
                       <FileText size={18} />
                       견적서 다운로드 (PDF)
@@ -1431,7 +1431,7 @@ export const ProductDetailPage: React.FC = () => {
         {mobileBarExpanded && (
           <div className="p-4 max-h-[60vh] overflow-y-auto">
             <h3 className="font-bold text-lg text-gray-900 mb-2 flex items-center gap-2">
-              <ShoppingBag size={20} className="text-[#FF5B60]" />
+              <ShoppingBag size={20} className="text-[#006CA3]" />
               예약 요약
             </h3>
             <p className="text-[14px] text-gray-500 leading-[1.4] mb-6">
@@ -1513,7 +1513,7 @@ export const ProductDetailPage: React.FC = () => {
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs text-gray-500">예상 견적 비용</p>
-              <p className="text-xl font-bold text-[#FF5B60]">
+              <p className="text-xl font-bold text-[#006CA3]">
                 {totalPrice.toLocaleString()}원
               </p>
             </div>
@@ -1667,8 +1667,8 @@ export const ProductDetailPage: React.FC = () => {
                               상호명
                             </td>
                             <td className="border border-gray-400 px-2 py-1 relative">
-                              행사어때 (휴먼파트너)
-                              <span className="absolute right-2 top-0 text-[#FF5B60] text-[10px] font-bold">
+                              휴먼파트너
+                              <span className="absolute right-2 top-0 text-[#006CA3] text-[10px] font-bold">
                                 [인]
                               </span>
                             </td>
@@ -1863,7 +1863,7 @@ export const ProductDetailPage: React.FC = () => {
                         <td className="border-2 border-gray-800 bg-gray-800 text-white px-4 py-3 font-bold text-center w-24 whitespace-nowrap">
                           합계금액
                         </td>
-                        <td className="border-2 border-gray-800 px-4 py-3 text-right font-bold text-lg text-[#FF5B60] whitespace-nowrap">
+                        <td className="border-2 border-gray-800 px-4 py-3 text-right font-bold text-lg text-[#006CA3] whitespace-nowrap">
                           {totalPrice.toLocaleString()}원
                         </td>
                       </tr>
@@ -1911,11 +1911,11 @@ export const ProductDetailPage: React.FC = () => {
                       변경될 수 있습니다.
                     </p>
                     <p className="text-gray-600 mt-2 font-medium">
-                      행사어때 (휴먼파트너) | 사업자등록번호: 314-07-32520 | 대전
+                      휴먼파트너 | 사업자등록번호: 314-07-32520 | 대전
                       유성구 지족로 282번길 17
                     </p>
                     <p className="text-gray-500 mt-1">
-                      Tel. 010-4074-6967 | Email. micepartner@micepartner.co.kr
+                      Tel. 010-4074-6967 | Email. humanpartner@humanpartner.co.kr
                     </p>
                   </div>
                 </div>
@@ -1993,7 +1993,7 @@ export const ProductDetailPage: React.FC = () => {
                 setBookingModal(prev => ({ ...prev, show: false }));
                 bookingModal.onClose?.();
               }}
-              className="w-full py-3 bg-[#FF5B60] text-white font-bold rounded-xl hover:bg-[#E04F54] transition-colors shadow-sm"
+              className="w-full py-3 bg-[#006CA3] text-white font-bold rounded-xl hover:bg-[#005A87] transition-colors shadow-sm"
             >
               확인
             </button>

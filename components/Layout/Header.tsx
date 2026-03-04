@@ -42,13 +42,13 @@ const NotificationDropdown = ({
   return (
     <div className="relative z-50">
       <button
-        className={`w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-slate-600 transition-colors rounded-xl md:rounded-full hover:bg-slate-100 ${isOpen ? "text-[#FF5B60] bg-red-50" : ""}`}
+        className={`w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-slate-600 transition-colors rounded-xl md:rounded-full hover:bg-slate-100 ${isOpen ? "text-[#006CA3] bg-sky-50" : ""}`}
         onClick={() => setIsOpen(!isOpen)}
       >
         <BellIcon className="w-6 h-6 md:w-7 md:h-7" />
         {/* Badge - Only show if unreadCount > 0 */}
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-[#FF5B60] rounded-full ring-1 ring-white"></span>
+          <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-[#006CA3] rounded-full ring-1 ring-white"></span>
         )}
       </button>
 
@@ -65,7 +65,7 @@ const NotificationDropdown = ({
               {unreadCount > 0 && (
                 <button
                   onClick={onMarkAllRead}
-                  className="text-xs text-gray-400 hover:text-[#FF5B60]"
+                  className="text-xs text-gray-400 hover:text-[#006CA3]"
                 >
                   모두 읽음
                 </button>
@@ -81,10 +81,10 @@ const NotificationDropdown = ({
                         onNotificationClick(noti);
                         setIsOpen(false);
                       }}
-                      className={`w-full text-left p-3 hover:bg-gray-50 transition-colors flex gap-3 ${!noti.is_read ? "bg-red-50/10" : ""}`}
+                      className={`w-full text-left p-3 hover:bg-gray-50 transition-colors flex gap-3 ${!noti.is_read ? "bg-sky-50" : ""}`}
                     >
                       <div
-                        className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!noti.is_read ? "bg-[#FF5B60]" : "bg-gray-200"}`}
+                        className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!noti.is_read ? "bg-[#006CA3]" : "bg-gray-200"}`}
                       />
                       <div>
                         <p
@@ -290,7 +290,7 @@ export const Header: React.FC = () => {
               >
                 <img
                   src="/logo.png"
-                  alt="행사어때"
+                  alt="휴먼파트너"
                   className="h-[22px] md:h-6 object-contain"
                 />
                 <span className="text-[0.8rem] text-gray-400 font-medium mt-0.5 whitespace-nowrap hidden sm:block tracking-[1px]">
@@ -307,7 +307,7 @@ export const Header: React.FC = () => {
                   <input
                     type="text"
                     placeholder="무엇을 도와드릴까요?"
-                    className="w-full h-[44px] md:h-auto pl-4 md:pl-5 pr-10 md:pr-12 py-0 md:py-2.5 rounded-xl bg-[#F1F5F9] border border-slate-200 focus:border-[#FF5B60] focus:ring-1 focus:ring-[#FF5B60] focus:bg-white transition-all text-[14px] md:text-sm text-slate-700 placeholder-slate-400 text-ellipsis overflow-hidden whitespace-nowrap"
+                    className="w-full h-[44px] md:h-auto pl-4 md:pl-5 pr-10 md:pr-12 py-0 md:py-2.5 rounded-xl bg-[#F1F5F9] border border-slate-200 focus:border-[#006CA3] focus:ring-1 focus:ring-[#006CA3] focus:bg-white transition-all text-[14px] md:text-sm text-slate-700 placeholder-slate-400 text-ellipsis overflow-hidden whitespace-nowrap"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         const target = e.target as HTMLInputElement;
@@ -359,7 +359,7 @@ export const Header: React.FC = () => {
                   onMouseLeave={() => setShowDesktopMenu(false)}
                 >
                   <button
-                    className={`flex items-center gap-2 whitespace-nowrap text-[15px] font-[550] px-4 py-4 border-b-2 transition-all ${showDesktopMenu ? "text-[#FF5B60] border-[#FF5B60]" : "text-gray-900 border-transparent hover:text-[#FF5B60] hover:border-[#FF5B60]"}`}
+                    className={`flex items-center gap-2 whitespace-nowrap text-[15px] font-[550] px-4 py-4 border-b-2 transition-all ${showDesktopMenu ? "text-[#006CA3] border-[#006CA3]" : "text-gray-900 border-transparent hover:text-[#006CA3] hover:border-[#006CA3]"}`}
                   >
                     <MenuIcon className="w-[18px] h-[18px]" /> 전체 서비스
                   </button>
@@ -368,8 +368,8 @@ export const Header: React.FC = () => {
                 <Link
                   to="/alliance"
                   className={`whitespace-nowrap text-[14px] min-[357px]:text-[15px] font-[550] transition-all px-0.5 min-[375px]:px-2 sm:px-4 py-4 border-b-2 ${location.pathname === '/alliance'
-                    ? 'text-[#FF5B60] border-[#FF5B60]'
-                    : 'text-gray-900 border-transparent hover:text-[#FF5B60] hover:border-[#FF5B60]'
+                    ? 'text-[#006CA3] border-[#006CA3]'
+                    : 'text-gray-900 border-transparent hover:text-[#006CA3] hover:border-[#006CA3]'
                     }`}
                 >
                   MICE 회원사

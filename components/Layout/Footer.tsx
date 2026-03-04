@@ -18,7 +18,7 @@ export function Footer() {
                     <div className="flex flex-wrap items-center gap-x-4 md:gap-x-6 text-[13px] md:text-sm font-semibold text-gray-600">
                         <Link to="/" className="hover:text-black transition-colors whitespace-nowrap flex items-center h-full">홈</Link>
                         <span className="w-px h-3.5 bg-gray-200 hidden md:block"></span>
-                        <Link to="/cs" className="hover:text-[#FF5B60] font-bold text-[#FF5B60] transition-colors whitespace-nowrap flex items-center h-full">고객센터</Link>
+                        <Link to="/cs" className="hover:text-[#006CA3] font-bold text-[#006CA3] transition-colors whitespace-nowrap flex items-center h-full">고객센터</Link>
                         <span className="w-px h-3.5 bg-gray-200 hidden md:block"></span>
                         <Link to="/company" className="cursor-pointer hover:text-black transition-colors whitespace-nowrap flex items-center h-full">회사소개</Link>
                         <span className="w-px h-3.5 bg-gray-200 hidden md:block"></span>
@@ -53,10 +53,10 @@ export function Footer() {
                             <div>
                                 <h3 className="font-bold text-gray-800 mb-2 text-[13px] tracking-wide">입금계좌</h3>
                                 <div className="text-gray-800 font-bold text-sm mb-1 tracking-tight">
-                                    <span className="text-[#FF5B60]">하나은행</span> 734-910239-17507
+                                    <span className="text-[#006CA3]">하나은행</span> 734-910239-17507
                                 </div>
                                 <div className="text-gray-500 text-[11px]">
-                                    예금주 : micepartner (이기섭)
+                                    예금주 : humanpartner (이기섭)
                                 </div>
                             </div>
                         </div>
@@ -69,7 +69,7 @@ export function Footer() {
                         
                         <div className="text-[11px] md:text-[13px] leading-6 md:leading-7 text-gray-500">
                             <p>
-                                법인명(상호) : micepartner <span className="mx-2 text-gray-300">|</span> 대표자(성명) : 이기섭 <span className="mx-2 text-gray-300">|</span> 사업자 등록번호 : 305-30-85537
+                                법인명(상호) : humanpartner <span className="mx-2 text-gray-300">|</span> 대표자(성명) : 이기섭 <span className="mx-2 text-gray-300">|</span> 사업자 등록번호 : 305-30-85537
                             </p>
                             <p>
                                 통신판매업 신고 : 2025-대전대덕-0526 &nbsp; <span className="underline cursor-pointer hover:text-gray-800 transition-colors">[사업자정보확인]</span>
@@ -81,7 +81,7 @@ export function Footer() {
                                 개인정보보호책임자 : 이기섭(hm_solution@naver.com)
                             </p>
                             <p className="mt-5 text-[11px] text-gray-400 font-medium">
-                                Copyright © 2024 micepartner. All rights reserved.
+                                Copyright © 2024 humanpartner. All rights reserved.
                             </p>
                         </div>
                     </div>

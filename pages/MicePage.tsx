@@ -6,8 +6,8 @@ export const MicePage: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>MICE 회원사 - 행사어때</title>
-        <meta name="description" content="행사어때의 MICE 회원사를 소개합니다." />
+        <title>MICE 회원사 - 휴먼파트너</title>
+        <meta name="description" content="휴먼파트너의 MICE 회원사를 소개합니다." />
       </Helmet>
       <div className="pt-24 pb-16 bg-gray-50 min-h-screen">
         <Container>

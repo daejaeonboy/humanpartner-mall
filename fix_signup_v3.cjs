@@ -8,7 +8,7 @@ let content = fs.readFileSync(path, 'utf8');
 content = content.replace(/<h1 className=\"text-2xl font-bold text-gray-900\">.*<\/h1>/, '<h1 className=\"text-2xl font-bold text-gray-900\">회원가입</h1>');
 
 // Fix p (line 387)
-content = content.replace(/<p className=\"text-gray-500 text-sm mt-2\">.*<\/p>/, '<p className=\"text-gray-500 text-sm mt-2\">행사어때의 회원이 되어 다양한 혜택을 누리세요.</p>');
+content = content.replace(/<p className=\"text-gray-500 text-sm mt-2\">.*<\/p>/, '<p className=\"text-gray-500 text-sm mt-2\">휴먼파트너의 회원이 되어 다양한 혜택을 누리세요.</p>');
 
 // Fix submit button (line 706) - Fixing the mess from v2
 content = content.replace(/{loading \? '가입 처리 중\.\.\.' : '가입하기'}.*?}/, "{loading ? '가입 처리 중...' : '가입하기'}");
@@ -16,7 +16,7 @@ content = content.replace(/{loading \? '가입 처리 중\.\.\.' : '가입하기
 content = content.replace(/{loading \? '.*?'.*?: '.*?媛€.*?\}/, "{loading ? '가입 처리 중...' : '가입하기'}");
 
 // Fix login link (line 711)
-content = content.replace(/이미 계정이 있으신가요\? <Link to=\"\/login\" className=\"text-\[#FF5B60\] font-bold hover:underline\">.*?<\/Link>/, '이미 계정이 있으신가요? <Link to="/login" className="text-[#FF5B60] font-bold hover:underline">로그인</Link>');
+content = content.replace(/이미 계정이 있으신가요\? <Link to=\"\/login\" className=\"text-\[#006CA3\] font-bold hover:underline\">.*?<\/Link>/, '이미 계정이 있으신가요? <Link to="/login" className="text-[#006CA3] font-bold hover:underline">로그인</Link>');
 // Fix trailing garbage if link was double-replaced or something
 content = content.replace(/濡쒓렇\?\?\/Link>/, '로그인</Link>');
 

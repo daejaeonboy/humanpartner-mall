@@ -6,7 +6,7 @@ export const BlankPage: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>BLANK - 행사어때</title>
+        <title>BLANK - 휴먼파트너</title>
         <meta name="description" content="새로운 기능 준비중입니다." />
       </Helmet>
       <div className="pt-24 pb-16 bg-gray-50 min-h-screen">

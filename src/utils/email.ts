@@ -18,7 +18,7 @@ export const sendVerificationEmail = async (toName: string, toEmail: string, cod
     const htmlContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
             <div style="text-align: center; margin-bottom: 20px;">
-                <h1 style="color: #FF5B60; margin: 0;">마이스파트너</h1>
+                <h1 style="color: #006CA3; margin: 0;">휴먼파트너</h1>
                 <p style="color: #666; font-size: 14px;">장소, 장비 </p>
             </div>
             
@@ -26,12 +26,12 @@ export const sendVerificationEmail = async (toName: string, toEmail: string, cod
                 <h2 style="color: #333; margin-top: 0;">이메일 인증 안내</h2>
                 <p style="color: #555; line-height: 1.5;">
                     안녕하세요, ${toName}님.<br/>
-                    행사어때 회원가입을 환영합니다.<br/>
+                    휴먼파트너 회원가입을 환영합니다.<br/>
                     아래 인증번호를 회원가입 화면에 입력해주세요.
                 </p>
                 
                 <div style="margin: 30px 0;">
-                    <span style="display: inline-block; background-color: #fff; padding: 15px 30px; font-size: 24px; font-weight: bold; color: #FF5B60; border: 2px solid #FF5B60; border-radius: 5px; letter-spacing: 5px;">
+                    <span style="display: inline-block; background-color: #fff; padding: 15px 30px; font-size: 24px; font-weight: bold; color: #006CA3; border: 2px solid #006CA3; border-radius: 5px; letter-spacing: 5px;">
                         ${code}
                     </span>
                 </div>
@@ -63,7 +63,7 @@ export const sendVerificationEmail = async (toName: string, toEmail: string, cod
             },
             body: JSON.stringify({
                 to: toEmail,
-                subject: '[행사어때] 회원가입 이메일 인증번호',
+                subject: '[휴먼파트너] 회원가입 이메일 인증번호',
                 html: htmlContent
             }),
         });

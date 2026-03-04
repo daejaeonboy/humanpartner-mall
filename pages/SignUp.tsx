@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { generateVerificationCode, sendVerificationEmail } from '../src/utils/email';
 import { Container } from '../components/ui/Container';
 import { Link, useNavigate } from 'react-router-dom';
@@ -12,7 +12,7 @@ import { getAuthErrorMessage } from '../src/utils/authErrors';
 
 // 약관 내용
 const TERMS_CONTENT = `제1조 (목적)
-본 약관은 행사어때 플랫폼(이하 "서비스")의 이용과 관련하여 운영 주체와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
+본 약관은 휴먼파트너 플랫폼(이하 "서비스")의 이용과 관련하여 운영 주체와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
 
 제2조 (정의)
 1. "이용자"란 본 약관에 따라 서비스를 이용하는 회원 및 비회원을 말합니다.
@@ -49,8 +49,8 @@ const TERMS_CONTENT = `제1조 (목적)
 본 약관은 2026년 2월 6일부터 시행합니다.`;
 
 const PRIVACY_CONTENT = `1. 총칙
-본 개인정보처리방침은 행사어때 플랫폼의 서비스 이용 과정에서 처리되는 개인정보의 기준을 안내합니다.
-플랫폼은 현재 서비스 준비 단계이며, 향후 "micepartner" 법인 설립 이후 해당 법인이 개인정보처리자로서 본 방침을 승계·운영할 수 있습니다.
+본 개인정보처리방침은 휴먼파트너 플랫폼의 서비스 이용 과정에서 처리되는 개인정보의 기준을 안내합니다.
+플랫폼은 현재 서비스 준비 단계이며, 향후 "humanpartner" 법인 설립 이후 해당 법인이 개인정보처리자로서 본 방침을 승계·운영할 수 있습니다.
 
 2. 수집하는 개인정보 항목
 - 회원가입 및 계정관리: 이름, 이메일, 비밀번호, 휴대전화번호
@@ -93,7 +93,7 @@ const PRIVACY_CONTENT = `1. 총칙
 - 성명: 이기섭
 - 연락처: 010-4074-6967
 - 이메일: hm_solution@naver.com
-상기 연락처는 법인 설립 전 임시 운영 연락처이며, micepartner 법인 설립 후 변경 시 즉시 고지합니다.
+상기 연락처는 법인 설립 전 임시 운영 연락처이며, humanpartner 법인 설립 후 변경 시 즉시 고지합니다.
 
 10. 고지의 의무
 본 방침의 내용 추가, 삭제 및 수정이 있는 경우 시행일 최소 7일 전에 공지합니다.
@@ -102,7 +102,7 @@ const PRIVACY_CONTENT = `1. 총칙
 부칙
 본 개인정보처리방침은 2026년 2월 6일부터 시행합니다.`;
 
-const MARKETING_CONTENT = `마케팅 정보 수신에 동의하시면 행사어때의 다양한 혜택과 이벤트, 신규 서비스 소식을 받아보실 수 있습니다.
+const MARKETING_CONTENT = `마케팅 정보 수신에 동의하시면 휴먼파트너의 다양한 혜택과 이벤트, 신규 서비스 소식을 받아보실 수 있습니다.
 
 - 이메일 및 문자(SMS)를 통한 이벤트/프로모션 안내
 - 신규 서비스 및 기능 업데이트 소식 안내
@@ -133,7 +133,7 @@ const AgreementSection = ({
                 <label className="flex items-center gap-3 cursor-pointer flex-1">
                     <div
                         className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${checked
-                            ? 'bg-[#FF5B60] border-[#FF5B60]'
+                            ? 'bg-[#006CA3] border-[#006CA3]'
                             : 'border-gray-300 bg-white'
                             }`}
                         onClick={() => onChange(!checked)}
@@ -409,7 +409,7 @@ export const SignUp: React.FC = () => {
                 <div className="max-w-lg mx-auto bg-white p-4 md:p-8 rounded-2xl shadow-sm border border-gray-100">
                     <div className="text-center mb-8">
                         <h1 className="text-2xl font-bold text-gray-900">회원가입</h1>
-                        <p className="text-gray-500 text-sm mt-2">행사어때의 회원이 되어 다양한 혜택을 누리세요.</p>
+                        <p className="text-gray-500 text-sm mt-2">휴먼파트너의 회원이 되어 다양한 혜택을 누리세요.</p>
                     </div>
 
                     {/* 회원 유형 선택 */}
@@ -420,7 +420,7 @@ export const SignUp: React.FC = () => {
                                 onClick={() => setMemberType('business')}
                                 className={`py-4 px-4 rounded-xl border-2 transition-all font-medium text-center ${
                                     memberType === 'business'
-                                        ? 'border-[#FF5B60] bg-[#FF5B60]/5 text-[#FF5B60]'
+                                        ? 'border-[#006CA3] bg-[#006CA3]/5 text-[#006CA3]'
                                         : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                                 }`}
                             >
@@ -433,7 +433,7 @@ export const SignUp: React.FC = () => {
                                 onClick={() => setMemberType('public')}
                                 className={`py-4 px-4 rounded-xl border-2 transition-all font-medium text-center ${
                                     memberType === 'public'
-                                        ? 'border-[#FF5B60] bg-[#FF5B60]/5 text-[#FF5B60]'
+                                        ? 'border-[#006CA3] bg-[#006CA3]/5 text-[#006CA3]'
                                         : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                                 }`}
                             >
@@ -455,7 +455,7 @@ export const SignUp: React.FC = () => {
                                     type="text"
                                     name="name"
                                     required
-                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FF5B60] focus:border-transparent outline-none transition-all"
+                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#006CA3] focus:border-transparent outline-none transition-all"
                                     placeholder="이름을 입력하세요"
                                     value={formData.name}
                                     onChange={handleChange}
@@ -470,7 +470,7 @@ export const SignUp: React.FC = () => {
                                     type="email"
                                     name="email"
                                     required
-                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FF5B60] focus:border-transparent outline-none transition-all"
+                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#006CA3] focus:border-transparent outline-none transition-all"
                                     placeholder="example@company.com"
                                     value={formData.email}
                                     onChange={handleChange}
@@ -483,7 +483,7 @@ export const SignUp: React.FC = () => {
                                         disabled={verifying || isCodeSent}
                                         className={`w-full mt-2 py-3 rounded-lg font-bold text-sm transition-all border ${isCodeSent
                                             ? 'bg-gray-100 text-gray-400 border-gray-200'
-                                            : 'bg-white text-[#FF5B60] border-[#FF5B60] hover:bg-[#FF5B60] hover:text-white'
+                                            : 'bg-white text-[#006CA3] border-[#006CA3] hover:bg-[#006CA3] hover:text-white'
                                             }`}
                                     >
                                         {verifying ? (
@@ -505,7 +505,7 @@ export const SignUp: React.FC = () => {
                                     <div className="flex gap-2">
                                         <input
                                             type="text"
-                                            className="flex-1 px-4 py-2 rounded border border-gray-300 focus:ring-2 focus:ring-[#FF5B60] outline-none text-sm"
+                                            className="flex-1 px-4 py-2 rounded border border-gray-300 focus:ring-2 focus:ring-[#006CA3] outline-none text-sm"
                                             placeholder="6자리 숫자"
                                             value={inputCode}
                                             onChange={(e) => setInputCode(e.target.value)}
@@ -537,7 +537,7 @@ export const SignUp: React.FC = () => {
                                     type="tel"
                                     name="phone"
                                     required
-                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FF5B60] focus:border-transparent outline-none transition-all"
+                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#006CA3] focus:border-transparent outline-none transition-all"
                                     placeholder="010-1234-5678"
                                     value={formData.phone}
                                     onChange={handlePhoneChange}
@@ -555,7 +555,7 @@ export const SignUp: React.FC = () => {
                                         name="password"
                                         required
                                         minLength={8}
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FF5B60] focus:border-transparent outline-none transition-all"
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#006CA3] focus:border-transparent outline-none transition-all"
                                         placeholder="8자 이상"
                                         value={formData.password}
                                         onChange={handleChange}
@@ -569,7 +569,7 @@ export const SignUp: React.FC = () => {
                                         type="password"
                                         name="confirmPassword"
                                         required
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FF5B60] focus:border-transparent outline-none transition-all"
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#006CA3] focus:border-transparent outline-none transition-all"
                                         placeholder="비밀번호 확인"
                                         value={formData.confirmPassword}
                                         onChange={handleChange}
@@ -591,7 +591,7 @@ export const SignUp: React.FC = () => {
                                         type="text"
                                         name="companyName"
                                         required
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FF5B60] focus:border-transparent outline-none transition-all"
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#006CA3] focus:border-transparent outline-none transition-all"
                                         placeholder="(주)휴먼파트너"
                                         value={formData.companyName}
                                         onChange={handleChange}
@@ -606,7 +606,7 @@ export const SignUp: React.FC = () => {
                                         <input
                                             type="text"
                                             name="department"
-                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FF5B60] focus:border-transparent outline-none transition-all"
+                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#006CA3] focus:border-transparent outline-none transition-all"
                                             placeholder="기획팀"
                                             value={formData.department}
                                             onChange={handleChange}
@@ -619,7 +619,7 @@ export const SignUp: React.FC = () => {
                                         <input
                                             type="text"
                                             name="position"
-                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FF5B60] focus:border-transparent outline-none transition-all"
+                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#006CA3] focus:border-transparent outline-none transition-all"
                                             placeholder="대리"
                                             value={formData.position}
                                             onChange={handleChange}
@@ -635,7 +635,7 @@ export const SignUp: React.FC = () => {
                                         type="text"
                                         name="address"
                                         required
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FF5B60] focus:border-transparent outline-none transition-all"
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#006CA3] focus:border-transparent outline-none transition-all"
                                         placeholder="서울시 강남구 테헤란로 123 OO빌딩 4층"
                                         value={formData.address}
                                         onChange={handleChange}
@@ -650,7 +650,7 @@ export const SignUp: React.FC = () => {
                                     <input
                                         type="text"
                                         name="businessNumber"
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FF5B60] focus:border-transparent outline-none transition-all"
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#006CA3] focus:border-transparent outline-none transition-all"
                                         placeholder="000-00-00000"
                                         value={formData.businessNumber}
                                         onChange={handleBusinessNumberChange}
@@ -680,10 +680,10 @@ export const SignUp: React.FC = () => {
                                         </div>
                                     ) : (
                                         <label className="block">
-                                            <div className={`border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-[#FF5B60] hover:bg-gray-50 transition-colors ${uploadingLicense ? 'opacity-50 pointer-events-none' : ''}`}>
+                                            <div className={`border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-[#006CA3] hover:bg-gray-50 transition-colors ${uploadingLicense ? 'opacity-50 pointer-events-none' : ''}`}>
                                                 {uploadingLicense ? (
                                                     <div className="flex flex-col items-center">
-                                                        <Loader2 className="animate-spin text-[#FF5B60]" size={24} />
+                                                        <Loader2 className="animate-spin text-[#006CA3]" size={24} />
                                                         <span className="text-sm text-gray-500 mt-2">업로드 중...</span>
                                                     </div>
                                                 ) : (
@@ -719,7 +719,7 @@ export const SignUp: React.FC = () => {
                                         type="text"
                                         name="institutionName"
                                         required
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FF5B60] focus:border-transparent outline-none transition-all"
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#006CA3] focus:border-transparent outline-none transition-all"
                                         placeholder="서울특별시청, 한국전력공사 등"
                                         value={formData.institutionName}
                                         onChange={handleChange}
@@ -734,7 +734,7 @@ export const SignUp: React.FC = () => {
                                         type="text"
                                         name="managerName"
                                         required
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FF5B60] focus:border-transparent outline-none transition-all"
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#006CA3] focus:border-transparent outline-none transition-all"
                                         placeholder="담당자 성함을 입력하세요"
                                         value={formData.managerName}
                                         onChange={handleChange}
@@ -748,11 +748,11 @@ export const SignUp: React.FC = () => {
                             <h3 className="text-sm font-semibold text-gray-800 border-b pb-2">약관 동의</h3>
 
                             {/* 전체 동의 */}
-                            <div className="p-4 bg-[#FF5B60]/5 rounded-lg">
+                            <div className="p-4 bg-[#006CA3]/5 rounded-lg">
                                 <label className="flex items-center gap-3 cursor-pointer">
                                     <div
                                         className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${allAgreed
-                                            ? 'bg-[#FF5B60] border-[#FF5B60]'
+                                            ? 'bg-[#006CA3] border-[#006CA3]'
                                             : 'border-gray-300 bg-white'
                                             }`}
                                         onClick={() => handleAllAgree(!allAgreed)}
@@ -792,7 +792,7 @@ export const SignUp: React.FC = () => {
                             disabled={loading || !allRequiredAgreed}
                             className={`w-full py-4 rounded-lg font-bold transition-all mt-6 flex items-center justify-center gap-2 ${loading || !allRequiredAgreed
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                : 'bg-[#FF5B60] text-white hover:bg-[#002d66]'
+                                : 'bg-[#006CA3] text-white hover:bg-[#002d66]'
                                 }`}
                         >
                             {loading && <Loader2 className="animate-spin" size={20} />}
@@ -801,7 +801,7 @@ export const SignUp: React.FC = () => {
                     </form>
 
                     <div className="mt-6 text-center text-sm text-gray-500">
-                        이미 계정이 있으신가요? <Link to="/login" className="text-[#FF5B60] font-bold hover:underline">로그인</Link>
+                        이미 계정이 있으신가요? <Link to="/login" className="text-[#006CA3] font-bold hover:underline">로그인</Link>
                     </div>
                 </div>
             </Container>
