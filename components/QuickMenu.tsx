@@ -74,8 +74,8 @@ export const QuickMenu: React.FC = () => {
       <Container>
         <div className="relative">
             {/* 2-row Grid for mobile, Flex for desktop */}
-            <div 
-               className="grid grid-cols-5 gap-y-6 gap-x-1 sm:gap-x-2 md:flex md:justify-between items-start pb-4 md:pb-0"
+            <div
+               className="grid grid-cols-5 gap-y-2 gap-x-[0.5rem] md:flex md:justify-between items-start pb-2 md:pb-0"
             >
           {items.map((item, index) => {
             // 카테고리가 있으면 해당 카테고리 필터링 링크 생성, 없으면 기존 링크 사용
@@ -94,12 +94,12 @@ export const QuickMenu: React.FC = () => {
               <Link
                 key={item.id}
                 to={linkUrl}
-                className="group flex flex-col items-center gap-3 flex-shrink-0 w-full md:w-auto md:flex-1 min-w-0"
+                className="group flex flex-col items-center gap-1.5 md:gap-[1em] flex-shrink-0 w-full md:w-auto md:flex-1 min-w-0"
               >
-                <div className="w-12 h-12 md:h-16 lg:w-20 lg:h-20 rounded-2xl bg-slate-50 flex items-center justify-center bg-opacity-10 group-hover:bg-opacity-25 transition-all duration-300 group-hover:-translate-y-1">
-                  <div className="scale-90 md:scale-110 lg:scale-125">
+                <div className="w-[4.1rem] h-[4.1rem] md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-2xl bg-slate-50 flex items-center justify-center bg-opacity-10 group-hover:bg-opacity-25 transition-all duration-300 group-hover:-translate-y-1">
+                  <div className="w-full h-full flex items-center justify-center md:scale-110 lg:scale-125">
                     {item.image_url ? (
-                      <img src={item.image_url} alt={item.name} className="w-full h-full object-contain p-0 md:p-4" />
+                      <img src={item.image_url} alt={item.name} className="w-full h-full object-contain p-[0.1rem] md:p-[0.2rem]" />
                     ) : (
                       getIcon(item.icon, iconColors[index % iconColors.length])
                     )}

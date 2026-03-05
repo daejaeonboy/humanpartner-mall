@@ -407,3 +407,98 @@ export const deleteAllianceMember = async (id: string): Promise<void> => {
         .eq('id', id);
     if (error) throw error;
 };
+
+// ==================== MICE Tab Posts ====================
+export type MiceTabType = 'notice' | 'event' | 'review';
+
+export interface MiceTabPost {
+    id?: string;
+    board_type: MiceTabType;
+    title: string;
+    summary?: string;
+    content?: string;
+    image_url?: string;
+    mobile_image_url?: string;
+    link?: string;
+    display_order: number;
+    is_active: boolean;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export const getMiceTabPosts = async (boardType?: MiceTabType): Promise<MiceTabPost[]> => {
+    let query = supabase
+        .from('mice_tab_posts')
+        .select('*')
+        .eq('is_active', true);
+
+    if (boardType) {
+        query = query.eq('board_type', boardType);
+    }
+
+    const { data, error } = await query
+        .order('display_order', { ascending: true })
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+};
+
+export const getAllMiceTabPosts = async (): Promise<MiceTabPost[]> => {
+    const { data, error } = await supabase
+        .from('mice_tab_posts')
+        .select('*')
+        .order('board_type', { ascending: true })
+        .order('display_order', { ascending: true })
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+};
+
+export const getMiceTabPostById = async (id: string): Promise<MiceTabPost | null> => {
+    const { data, error } = await supabase
+        .from('mice_tab_posts')
+        .select('*')
+        .eq('id', id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+    if (error) throw error;
+    return data || null;
+};
+
+export const addMiceTabPost = async (post: Omit<MiceTabPost, 'id' | 'created_at' | 'updated_at'>): Promise<MiceTabPost> => {
+    const { data, error } = await supabase
+        .from('mice_tab_posts')
+        .insert([post])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const updateMiceTabPost = async (id: string, updates: Partial<MiceTabPost>): Promise<MiceTabPost> => {
+    const { data, error } = await supabase
+        .from('mice_tab_posts')
+        .update({
+            ...updates,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const deleteMiceTabPost = async (id: string): Promise<void> => {
+    const { error } = await supabase
+        .from('mice_tab_posts')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+};

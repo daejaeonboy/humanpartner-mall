@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Header } from './components/Layout/Header';
 import { BottomNav } from './components/Layout/BottomNav';
 import { Footer } from './components/Layout/Footer';
@@ -16,8 +16,8 @@ import { ProductSearchResult } from './pages/ProductSearchResult';
 import { CompanyIntro } from './pages/CompanyIntro';
 import { TermsOfService } from './pages/TermsOfService';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
-import { AlliancePage } from './pages/AlliancePage';
-import { EventPage } from './pages/EventPage';
+import { MiceBoardPage } from './pages/MiceBoardPage';
+import { GnbPostDetailPage } from './pages/GnbPostDetailPage';
 import { BlankPage } from './pages/BlankPage';
 import { NotFound } from './pages/NotFound';
 import { AuthProvider } from './src/context/AuthContext';
@@ -33,6 +33,7 @@ import { AdminSignup } from './pages/admin/AdminSignup';
 import { NavMenuManager } from './pages/admin/NavMenuManager';
 import { FAQManager } from './pages/admin/FAQManager';
 import { InquiryManager } from './pages/admin/InquiryManager';
+import { GnbSectionManager } from './pages/admin/GnbSectionManager';
 import { AdminRoute } from './src/components/AdminRoute';
 
 function App() {
@@ -46,11 +47,14 @@ function App() {
             <Route path="sections" element={<SectionManager />} />
             <Route path="categories" element={<CategoryManager />} />
             <Route path="products" element={<ProductManager />} />
-            <Route path="bookings" element={<BookingList />} />
+            <Route path="rental-requests" element={<BookingList />} />
+            <Route path="bookings" element={<Navigate to="/admin/rental-requests" replace />} />
             <Route path="users" element={<UserManager />} />
             <Route path="menus" element={<NavMenuManager />} />
             <Route path="faqs" element={<FAQManager />} />
             <Route path="inquiries" element={<InquiryManager />} />
+            <Route path="gnb-sections" element={<GnbSectionManager />} />
+            <Route path="mice-tabs" element={<Navigate to="/admin/gnb-sections" replace />} />
           </Route>
 
           {/* Admin Login - Separate Route */}
@@ -76,8 +80,12 @@ function App() {
                   <Route path="/p/:code" element={<RedirectToProduct />} />
                   <Route path="/search" element={<ProductSearchResult />} />
                   <Route path="/company" element={<CompanyIntro />} />
-                  <Route path="/alliance" element={<AlliancePage />} />
-                  <Route path="/event" element={<EventPage />} />
+                  <Route path="/notice" element={<MiceBoardPage boardType="notice" />} />
+                  <Route path="/notice/:id" element={<GnbPostDetailPage boardType="notice" />} />
+                  <Route path="/event" element={<MiceBoardPage boardType="event" />} />
+                  <Route path="/event/:id" element={<GnbPostDetailPage boardType="event" />} />
+                  <Route path="/review" element={<MiceBoardPage boardType="review" />} />
+                  <Route path="/review/:id" element={<GnbPostDetailPage boardType="review" />} />
                   <Route path="/blank" element={<BlankPage />} />
                   <Route path="/terms" element={<TermsOfService />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />

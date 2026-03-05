@@ -1,7 +1,8 @@
--- 기본 GNB 메뉴 데이터 추가 (회사소개, MICE 회원사, EVENT, BLANK)
+-- 기본 GNB 메뉴 데이터 추가 (회사소개, 공지사항, 이벤트, 설치후기, 고객센터)
 INSERT INTO public.gnb_menu_items (name, link, display_order, is_active)
 VALUES 
     ('회사소개', '/company', 1, true),
-    ('MICE 회원사', '/alliance', 2, true),
-    ('EVENT', '/event', 3, true),
-    ('BLANK', '/blank', 4, true);
+    ('공지사항', '/notice', 2, true),
+    ('이벤트', '/event', 3, true),
+    ('설치후기', '/review', 4, true),
+    ('고객센터', '/cs', 5, true);

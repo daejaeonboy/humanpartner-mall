@@ -28,7 +28,7 @@ export const BookingList = () => {
 
     const handleStatusChange = async (id: string, status: Booking['status']) => {
         const statusLabel = status === 'confirmed' ? '확정' : '취소';
-        if (!confirm(`이 예약을 ${statusLabel} 처리하시겠습니까?`)) return;
+        if (!confirm(`이 대여 요청을 ${statusLabel} 처리하시겠습니까?`)) return;
 
         setUpdatingId(id);
         try {
@@ -40,16 +40,16 @@ export const BookingList = () => {
             if (targetBooking?.user_id) {
                  await createNotification(
                     targetBooking.user_id,
-                    status === 'confirmed' ? '예약 확정' : '예약 취소',
+                    status === 'confirmed' ? '대여 확정' : '대여 취소',
                     status === 'confirmed' 
-                        ? `${targetBooking.products?.name || '상품'} 예약이 확정되었습니다. 이용해주셔서 감사합니다.` 
-                        : `${targetBooking.products?.name || '상품'} 예약이 취소되었습니다.`,
+                        ? `${targetBooking.products?.name || '상품'} 대여 요청이 확정되었습니다. 이용해주셔서 감사합니다.` 
+                        : `${targetBooking.products?.name || '상품'} 대여 요청이 취소되었습니다.`,
                     status === 'confirmed' ? 'success' : 'error',
                     '/mypage'
                 );
             }
 
-            alert(`예약이 ${statusLabel}되었습니다.`);
+            alert(`대여 요청이 ${statusLabel}되었습니다.`);
         } catch (error) {
             console.error('Failed to update status:', error);
             alert('상태 변경에 실패했습니다.');
@@ -59,13 +59,13 @@ export const BookingList = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('이 예약을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+        if (!confirm('이 대여 요청을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
 
         setDeletingId(id);
         try {
             await deleteBooking(id);
             setBookings(bookings.filter(b => b.id !== id));
-            alert('예약이 삭제되었습니다.');
+            alert('대여 요청이 삭제되었습니다.');
         } catch (error) {
             console.error('Failed to delete booking:', error);
             alert('삭제에 실패했습니다.');
@@ -79,17 +79,17 @@ export const BookingList = () => {
             pending: { 
                 className: 'bg-orange-100 border border-orange-300 text-orange-800', 
                 icon: Calendar, 
-                label: '예약 대기 중' 
+                label: '대여 신청 접수' 
             },
             confirmed: { 
                 className: 'bg-blue-100 border border-blue-300 text-blue-800', 
                 icon: CheckCircle, 
-                label: '예약 확정' 
+                label: '대여 확정' 
             },
             cancelled: { 
                 className: 'bg-gray-100 border border-gray-300 text-gray-700', 
                 icon: XCircle, 
-                label: '예약 취소' 
+                label: '대여 취소' 
             },
         };
         const { className, icon: Icon, label } = config[status];
@@ -121,7 +121,7 @@ export const BookingList = () => {
         <div>
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h2 className="text-2xl font-bold text-slate-800">예약 확인</h2>
+                    <h2 className="text-2xl font-bold text-slate-800">대여 요청 관리</h2>
                     <p className="text-slate-500 text-sm mt-1">총 {bookings.length}건</p>
                 </div>
                 <button
@@ -151,7 +151,7 @@ export const BookingList = () => {
                             {bookings.length === 0 ? (
                                 <tr>
                                     <td colSpan={8} className="text-center py-12 text-slate-400">
-                                        예약 내역이 없습니다.
+                                        대여 요청 내역이 없습니다.
                                     </td>
                                 </tr>
                             ) : (

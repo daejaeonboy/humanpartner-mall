@@ -14,6 +14,7 @@ export const InquiryPage: React.FC = () => {
     const [saving, setSaving] = useState(false);
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [formData, setFormData] = useState({ title: '', content: '', category: '서비스 이용' });
+    const normalizeCategory = (value: string) => value === '예약/결제' ? '대여/결제' : value;
 
     const loadInquiries = async () => {
         if (!user) return;
@@ -41,7 +42,7 @@ export const InquiryPage: React.FC = () => {
                 user_name: userProfile?.name || '',
                 user_email: userProfile?.email || user.email || '',
                 company_name: userProfile?.company_name || '',
-                category: formData.category,
+                category: normalizeCategory(formData.category),
                 title: formData.title,
                 content: formData.content,
             });
@@ -86,7 +87,7 @@ export const InquiryPage: React.FC = () => {
                             <p className="text-sm text-gray-500 mb-6">{userProfile?.email || user.email}</p>
                             <div className="text-left space-y-1 border-t border-gray-100 pt-4">
                                 <Link to="/mypage" className="text-sm text-gray-500 block w-full text-left py-2 px-2 rounded hover:bg-gray-50 hover:text-black">
-                                    예약 내역
+                                    대여 내역
                                 </Link>
                                 <Link to="/mypage/info" className="text-sm text-gray-500 block w-full text-left py-2 px-2 rounded hover:bg-gray-50 hover:text-black">
                                     내 정보 관리
@@ -127,7 +128,7 @@ export const InquiryPage: React.FC = () => {
                                                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:ring-4 focus:ring-[#001E45]/10 focus:border-[#001E45] outline-none transition-all font-medium appearance-none"
                                             >
                                                 <option value="서비스 이용">서비스 이용</option>
-                                                <option value="예약/결제">예약/결제</option>
+                                                <option value="대여/결제">대여/결제</option>
                                                 <option value="취소/환불">취소/환불</option>
                                                 <option value="기타">기타</option>
                                             </select>
@@ -204,7 +205,7 @@ export const InquiryPage: React.FC = () => {
                                                     )}
                                                     <span className="text-gray-300 mx-1 font-light text-xs">|</span>
                                                     <span className="text-[12px] font-bold text-gray-700">
-                                                        {item.category || '서비스 이용'}
+                                                        {normalizeCategory(item.category || '서비스 이용')}
                                                     </span>
                                                 </div>
                                                 <div className="text-[12px] font-medium text-gray-400">

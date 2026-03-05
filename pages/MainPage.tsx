@@ -104,8 +104,8 @@ export const MainPage: React.FC = () => {
     return (
         <main>
             <Helmet>
-                <title>휴먼파트너 | 종합 행사 장비 렌탈 플랫폼</title>
-                <meta name="description" content="행사에 필요한 모든 것, 휴먼파트너에서 한 번에 렌탈하세요. 음향, 조명, 영상, 무대 장비 등 프리미엄 장비 렌탈 서비스." />
+                <title>휴먼파트너 | 사무기기 렌탈 플랫폼</title>
+                <meta name="description" content="복합기, 노트북, 데스크탑 등 사무기기를 합리적인 조건으로 렌탈하세요. 휴먼파트너 렌탈 서비스." />
                 <link rel="canonical" href="https://humanpartner.co.kr/" />
             </Helmet>
             <PopupManager />

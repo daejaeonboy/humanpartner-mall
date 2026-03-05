@@ -4,7 +4,8 @@ import {
 } from 'lucide-react';
 import { getFAQs, addFAQ, updateFAQ, deleteFAQ, FAQ, getFAQCategories, addFAQCategory, updateFAQCategory, deleteFAQCategory, FAQCategory } from '../../src/api/faqApi';
 
-const DEFAULT_CATEGORIES = ['자주 묻는 질문', '공통', '이용문의', '예약/결제', '취소/환불', '상품문의', '기타'];
+const DEFAULT_CATEGORIES = ['자주 묻는 질문', '공통', '이용문의', '대여/결제', '취소/환불', '상품문의', '기타'];
+const normalizeCategory = (value: string) => value === '예약/결제' ? '대여/결제' : value;
 
 export const FAQManager: React.FC = () => {
     const [faqs, setFaqs] = useState<FAQ[]>([]);
@@ -33,7 +34,7 @@ export const FAQManager: React.FC = () => {
             const data = await getFAQCategories();
             if (data.length > 0) {
                 setDbCategories(data);
-                setCategories(data.map(c => c.name));
+                setCategories(data.map(c => normalizeCategory(c.name)));
             } else {
                 setCategories(DEFAULT_CATEGORIES);
                 setDbCategories([]);
@@ -47,7 +48,7 @@ export const FAQManager: React.FC = () => {
     const loadFAQs = async () => {
         try {
             const data = await getFAQs();
-            setFaqs(data);
+            setFaqs(data.map(faq => ({ ...faq, category: normalizeCategory(faq.category) })));
         } catch (error) {
             console.error('Failed to load FAQs:', error);
         } finally {

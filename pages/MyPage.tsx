@@ -49,17 +49,17 @@ export const MyPage: React.FC = () => {
             pending: { 
                 className: 'bg-orange-100 border border-orange-300 text-orange-800', 
                 icon: Calendar, 
-                label: '예약 대기 중' 
+                label: '대여 신청 접수' 
             },
             confirmed: { 
                 className: 'bg-blue-100 border border-blue-300 text-blue-800', 
                 icon: CheckCircle, 
-                label: '예약 확정' 
+                label: '대여 확정' 
             },
             cancelled: { 
                 className: 'bg-gray-100 border border-gray-300 text-gray-700', 
                 icon: XCircle, 
-                label: '예약 취소' 
+                label: '대여 취소' 
             },
         };
         const { className, icon: Icon, label } = config[status];
@@ -115,7 +115,7 @@ export const MyPage: React.FC = () => {
                             <p className="text-sm text-gray-500 mb-6">{userProfile?.email || user.email}</p>
                             <div className="text-left space-y-1 border-t border-gray-100 pt-4">
                                 <Link to="/mypage" className="text-sm font-bold text-[#001E45] block w-full text-left py-2 px-2 rounded hover:bg-[#001E45]/5">
-                                    예약 내역
+                                    대여 내역
                                 </Link>
                                 <Link to="/mypage/info" className="text-sm text-gray-500 block w-full text-left py-2 px-2 rounded hover:bg-gray-50 hover:text-black">
                                     내 정보 관리
@@ -130,7 +130,7 @@ export const MyPage: React.FC = () => {
                     {/* Main Content / Booking List */}
                     <div className="md:w-3/4">
                         <h1 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                            <Clock size={24} /> 내 예약 내역
+                            <Clock size={24} /> 내 대여 내역
                         </h1>
 
                         {loading ? (
@@ -139,7 +139,7 @@ export const MyPage: React.FC = () => {
                             </div>
                         ) : bookings.length === 0 ? (
                             <div className="bg-white p-12 rounded-xl border border-gray-200 text-center">
-                                <p className="text-gray-500 mb-4">예약 내역이 없습니다.</p>
+                                <p className="text-gray-500 mb-4">대여 내역이 없습니다.</p>
                                 <Link to="/products" className="text-[#001E45] underline">상품 둘러보기</Link>
                             </div>
                         ) : (
@@ -181,7 +181,7 @@ export const MyPage: React.FC = () => {
                                                         }}
                                                         className="w-full py-4 bg-[#001E45] text-white rounded-xl text-base font-bold hover:bg-[#002D66] transition-all shadow-md active:scale-[0.98]"
                                                     >
-                                                        예약 내역보기
+                                                        대여 내역보기
                                                     </button>
                                                 )}
                                             </div>
@@ -209,7 +209,7 @@ export const MyPage: React.FC = () => {
                                                 <div className="min-w-0 flex flex-col gap-3">
                                                     <div className="flex items-center gap-3">
                                                         {getStatusBadge(booking.status)}
-                                                        <span className="text-xs text-gray-400 font-medium tracking-tight">예약번호 {booking.id?.slice(0, 8)}</span>
+                                                        <span className="text-xs text-gray-400 font-medium tracking-tight">접수번호 {booking.id?.slice(0, 8)}</span>
                                                     </div>
                                                     <h3 className="font-extrabold text-2xl text-gray-900 leading-tight tracking-tight">
                                                         {booking.products?.name || '상품'}

@@ -12,6 +12,8 @@ export const CSCenter: React.FC = () => {
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [categories, setCategories] = useState<string[]>(['자주 묻는 질문']);
 
+    const normalizeCategory = (value: string) => value === '예약/결제' ? '대여/결제' : value;
+
     useEffect(() => {
         const loadData = async () => {
             try {
@@ -19,15 +21,15 @@ export const CSCenter: React.FC = () => {
                     getFAQs(),
                     getFAQCategories()
                 ]);
-                setFaqs(faqData);
+                setFaqs(faqData.map(item => ({ ...item, category: normalizeCategory(item.category) })));
                 if (catData.length > 0) {
-                    setCategories(catData.map(c => c.name));
+                    setCategories(catData.map(c => normalizeCategory(c.name)));
                 } else {
-                    setCategories(['자주 묻는 질문', '공통', '이용문의', '예약/결제', '취소/환불', '상품문의', '기타']);
+                    setCategories(['자주 묻는 질문', '공통', '이용문의', '대여/결제', '취소/환불', '상품문의', '기타']);
                 }
             } catch (error) {
                 console.error('Failed to load data:', error);
-                setCategories(['자주 묻는 질문', '공통', '이용문의', '예약/결제', '취소/환불', '상품문의', '기타']);
+                setCategories(['자주 묻는 질문', '공통', '이용문의', '대여/결제', '취소/환불', '상품문의', '기타']);
             } finally {
                 setLoading(false);
             }
@@ -44,7 +46,7 @@ export const CSCenter: React.FC = () => {
     });
 
     return (
-        <div className="pb-20 pt-10 bg-white min-h-screen">
+        <div className="pb-20 pt-[64px] bg-white min-h-screen">
             <Helmet>
                 <title>고객센터 | 휴먼파트너</title>
                 <meta name="description" content="휴먼파트너 고객센터입니다. 자주 묻는 질문부터 실시간 상담까지 도와드립니다." />
@@ -148,4 +150,3 @@ export const CSCenter: React.FC = () => {
         </div>
     );
 };
-

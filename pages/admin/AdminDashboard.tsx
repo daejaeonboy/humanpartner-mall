@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Package, CalendarCheck, LayoutDashboard, ArrowLeft, Layers, Tag, Settings, Users, LogOut, User, Menu, HelpCircle, MessageSquare } from 'lucide-react';
+import { Package, CalendarCheck, LayoutDashboard, ArrowLeft, Layers, Tag, Settings, Users, LogOut, User, Menu, HelpCircle, MessageSquare, Megaphone } from 'lucide-react';
 import { useAuth } from '../../src/context/AuthContext';
 
 export const AdminDashboard = () => {
@@ -21,9 +21,10 @@ export const AdminDashboard = () => {
         { path: '/admin/sections', label: '섹션 관리', icon: Layers },
         // Category management removed as per request
         { path: '/admin/products', label: '상품 관리', icon: Package },
-        { path: '/admin/bookings', label: '예약 확인', icon: CalendarCheck },
+        { path: '/admin/rental-requests', label: '대여 요청 관리', icon: CalendarCheck },
         { path: '/admin/users', label: '회원 관리', icon: Users },
         { path: '/admin/menus', label: '전체 메뉴 관리', icon: Menu },
+        { path: '/admin/gnb-sections', label: 'GNB 섹션 관리', icon: Megaphone },
         { path: '/admin/faqs', label: 'FAQ 관리', icon: HelpCircle },
         { path: '/admin/inquiries', label: '1:1 문의 관리', icon: MessageSquare },
     ];
@@ -113,7 +114,7 @@ export const AdminDashboard = () => {
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#001E45] transition-colors">CMS 관리</h3>
-                                            <p className="text-slate-500 text-sm">아이콘, 탭, 배너 편집</p>
+                                            <p className="text-slate-500 text-sm">아이콘, 배너, 팝업 편집</p>
                                         </div>
                                     </div>
                                 </Link>
@@ -149,7 +150,7 @@ export const AdminDashboard = () => {
                                 </Link>
 
                                 <Link
-                                    to="/admin/bookings"
+                                    to="/admin/rental-requests"
                                     className="group bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#001E45]/30"
                                 >
                                     <div className="flex items-center gap-4">
@@ -157,8 +158,8 @@ export const AdminDashboard = () => {
                                             <CalendarCheck className="text-[#001E45] group-hover:text-white transition-colors" size={28} />
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#001E45] transition-colors">예약 확인</h3>
-                                            <p className="text-slate-500 text-sm">고객 예약 목록 확인</p>
+                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#001E45] transition-colors">대여 요청 관리</h3>
+                                            <p className="text-slate-500 text-sm">고객 대여 요청 목록 확인</p>
                                         </div>
                                     </div>
                                 </Link>

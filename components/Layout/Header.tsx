@@ -4,7 +4,12 @@ import { Link, useLocation } from "react-router-dom";
 import { Container } from "../ui/Container";
 import { NAV_LINKS, TOP_LINKS } from "../../constants";
 import { getActiveSections, Section } from "../../src/api/sectionApi";
-import { getAllNavMenuItems, NavMenuItem } from "../../src/api/cmsApi";
+import {
+  getAllNavMenuItems,
+  getTabMenuItems,
+  NavMenuItem,
+  TabMenuItem,
+} from "../../src/api/cmsApi";
 import { useAuth } from "../../src/context/AuthContext";
 import { FullMenu } from "./FullMenu";
 import {
@@ -25,6 +30,40 @@ const MenuIcon = ({ className }: { className?: string }) => (
 const ProfileIcon = ({ className }: { className?: string }) => (
   <img src="/person.svg" alt="프로필" className={className} />
 );
+
+const DEFAULT_GNB_TABS: TabMenuItem[] = [
+  {
+    name: "공지사항",
+    link: "/notice",
+    display_order: 1,
+    is_active: true,
+  },
+  {
+    name: "이벤트",
+    link: "/event",
+    display_order: 2,
+    is_active: true,
+  },
+  {
+    name: "설치후기",
+    link: "/review",
+    display_order: 3,
+    is_active: true,
+  },
+  {
+    name: "고객센터",
+    link: "/cs",
+    display_order: 4,
+    is_active: true,
+  },
+];
+
+const GNB_ROUTE_BY_NAME: Record<string, string> = {
+  "공지사항": "/notice",
+  "이벤트": "/event",
+  "설치후기": "/review",
+  "고객센터": "/cs",
+};
 
 const NotificationDropdown = ({
   notifications,
@@ -126,6 +165,45 @@ export const Header: React.FC = () => {
   // Removed showNotifications state as it is now inside NotificationDropdown
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [gnbSectionTabs, setGnbSectionTabs] =
+    useState<TabMenuItem[]>(DEFAULT_GNB_TABS);
+
+  const resolveGnbTabPath = (tab: TabMenuItem) => {
+    const raw = (tab.link || "").trim();
+    if (!raw || raw === "/") {
+      return GNB_ROUTE_BY_NAME[tab.name] || "/";
+    }
+    return raw;
+  };
+
+  const isGnbSectionActive = (path: string) => {
+    const [targetPathRaw, targetQueryRaw = ""] = path.split("?");
+    const targetPath = targetPathRaw.replace(/\/+$/, "") || "/";
+    const normalizedCurrent = location.pathname.replace(/\/+$/, "") || "/";
+
+    if (targetPath !== normalizedCurrent) {
+      if (targetPath === "/") return false;
+      if (!targetQueryRaw && normalizedCurrent.startsWith(`${targetPath}/`)) {
+        return true;
+      }
+      return false;
+    }
+
+    if (!targetQueryRaw) {
+      return true;
+    }
+
+    const currentParams = new URLSearchParams(location.search);
+    const targetParams = new URLSearchParams(targetQueryRaw);
+
+    for (const [key, value] of targetParams.entries()) {
+      if (currentParams.get(key) !== value) {
+        return false;
+      }
+    }
+
+    return true;
+  };
 
   // Fetch notifications
   useEffect(() => {
@@ -169,15 +247,18 @@ export const Header: React.FC = () => {
   useEffect(() => {
     const loadNavItems = async () => {
       try {
-        const [items, menuData] = await Promise.all([
+        const [items, menuData, tabData] = await Promise.all([
           getActiveSections(),
           getAllNavMenuItems(),
+          getTabMenuItems(),
         ]);
         setNavItems(items);
         setAllMenuItems(menuData);
+        setGnbSectionTabs(tabData.length > 0 ? tabData : DEFAULT_GNB_TABS);
       } catch (error) {
         console.error("Failed to load sections:", error);
         setNavItems([]);
+        setGnbSectionTabs(DEFAULT_GNB_TABS);
       } finally {
         setLoadingNav(false);
       }
@@ -249,7 +330,7 @@ export const Header: React.FC = () => {
                 <img
                   src="/logo.png"
                   alt="휴먼파트너"
-                  className="h-[34px] md:h-10 object-contain"
+                  className="h-[2.5rem] md:h-[2.8rem] object-contain"
                 />
               </a>
 
@@ -304,31 +385,55 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Premium GNB - Centered and Generous Spacing */}
-        <div className="border-t border-b border-gray-100 relative bg-white shadow-sm z-40">
+        <div className="border-t border-b border-gray-100 relative bg-white z-40">
           <Container>
-            <div className="relative flex justify-start w-full">
-              <nav className="flex items-center justify-between sm:justify-start sm:gap-6 md:gap-2 w-full md:w-auto overflow-x-auto no-scrollbar scroll-smooth snap-x md:-ml-4 px-0">
+            <div className="relative flex justify-start w-full h-[56px]">
+              <nav className="flex h-full items-stretch justify-between sm:justify-start sm:gap-6 md:gap-2 w-full md:w-auto overflow-x-auto md:overflow-visible no-scrollbar scroll-smooth snap-x md:-ml-4 px-0">
                 <div
-                  className="hidden md:block"
+                  className="hidden md:block h-full"
                   onMouseEnter={() => setShowDesktopMenu(true)}
                   onMouseLeave={() => setShowDesktopMenu(false)}
                 >
                   <button
-                    className={`flex items-center gap-2 whitespace-nowrap text-[15px] font-[550] px-4 py-4 border-b-2 transition-all ${showDesktopMenu ? "text-[#001E45] border-[#001E45]" : "text-gray-900 border-transparent hover:text-[#001E45] hover:border-[#001E45]"}`}
+                    className={`relative flex h-full items-center gap-2 whitespace-nowrap text-[15px] font-[550] px-4 transition-all after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 md:after:-bottom-[2px] after:h-[2px] after:transition-colors ${showDesktopMenu ? "text-[#001E45] after:bg-[#001E45]" : "text-gray-900 hover:text-[#001E45] after:bg-transparent hover:after:bg-[#001E45]"}`}
                   >
-                    <MenuIcon className="w-[18px] h-[18px]" /> 전체 서비스
+                    <MenuIcon className="w-[18px] h-[18px]" /> 전체 메뉴
                   </button>
                 </div>
 
-                <Link
-                  to="/alliance"
-                  className={`whitespace-nowrap text-[14px] min-[357px]:text-[15px] font-[550] transition-all px-0.5 min-[375px]:px-2 sm:px-4 py-4 border-b-2 ${location.pathname === '/alliance'
-                    ? 'text-[#001E45] border-[#001E45]'
-                    : 'text-gray-900 border-transparent hover:text-[#001E45] hover:border-[#001E45]'
-                    }`}
-                >
-                  MICE 회원사
-                </Link>
+                {gnbSectionTabs.map((tab) => {
+                  const path = resolveGnbTabPath(tab);
+                  const isExternal = /^https?:\/\//i.test(path);
+                  const isActive = !isExternal && isGnbSectionActive(path);
+                  const className = `relative flex h-full items-center whitespace-nowrap text-[14px] min-[357px]:text-[15px] font-[550] transition-all px-0.5 min-[375px]:px-2 sm:px-4 after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 md:after:-bottom-[2px] after:h-[2px] after:transition-colors ${isActive
+                    ? 'text-[#001E45] after:bg-[#001E45]'
+                    : 'text-gray-900 hover:text-[#001E45] after:bg-transparent hover:after:bg-[#001E45]'
+                    }`;
+
+                  if (isExternal) {
+                    return (
+                      <a
+                        key={tab.id || `${tab.name}-${path}`}
+                        href={path}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={className}
+                      >
+                        {tab.name}
+                      </a>
+                    );
+                  }
+
+                  return (
+                    <Link
+                      key={tab.id || `${tab.name}-${path}`}
+                      to={path}
+                      className={className}
+                    >
+                      {tab.name}
+                    </Link>
+                  );
+                })}
               </nav>
               <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none md:hidden" />
             </div>

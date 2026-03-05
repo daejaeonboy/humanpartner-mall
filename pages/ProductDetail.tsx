@@ -620,7 +620,7 @@ export const ProductDetailPage: React.FC = () => {
       if (!isAvailable) {
         setBookingModal({
           show: true,
-          message: '선택한 날짜에 이미 예약이 있습니다.\n다른 날짜를 선택해주세요.',
+          message: '선택한 날짜에 이미 대여 신청이 있습니다.\n다른 날짜를 선택해주세요.',
           type: 'error',
         });
         setIsBooking(false);
@@ -709,15 +709,15 @@ export const ProductDetailPage: React.FC = () => {
       // Send Notification
       await createNotification(
         user.uid,
-        "예약 신청 완료",
-        `${product.name} 예약 신청이 접수되었습니다. 관리자 승인 후 확정됩니다.`,
+        "대여 신청 완료",
+        `${product.name} 대여 신청이 접수되었습니다. 관리자 확인 후 확정됩니다.`,
         "info",
         "/mypage" // Link to mypage
       );
 
       setBookingModal({
         show: true,
-        message: '예약이 완료되었습니다!\n마이페이지에서 확인하세요.',
+        message: '대여 신청이 완료되었습니다!\n마이페이지에서 확인하세요.',
         type: 'success',
         onClose: () => navigate('/mypage'),
       });
@@ -725,7 +725,7 @@ export const ProductDetailPage: React.FC = () => {
       console.error("Booking failed", error);
       setBookingModal({
         show: true,
-        message: '예약 처리에 실패했습니다.\n잠시 후 다시 시도해주세요.',
+        message: '대여 신청 처리에 실패했습니다.\n잠시 후 다시 시도해주세요.',
         type: 'error',
       });
     } finally {
@@ -1002,7 +1002,7 @@ export const ProductDetailPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex justify-between items-center pt-8 pb-4 border-t border-gray-100">
-                  <span className="font-medium text-gray-700">예상 인원</span>
+                  <span className="font-medium text-gray-700">예상 수량</span>
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => {
@@ -1030,7 +1030,7 @@ export const ProductDetailPage: React.FC = () => {
                         className="w-12 text-center font-bold text-gray-900 text-lg border-b border-transparent focus:border-[#001E45] focus:outline-none bg-transparent p-0"
                         placeholder="0"
                       />
-                      <span className="font-medium text-gray-700">명</span>
+                      <span className="font-medium text-gray-700">대</span>
                     </div>
                     <button
                       onClick={() => {
@@ -1191,8 +1191,8 @@ export const ProductDetailPage: React.FC = () => {
                 <div className="flex border-b border-gray-200">
                   {[
                     { id: "detail", label: "상세정보" },
-                    { id: "guide", label: "예약안내" },
-                    { id: "review", label: "예약후기" },
+                    { id: "guide", label: "대여안내" },
+                    { id: "review", label: "사용후기" },
                   ].map((tab) => (
                     <button
                       key={tab.id}
@@ -1224,7 +1224,7 @@ export const ProductDetailPage: React.FC = () => {
                   {activeTab === "guide" && (
                     <div className="space-y-4 text-gray-600">
                       <p>
-                        상품 대여는 예약 확정 후 진행되며, 지정된 날짜와
+                        상품 대여는 대여 신청 확정 후 진행되며, 지정된 날짜와
                         장소에서 수령 가능합니다.
                       </p>
                       <p>
@@ -1248,11 +1248,11 @@ export const ProductDetailPage: React.FC = () => {
                 <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
                   <h3 className="font-bold text-lg text-gray-900 mb-2 flex items-center gap-2">
                     <ShoppingBag size={20} className="text-[#001E45]" />
-                    예약 요약
+                    대여 요약
                   </h3>
                   <p className="text-[14px] text-gray-500 leading-[1.4] mb-6">
                     상기 금액은 기본 운영 기준 구성에 대한 최소 금액이며,<br />
-                    행사 규모 및 일정에 따라 조정될 수 있습니다.
+                    수량 및 대여 일정에 따라 조정될 수 있습니다.
                   </p>
 
                   {/* Selected Dates */}
@@ -1264,9 +1264,9 @@ export const ProductDetailPage: React.FC = () => {
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">예상 인원</span>
+                      <span className="text-gray-500">예상 수량</span>
                       <span className="font-medium text-gray-900">
-                        {expectedPeople || 0}명
+                        {expectedPeople || 0}대
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -1330,7 +1330,7 @@ export const ProductDetailPage: React.FC = () => {
                     )}
                   </button>
                   <p className="text-xs text-gray-400 text-center mt-3">
-                    예약 확정 후 알림톡이 발송됩니다.
+                    대여 신청 확정 후 알림톡이 발송됩니다.
                   </p>
 
                   {/* Payment Notice */}
@@ -1387,16 +1387,16 @@ export const ProductDetailPage: React.FC = () => {
                         <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-gray-100 border border-gray-100">
                           <img
                             src="/cert-mice.jpg"
-                            alt="대전 MICE 전문기업"
+                            alt="사무장비 렌탈 전문기업"
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <div>
                           <p className="font-bold text-gray-900 text-sm">
-                            대전 MICE 전문기업
+                            사무장비 렌탈 전문기업
                           </p>
                           <p className="text-xs text-gray-500">
-                            지역 행사 전문성 보유
+                            복합기·노트북·데스크탑 렌탈 전문성 보유
                           </p>
                         </div>
                       </div>
@@ -1432,11 +1432,11 @@ export const ProductDetailPage: React.FC = () => {
           <div className="p-4 max-h-[60vh] overflow-y-auto">
             <h3 className="font-bold text-lg text-gray-900 mb-2 flex items-center gap-2">
               <ShoppingBag size={20} className="text-[#001E45]" />
-              예약 요약
+              대여 요약
             </h3>
             <p className="text-[14px] text-gray-500 leading-[1.4] mb-6">
               상기 금액은 기본 운영 기준 구성에 대한 최소 금액이며,<br />
-              행사 규모 및 일정에 따라 조정될 수 있습니다.
+              수량 및 대여 일정에 따라 조정될 수 있습니다.
             </p>
 
             {/* Summary Details */}
@@ -1446,9 +1446,9 @@ export const ProductDetailPage: React.FC = () => {
                 <span className="font-medium text-gray-900">{days}일</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">예상 인원</span>
+                <span className="text-gray-500">예상 수량</span>
                 <span className="font-medium text-gray-900">
-                  {expectedPeople || 0}명
+                  {expectedPeople || 0}대
                 </span>
               </div>
               <div className="flex justify-between">
@@ -1710,10 +1710,10 @@ export const ProductDetailPage: React.FC = () => {
                           {days}일간)
                         </td>
                         <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-bold w-24 text-center">
-                          예상인원
+                          예상 수량
                         </td>
                         <td className="border border-gray-400 px-3 py-2 w-32">
-                          {expectedPeople || "-"}명
+                          {expectedPeople || "-"}대
                         </td>
                       </tr>
                     </tbody>
@@ -1894,7 +1894,7 @@ export const ProductDetailPage: React.FC = () => {
                           있습니다.
                         </li>
                         <li>
-                          예약 확정을 위해 계약금(총 금액의 50%) 선입금이
+                          대여 확정을 위해 계약금(총 금액의 50%) 선입금이
                           필요합니다.
                         </li>
                       </ul>

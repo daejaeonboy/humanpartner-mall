@@ -105,6 +105,15 @@ export const FullMenu: React.FC<FullMenuProps> = ({ onClose, variant = 'mobile',
         setOpenSections(newSet);
     };
 
+    const getGroupLink = (groupName: string) => {
+        const parentObj = menuItems.find(i => i.name === groupName && !i.category);
+        const parentLink = parentObj?.link?.trim();
+        if (parentLink && parentLink !== '#') {
+            return parentLink;
+        }
+        return `/products?category=${encodeURIComponent(groupName)}`;
+    };
+
     return (
         <div
             className={`z-50 ${variant === 'mobile' ? 'fixed inset-0' : 'absolute top-full left-0 w-full'}`}
@@ -150,7 +159,7 @@ export const FullMenu: React.FC<FullMenuProps> = ({ onClose, variant = 'mobile',
                                             <h3 className="font-bold text-lg text-slate-800 mb-1">
                                                 {userProfile?.name || '사용자'}님, 안녕하세요!
                                             </h3>
-                                            <p className="text-xs text-slate-500">휴먼파트너와 함께<br />멋진 행사를 기획해보세요.</p>
+                                            <p className="text-xs text-slate-500">휴먼파트너와 함께<br />필요한 장비를 빠르게 렌탈해보세요.</p>
                                         </div>
                                         <div className="flex gap-3">
                                             <Link to="/mypage" onClick={onClose} className="flex-1 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm hover:bg-[#001E45]/10 hover:text-[#001E45] transition-all text-center">마이페이지</Link>
@@ -173,7 +182,7 @@ export const FullMenu: React.FC<FullMenuProps> = ({ onClose, variant = 'mobile',
                 )}
 
                 {/* Content */}
-                <div className={`flex-1 overflow-y-auto ${variant === 'mobile' ? '' : 'p-8'}`}>
+                <div className={`flex-1 overflow-y-auto ${variant === 'mobile' ? '' : 'pt-8 px-8 pb-16'}`}>
                     <Container className={variant === 'mobile' ? '!px-5 !w-full !max-w-none' : ''}>
                         <div className={`${variant === 'mobile' ? 'space-y-2 pb-10' : 'grid grid-cols-1 md:grid-cols-4 gap-8'}`}>
                             {groups.map((group, idx) => (
@@ -194,7 +203,13 @@ export const FullMenu: React.FC<FullMenuProps> = ({ onClose, variant = 'mobile',
                                         </button>
                                     ) : (
                                         <h3 className="text-lg font-bold text-slate-900 border-b border-slate-200 pb-2 mb-4">
-                                            {group.name}
+                                            <Link
+                                                to={getGroupLink(group.name)}
+                                                onClick={onClose}
+                                                className="inline-flex hover:text-[#001E45] transition-colors"
+                                            >
+                                                {group.name}
+                                            </Link>
                                         </h3>
                                     )}
 
@@ -223,20 +238,15 @@ export const FullMenu: React.FC<FullMenuProps> = ({ onClose, variant = 'mobile',
                                                     </li>
                                                 ))
                                             ) : (
-                                                (() => {
-                                                    const parentObj = menuItems.find(i => i.name === group.name && !i.category);
-                                                    return parentObj ? (
-                                                        <li>
-                                                            <Link
-                                                                to={parentObj.link}
-                                                                onClick={onClose}
-                                                                className="block p-3 text-sm text-slate-600 font-medium hover:text-[#001E45]"
-                                                            >
-                                                                바로가기
-                                                            </Link>
-                                                        </li>
-                                                    ) : null
-                                                })()
+                                                <li>
+                                                    <Link
+                                                        to={getGroupLink(group.name)}
+                                                        onClick={onClose}
+                                                        className="block p-3 text-sm text-slate-600 font-medium hover:text-[#001E45]"
+                                                    >
+                                                        바로가기
+                                                    </Link>
+                                                </li>
                                             )}
                                         </ul>
                                     </div>

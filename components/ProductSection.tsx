@@ -32,6 +32,11 @@ export const ProductSection: React.FC<ProductSectionProps> = ({
     ? products
     : products.filter(product => product.category === activeCategory);
 
+  const allViewCategory = categories.filter(cat => cat && cat !== '전체').join(',');
+  const allViewPath = allViewCategory
+    ? `/products?category=${encodeURIComponent(allViewCategory)}&title=${encodeURIComponent(title)}`
+    : `/products?title=${encodeURIComponent(title)}`;
+
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
       const scrollAmount = 300;
@@ -70,7 +75,12 @@ export const ProductSection: React.FC<ProductSectionProps> = ({
           <div>
             <h2 className="text-xl md:text-[28px] font-semibold text-slate-900 tracking-tight">{title}</h2>
           </div>
-          <button className="text-sm font-semibold text-slate-400 hover:text-[#001E45] transition-colors hidden md:block">전체보기</button>
+          <Link
+            to={allViewPath}
+            className="text-[1rem] font-semibold text-slate-400 hover:text-[#001E45] transition-colors hidden md:block"
+          >
+            전체보기
+          </Link>
         </div>
 
         {/* Filter Pills */}

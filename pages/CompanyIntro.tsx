@@ -8,7 +8,7 @@ export const CompanyIntro: React.FC = () => {
         <div className="bg-white min-h-screen">
             <Helmet>
                 <title>회사소개 - humanpartner | 휴먼파트너</title>
-                <meta name="description" content="humanpartner 회사소개. 최고의 행사 파트너로서 고객의 성공적인 비즈니스를 지원합니다." />
+                <meta name="description" content="humanpartner 회사소개. 복합기, 노트북, 데스크탑 등 사무기기 렌탈 서비스를 제공합니다." />
             </Helmet>
 
             {/* Hero Section */}
@@ -22,11 +22,11 @@ export const CompanyIntro: React.FC = () => {
                 />
                 <Container className="relative z-20 text-center">
                     <h1 className="text-4xl md:text-5xl font-bold mb-6" style={{ lineHeight: 1.4 }}>
-                        고객의 성공적인 행사를 위한<br />
+                        고객의 업무 운영을 위한<br />
                         <span className="text-[#001E45]">최고의 파트너</span>
                     </h1>
                     <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto break-keep leading-relaxed">
-                        휴먼파트너는 공공기관의 행사 운영을 위한 실무 경험을 바탕으로<br className="hidden md:block" /> '휴먼파트너' 플랫폼을 통해 표준화된 행사 환경을 제공합니다.
+                        휴먼파트너는 복합기, 노트북, 데스크탑 등 사무기기 렌탈 운영 경험을 바탕으로<br className="hidden md:block" /> 표준화된 장비 공급 환경을 제공합니다.
                     </p>
                 </Container>
             </div>
@@ -40,20 +40,20 @@ export const CompanyIntro: React.FC = () => {
                                 ABOUT <span className="text-[#001E45]">휴먼파트너</span>
                             </h2>
                             <p className="text-base md:text-lg text-gray-600 leading-relaxed mb-6 break-keep">
-                                휴먼파트너는 공공기관과 기업 행사의 실질적인 운영 경험을 바탕으로<br className="hidden md:block" /> 설계된 행사 통합 운영 플랫폼입니다.
+                                휴먼파트너는 기업과 공공기관의 장비 운영 수요를 바탕으로<br className="hidden md:block" /> 설계된 사무기기 렌탈 플랫폼입니다.
                             </p>
                             <p className="text-base md:text-lg text-gray-600 leading-relaxed mb-6 break-keep">
-                                휴먼파트너의 10년 이상 축적된 현장 노하우를 기반으로,<br className="hidden md:block" /> 행사 준비 과정에서 발생하는 비효율과 협업의 어려움을<br className="hidden md:block" /> 패키지화·표준화하여 제공합니다.
+                                휴먼파트너의 10년 이상 축적된 현장 노하우를 기반으로,<br className="hidden md:block" /> 장비 준비 과정에서 발생하는 비효율을 줄이고<br className="hidden md:block" /> 견적·대여·설치 과정을 표준화하여 제공합니다.
                             </p>
                             <p className="text-base md:text-lg text-gray-600 leading-relaxed break-keep">
-                                작은 회의부터 대규모 전시·시험·공공행사까지,<br className="hidden md:block" /> 단순 장비 공급이 아닌 운영 기준과 책임을 함께 제공하는 파트너입니다.
+                                소규모 사무실부터 대규모 기관 운영까지,<br className="hidden md:block" /> 단순 장비 공급을 넘어 안정적인 렌탈 운영 기준을 제공하는 파트너입니다.
                             </p>
                         </div>
                         <div className="flex-1 grid grid-cols-2 gap-4">
                             <div className="bg-slate-50 p-6 rounded-2xl text-center hover:shadow-lg transition-all border border-slate-100 flex flex-col items-center justify-center">
                                 <LayoutTemplate className="w-10 h-10 text-[#001E45] mb-3" />
-                                <h3 className="font-bold text-slate-800 mb-1">행사 운영 표준화</h3>
-                                <p className="text-sm text-gray-500 break-keep">행사 유형별 패키지 기반 구성 제공</p>
+                                <h3 className="font-bold text-slate-800 mb-1">렌탈 운영 표준화</h3>
+                                <p className="text-sm text-gray-500 break-keep">장비 유형별 패키지 기반 구성 제공</p>
                             </div>
                             <div className="bg-slate-50 p-6 rounded-2xl text-center hover:shadow-lg transition-all border border-slate-100 flex flex-col items-center justify-center">
                                 <Network className="w-10 h-10 text-[#001E45] mb-3" />
@@ -90,9 +90,9 @@ export const CompanyIntro: React.FC = () => {
                                 <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80" alt="Rental" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                             </div>
                             <div className="p-6">
-                                <h3 className="text-xl font-bold mb-2 group-hover:text-[#001E45] transition-colors">행사 장비 렌탈</h3>
+                                <h3 className="text-xl font-bold mb-2 group-hover:text-[#001E45] transition-colors">사무기기 렌탈</h3>
                                 <p className="text-gray-500 text-sm leading-relaxed">
-                                    음향, 조명, 영상, 무대 시스템 등 행사에 필요한 전문 장비를 합리적인 가격에 렌탈합니다.
+                                    복합기, 노트북, 데스크탑 등 업무에 필요한 핵심 장비를 합리적인 가격에 렌탈합니다.
                                 </p>
                             </div>
                         </div>
@@ -105,7 +105,7 @@ export const CompanyIntro: React.FC = () => {
                             <div className="p-6">
                                 <h3 className="text-xl font-bold mb-2 group-hover:text-[#001E45] transition-colors">공간 연출 및 기획</h3>
                                 <p className="text-gray-500 text-sm leading-relaxed">
-                                    단순 설치를 넘어 행사의 컨셉에 맞는 최적의 공간 배치와 연출을 제안합니다.
+                                    단순 설치를 넘어 업무 환경에 맞는 장비 구성과 배치를 제안합니다.
                                 </p>
                             </div>
                         </div>
@@ -118,7 +118,7 @@ export const CompanyIntro: React.FC = () => {
                             <div className="p-6">
                                 <h3 className="text-xl font-bold mb-2 group-hover:text-[#001E45] transition-colors">현장 운영 지원</h3>
                                 <p className="text-gray-500 text-sm leading-relaxed">
-                                    전문 엔지니어와 스태프가 현장에 상주하여 원활한 행사 진행을 돕습니다.
+                                    전문 엔지니어가 설치와 운영을 지원해 안정적인 업무 진행을 돕습니다.
                                 </p>
                             </div>
                         </div>
