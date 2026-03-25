@@ -9,6 +9,7 @@ export const CompanyIntro: React.FC = () => {
             <Helmet>
                 <title>회사소개 | 렌탈파트너</title>
                 <meta name="description" content="렌탈파트너 회사소개입니다. 복합기, 노트북, 데스크탑 등 사무기기 렌탈 서비스를 제공합니다." />
+                <link rel="canonical" href="https://rentalpartner.kr/company" />
             </Helmet>
 
             {/* Hero Section */}

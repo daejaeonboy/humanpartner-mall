@@ -127,6 +127,8 @@ export const QuoteCartPage: React.FC = () => {
           name="description"
           content="여러 품목을 장바구니에 담아 한 번에 견적 요청하세요. 온라인에서는 결제 없이 견적 접수만 진행됩니다."
         />
+        <meta name="robots" content="noindex, nofollow" />
+        <link rel="canonical" href="https://rentalpartner.kr/quote-cart" />
       </Helmet>
       <Container>
         <div className="flex flex-col md:flex-row gap-8">

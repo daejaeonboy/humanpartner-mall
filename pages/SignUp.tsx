@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { generateVerificationCode, sendVerificationEmail } from '../src/utils/email';
 import { Container } from '../components/ui/Container';
 import { Link, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { ChevronDown, ChevronUp, Check, Loader2, Upload, X } from 'lucide-react';
 
 import { auth } from '../src/firebase';
@@ -406,6 +407,12 @@ export const SignUp: React.FC = () => {
 
     return (
         <div className="py-12 bg-gray-50 min-h-screen">
+            <Helmet>
+                <title>회원가입 | 렌탈파트너</title>
+                <meta name="description" content="렌탈파트너 회원가입 페이지입니다." />
+                <meta name="robots" content="noindex, nofollow" />
+                <link rel="canonical" href="https://rentalpartner.kr/signup" />
+            </Helmet>
             <Container>
                 <div className="max-w-lg mx-auto bg-white p-4 md:p-8 rounded-2xl shadow-sm border border-gray-100">
                     <div className="text-center mb-8">

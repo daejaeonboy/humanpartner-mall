@@ -122,6 +122,7 @@ export const TermsOfService: React.FC = () => {
           name="description"
           content="렌탈파트너 서비스 이용약관입니다. 회원가입, 견적 요청 접수, 계약/정산, 취소/환불, 권리·의무 및 책임사항을 안내합니다."
         />
+        <link rel="canonical" href="https://rentalpartner.kr/terms" />
       </Helmet>
 
       <Container className="max-w-4xl py-20">

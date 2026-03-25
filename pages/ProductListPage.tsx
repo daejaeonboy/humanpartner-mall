@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container } from '../components/ui/Container';
 import { Loader2 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { getProducts, Product } from '../src/api/productApi';
 import { getProductsBySection } from '../src/api/sectionApi';
 import { getAllNavMenuItems } from '../src/api/cmsApi';
@@ -134,6 +135,14 @@ export const ProductListPage: React.FC = () => {
 
     return (
         <div className="pt-8 pb-12 bg-white">
+            <Helmet>
+                <title>상품목록 | 렌탈파트너</title>
+                <meta
+                    name="description"
+                    content="복합기, 노트북, 데스크탑 등 렌탈파트너의 사무기기 렌탈 상품을 확인해보세요."
+                />
+                <link rel="canonical" href="https://rentalpartner.kr/products" />
+            </Helmet>
             <Container>
                 <div className="mb-6">
                     {/* Title Logic: Use Current Group Name if available, otherwise URL Title or Active Category */}

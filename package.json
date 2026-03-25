@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/generate-route-html.cjs",
     "preview": "vite preview",
     "deploy:prod": "npm run build && firebase deploy --project humanpartner-mall --only hosting:humanpartner-mall",
     "deploy:prod:functions": "firebase deploy --project humanpartner-mall --only functions:sendEmailVerification",

@@ -36,6 +36,8 @@ export const ProductSearchResult: React.FC = () => {
         <div className="min-h-screen bg-slate-50 py-8 md:py-12">
             <Helmet>
                 <title>'{query}' 검색 결과 - 렌탈파트너</title>
+                <meta name="robots" content="noindex, nofollow" />
+                <link rel="canonical" href="https://rentalpartner.kr/search" />
             </Helmet>
 
             <Container>

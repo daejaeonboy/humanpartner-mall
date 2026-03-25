@@ -111,6 +111,7 @@ export const MiceBoardPage: React.FC<MiceBoardPageProps> = ({ boardType }) => {
       <Helmet>
         <title>{meta.metaTitle}</title>
         <meta name="description" content={meta.metaDescription} />
+        <link rel="canonical" href={`https://rentalpartner.kr${BOARD_PATH[boardType]}`} />
       </Helmet>
 
       <div className="bg-white min-h-screen pb-20">

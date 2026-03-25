@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container } from '../components/ui/Container';
 import { Link, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { auth } from '../src/firebase';
 import { signInWithEmailAndPassword, setPersistence, browserSessionPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getUserProfileByFirebaseUid } from '../src/api/userApi';
@@ -85,6 +86,12 @@ export const Login: React.FC = () => {
 
     return (
         <div className="py-20 bg-gray-50 min-h-screen flex items-center justify-center px-4">
+            <Helmet>
+                <title>로그인 | 렌탈파트너</title>
+                <meta name="description" content="렌탈파트너 로그인 페이지입니다." />
+                <meta name="robots" content="noindex, nofollow" />
+                <link rel="canonical" href="https://rentalpartner.kr/login" />
+            </Helmet>
             <Container>
                 <div className="w-full max-w-xl md:max-w-3xl mx-auto bg-white p-6 md:p-16 rounded-3xl shadow-lg border border-gray-100 mb-20">
                     <div className="text-center mb-6 md:mb-10">

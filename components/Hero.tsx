@@ -75,7 +75,7 @@ export const Hero: React.FC = () => {
 
   if (loading) {
     return (
-      <section className="relative w-full h-[500px] md:h-[800px] bg-slate-900 flex items-center justify-center">
+      <section className="relative w-full h-[600px] bg-slate-900 flex items-center justify-center">
         <Loader2 className="animate-spin text-white" size={40} />
       </section>
     );
@@ -83,7 +83,7 @@ export const Hero: React.FC = () => {
 
   if (slides.length === 0) {
     return (
-      <section className="relative w-full h-[500px] md:h-[800px] bg-slate-900 flex items-center justify-center">
+      <section className="relative w-full h-[600px] bg-slate-900 flex items-center justify-center">
         <p className="text-white/50">배너가 없습니다. Admin에서 배너를 추가해주세요.</p>
       </section>
     );
@@ -91,7 +91,7 @@ export const Hero: React.FC = () => {
 
   return (
     <section
-      className="relative w-full h-[500px] md:h-[800px] bg-slate-900 overflow-hidden group"
+      className="relative w-full h-[600px] bg-slate-900 overflow-hidden group"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}

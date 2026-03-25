@@ -80,6 +80,7 @@ export const CSCenter: React.FC = () => {
             <Helmet>
                 <title>고객센터 | 렌탈파트너</title>
                 <meta name="description" content="렌탈파트너 고객센터입니다. 자주 묻는 질문부터 실시간 상담까지 도와드립니다." />
+                <link rel="canonical" href="https://rentalpartner.kr/cs" />
             </Helmet>
 
             <Container>

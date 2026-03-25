@@ -120,6 +120,7 @@ export const PrivacyPolicy: React.FC = () => {
           name="description"
           content="렌탈파트너 서비스의 개인정보처리방침입니다. 수집 항목, 이용 목적, 보유 기간, 이용자 권리 및 보호조치를 안내합니다."
         />
+        <link rel="canonical" href="https://rentalpartner.kr/privacy" />
       </Helmet>
 
       <Container className="max-w-4xl py-20">
