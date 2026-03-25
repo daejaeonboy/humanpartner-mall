@@ -1,4 +1,4 @@
-import * as functions from "firebase-functions/v1";
+﻿import * as functions from "firebase-functions/v1";
 import * as nodemailer from "nodemailer";
 import * as cors from "cors";
 import * as dotenv from "dotenv";
@@ -34,7 +34,7 @@ export const sendEmailVerification = functions.https.onRequest((req, res) => {
         // 설정 확인
         const emailUser = normalizeEnvValue(process.env.EMAIL_USER);
         const emailPass = normalizeEnvValue(process.env.EMAIL_PASS);
-        const emailFromName = normalizeEnvValue(process.env.EMAIL_FROM_NAME) || "렌탈파트너";
+        const emailFromName = normalizeEnvValue(process.env.EMAIL_FROM_NAME) || "렌탈어때";
 
         // 커스텀 SMTP 설정 (옵션)
         const smtpHost = normalizeEnvValue(process.env.SMTP_HOST);
@@ -89,3 +89,4 @@ export const sendEmailVerification = functions.https.onRequest((req, res) => {
         }
     });
 });
+

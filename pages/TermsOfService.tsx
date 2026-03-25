@@ -6,7 +6,7 @@ const termsSections: Array<{ title: string; items: string[] }> = [
   {
     title: '제1조 (목적)',
     items: [
-      '본 약관은 주식회사 렌탈파트너(이하 "회사")가 운영하는 렌탈파트너 및 관련 웹/모바일 서비스(이하 "서비스")의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.',
+      '본 약관은 주식회사 렌탈어때(이하 "회사")가 운영하는 렌탈어때 및 관련 웹/모바일 서비스(이하 "서비스")의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.',
     ],
   },
   {
@@ -117,10 +117,10 @@ export const TermsOfService: React.FC = () => {
   return (
     <div className="min-h-screen bg-white pb-20">
       <Helmet>
-        <title>서비스 이용약관 | 렌탈파트너</title>
+        <title>서비스 이용약관 | 렌탈어때</title>
         <meta
           name="description"
-          content="렌탈파트너 서비스 이용약관입니다. 회원가입, 견적 요청 접수, 계약/정산, 취소/환불, 권리·의무 및 책임사항을 안내합니다."
+          content="렌탈어때 서비스 이용약관입니다. 회원가입, 견적 요청 접수, 계약/정산, 취소/환불, 권리·의무 및 책임사항을 안내합니다."
         />
         <link rel="canonical" href="https://rentalpartner.kr/terms" />
       </Helmet>
@@ -144,3 +144,4 @@ export const TermsOfService: React.FC = () => {
     </div>
   );
 };
+

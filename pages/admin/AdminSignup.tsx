@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Loader2, Shield, Eye, EyeOff } from 'lucide-react';
 import { auth } from '../../src/firebase';
@@ -63,7 +63,7 @@ export const AdminSignup: React.FC = () => {
                 email: formData.email,
                 name: formData.name,
                 phone: formData.phone,
-                company_name: '렌탈파트너', // 관리자용 기본값
+                company_name: '렌탈어때', // 관리자용 기본값
                 agreed_terms: true,
                 agreed_privacy: true,
                 agreed_marketing: false
@@ -91,7 +91,7 @@ export const AdminSignup: React.FC = () => {
                         <Shield className="text-white" size={32} />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900">관리자 회원가입</h1>
-                    <p className="text-gray-500 mt-2">렌탈파트너 관리 시스템</p>
+                    <p className="text-gray-500 mt-2">렌탈어때 관리 시스템</p>
                 </div>
 
                 {/* Signup Form */}
@@ -231,9 +231,10 @@ export const AdminSignup: React.FC = () => {
                 </div>
 
                 <p className="text-center text-gray-400 text-xs mt-6">
-                    © 2025 렌탈파트너. All rights reserved.
+                    © 2025 렌탈어때. All rights reserved.
                 </p>
             </div>
         </div>
     );
 };
+

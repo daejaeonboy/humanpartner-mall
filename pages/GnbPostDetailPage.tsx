@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
@@ -85,8 +85,8 @@ export const GnbPostDetailPage: React.FC<GnbPostDetailPageProps> = ({ boardType 
   }, [boardType, id]);
 
   const pageTitle = useMemo(() => {
-    if (!post) return `${meta.title} - 렌탈파트너`;
-    return `${post.title} - ${meta.title} - 렌탈파트너`;
+    if (!post) return `${meta.title} - 렌탈어때`;
+    return `${post.title} - ${meta.title} - 렌탈어때`;
   }, [meta.title, post]);
   const contentBlocks = useMemo(() => parseGnbContent(post?.content), [post?.content]);
   const plainContent = useMemo(() => stripGnbContentImages(post?.content), [post?.content]);
@@ -221,3 +221,4 @@ export const GnbPostDetailPage: React.FC<GnbPostDetailPageProps> = ({ boardType 
     </>
   );
 };
+

@@ -1,4 +1,4 @@
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+﻿import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Package, CalendarCheck, LayoutDashboard, ArrowLeft, Layers, Tag, Settings, Users, LogOut, User, Menu, HelpCircle, MessageSquare, Megaphone } from 'lucide-react';
 import { useAuth } from '../../src/context/AuthContext';
 
@@ -99,7 +99,7 @@ export const AdminDashboard = () => {
                             {/* Welcome Section */}
                             <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
                                 <h2 className="text-2xl font-bold mb-2 text-gray-900">안녕하세요, {userProfile?.name || '관리자'}님! 👋</h2>
-                                <p className="text-gray-500">렌탈파트너 관리자 대시보드에 오신 것을 환영합니다.</p>
+                                <p className="text-gray-500">렌탈어때 관리자 대시보드에 오신 것을 환영합니다.</p>
                             </div>
 
                             {/* Quick Stats */}
@@ -233,3 +233,4 @@ export const AdminDashboard = () => {
         </div>
     );
 };
+

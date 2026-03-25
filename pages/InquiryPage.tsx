@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Container } from '../components/ui/Container';
 import { User, MessageSquare, Clock, Loader2, Plus, X, Send, ChevronDown, CheckCircle } from 'lucide-react';
 import { useAuth } from '../src/context/AuthContext';
@@ -294,7 +294,7 @@ export const InquiryPage: React.FC = () => {
                                                             <div className="flex-1 space-y-2">
                                                                 <div className="flex items-center justify-between">
                                                                     <div className="flex items-center gap-1.5">
-                                                                        <span className="text-xs font-black text-[#001E45] uppercase tracking-tight">렌탈파트너 답변</span>
+                                                                        <span className="text-xs font-black text-[#001E45] uppercase tracking-tight">렌탈어때 답변</span>
                                                                         <CheckCircle size={10} className="text-[#001E45]" />
                                                                     </div>
                                                                     <span className="text-[10px] font-medium text-gray-300">{formatDate(item.answered_at!)}</span>
@@ -334,3 +334,4 @@ export const InquiryPage: React.FC = () => {
         </div>
     );
 };
+

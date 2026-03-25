@@ -825,7 +825,7 @@ export const ProductDetailPage: React.FC = () => {
     return (
       <>
         <Helmet>
-          <title>상품을 찾을 수 없습니다 | 렌탈파트너</title>
+          <title>상품을 찾을 수 없습니다 | 렌탈어때</title>
           <meta name="robots" content="noindex, nofollow" />
           <link rel="canonical" href={`${SITE_URL}/products`} />
         </Helmet>
@@ -871,10 +871,10 @@ export const ProductDetailPage: React.FC = () => {
   ].filter((tab) => tab.show);
   const hasAnyOptions = optionTabs.length > 0;
   const canonicalUrl = `${SITE_URL}/products/${product.id || id || ""}`;
-  const seoTitle = `${product.name} | 렌탈파트너`;
+  const seoTitle = `${product.name} | 렌탈어때`;
   const seoDescription =
     buildSeoDescription(product.short_description, product.description) ||
-    `${product.name} 렌탈 서비스입니다. 렌탈파트너에서 합리적인 조건으로 상담받아보세요.`;
+    `${product.name} 렌탈 서비스입니다. 렌탈어때에서 합리적인 조건으로 상담받아보세요.`;
   const seoImage = toAbsoluteUrl(product.image_url);
   const structuredData = toJsonLd({
     "@context": "https://schema.org",
@@ -1636,4 +1636,5 @@ export const ProductDetailPage: React.FC = () => {
     </>
   );
 };
+
 

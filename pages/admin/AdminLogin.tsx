@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Loader2, Shield, Eye, EyeOff } from 'lucide-react';
 import { auth } from '../../src/firebase';
@@ -79,7 +79,7 @@ export const AdminLogin: React.FC = () => {
                         <Shield className="text-white" size={32} />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900">관리자 로그인</h1>
-                    <p className="text-gray-500 mt-2">렌탈파트너 관리 시스템</p>
+                    <p className="text-gray-500 mt-2">렌탈어때 관리 시스템</p>
                 </div>
 
                 {/* Login Form */}
@@ -164,9 +164,10 @@ export const AdminLogin: React.FC = () => {
                 </div>
 
                 <p className="text-center text-gray-400 text-xs mt-6">
-                    © 2025 렌탈파트너. All rights reserved.
+                    © 2025 렌탈어때. All rights reserved.
                 </p>
             </div>
         </div>
     );
 };
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Container } from '../components/ui/Container';
 import { Phone, MessageCircle, ChevronDown, Loader2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
@@ -78,8 +78,8 @@ export const CSCenter: React.FC = () => {
     return (
         <div className="pb-20 pt-[64px] bg-white min-h-screen">
             <Helmet>
-                <title>고객센터 | 렌탈파트너</title>
-                <meta name="description" content="렌탈파트너 고객센터입니다. 자주 묻는 질문부터 실시간 상담까지 도와드립니다." />
+                <title>고객센터 | 렌탈어때</title>
+                <meta name="description" content="렌탈어때 고객센터입니다. 자주 묻는 질문부터 실시간 상담까지 도와드립니다." />
                 <link rel="canonical" href="https://rentalpartner.kr/cs" />
             </Helmet>
 
@@ -193,3 +193,4 @@ export const CSCenter: React.FC = () => {
         </div>
     );
 };
+

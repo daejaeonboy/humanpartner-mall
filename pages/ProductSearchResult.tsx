@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { searchProducts, Product } from '../src/api/productApi';
 import { Container } from '../components/ui/Container';
@@ -35,7 +35,7 @@ export const ProductSearchResult: React.FC = () => {
     return (
         <div className="min-h-screen bg-slate-50 py-8 md:py-12">
             <Helmet>
-                <title>'{query}' 검색 결과 - 렌탈파트너</title>
+                <title>'{query}' 검색 결과 - 렌탈어때</title>
                 <meta name="robots" content="noindex, nofollow" />
                 <link rel="canonical" href="https://rentalpartner.kr/search" />
             </Helmet>
@@ -120,3 +120,4 @@ export const ProductSearchResult: React.FC = () => {
         </div>
     );
 };
+

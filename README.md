@@ -1,6 +1,6 @@
-# Rentalpartner Mall
+﻿# Rentalpartner Mall
 
-렌탈파트너 렌탈 쇼핑몰 프론트엔드/백엔드(서버, Firebase Functions) 프로젝트입니다.
+렌탈어때 렌탈 쇼핑몰 프론트엔드/백엔드(서버, Firebase Functions) 프로젝트입니다.
 
 ## 1) 환경 변수 설정
 
@@ -94,3 +94,4 @@ npm run deploy:prod:all
 실행하지 않으면 로그인 시 아래와 같은 오류가 발생할 수 있습니다.
 - `PGRST205`
 - `Could not find the table 'public.user_profiles' in the schema cache`
+

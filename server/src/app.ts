@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+﻿import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
@@ -21,9 +21,10 @@ app.use('/api/users', userRoutes);
 app.use('/api/email', emailRoutes);
 
 app.get('/', (req: Request, res: Response) => {
-    res.send('렌탈파트너 Backend is running!');
+    res.send('렌탈어때 Backend is running!');
 });
 
 app.listen(port, () => {
     console.log(`[server]: Server is running at http://localhost:${port}`);
 });
+

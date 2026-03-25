@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Container } from '../components/ui/Container';
 
@@ -6,7 +6,7 @@ export const BlankPage: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>BLANK - 렌탈파트너</title>
+        <title>BLANK - 렌탈어때</title>
         <meta name="description" content="새로운 기능 준비중입니다." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
@@ -21,3 +21,4 @@ export const BlankPage: React.FC = () => {
     </>
   );
 };
+

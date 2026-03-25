@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Calendar, Clock, FileText, Loader2, User, X } from "lucide-react";
 import { Helmet } from "react-helmet-async";
@@ -122,7 +122,7 @@ export const QuoteCartPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 pt-12 pb-10">
       <Helmet>
-        <title>장바구니 | 렌탈파트너</title>
+        <title>장바구니 | 렌탈어때</title>
         <meta
           name="description"
           content="여러 품목을 장바구니에 담아 한 번에 견적 요청하세요. 온라인에서는 결제 없이 견적 접수만 진행됩니다."
@@ -288,3 +288,4 @@ export const QuoteCartPage: React.FC = () => {
     </div>
   );
 };
+

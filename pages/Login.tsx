@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Container } from '../components/ui/Container';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -87,8 +87,8 @@ export const Login: React.FC = () => {
     return (
         <div className="py-20 bg-gray-50 min-h-screen flex items-center justify-center px-4">
             <Helmet>
-                <title>로그인 | 렌탈파트너</title>
-                <meta name="description" content="렌탈파트너 로그인 페이지입니다." />
+                <title>로그인 | 렌탈어때</title>
+                <meta name="description" content="렌탈어때 로그인 페이지입니다." />
                 <meta name="robots" content="noindex, nofollow" />
                 <link rel="canonical" href="https://rentalpartner.kr/login" />
             </Helmet>
@@ -96,7 +96,7 @@ export const Login: React.FC = () => {
                 <div className="w-full max-w-xl md:max-w-3xl mx-auto bg-white p-6 md:p-16 rounded-3xl shadow-lg border border-gray-100 mb-20">
                     <div className="text-center mb-6 md:mb-10">
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">로그인</h1>
-                        <p className="text-gray-500 text-sm md:text-base mt-2 md:mt-3">렌탈파트너 서비스 이용을 위해 로그인해주세요.</p>
+                        <p className="text-gray-500 text-sm md:text-base mt-2 md:mt-3">렌탈어때 서비스 이용을 위해 로그인해주세요.</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
@@ -179,3 +179,4 @@ export const Login: React.FC = () => {
         </div>
     );
 };
+

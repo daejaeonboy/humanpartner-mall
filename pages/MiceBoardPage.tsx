@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Container } from '../components/ui/Container';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
@@ -21,24 +21,24 @@ interface BoardMeta {
 const BOARD_META: Record<MiceTabType, BoardMeta> = {
   notice: {
     title: '공지사항',
-    description: '렌탈파트너 서비스 최신 공지사항을 확인하실 수 있습니다.',
+    description: '렌탈어때 서비스 최신 공지사항을 확인하실 수 있습니다.',
     placeholder: '공지 제목 또는 내용을 입력해주세요.',
-    metaTitle: '공지사항 - 렌탈파트너',
-    metaDescription: '렌탈파트너 공지사항 페이지입니다.'
+    metaTitle: '공지사항 - 렌탈어때',
+    metaDescription: '렌탈어때 공지사항 페이지입니다.'
   },
   event: {
     title: '이벤트',
     description: '진행 중인 이벤트와 프로모션 소식을 한눈에 확인하실 수 있습니다.',
     placeholder: '이벤트 제목 또는 내용을 입력해주세요.',
-    metaTitle: '이벤트 - 렌탈파트너',
-    metaDescription: '렌탈파트너 이벤트 페이지입니다.'
+    metaTitle: '이벤트 - 렌탈어때',
+    metaDescription: '렌탈어때 이벤트 페이지입니다.'
   },
   review: {
     title: '설치후기',
     description: '현장 설치 사례와 운영 후기를 통해 서비스 품질을 확인해보세요.',
     placeholder: '후기 제목 또는 내용을 입력해주세요.',
-    metaTitle: '설치후기 - 렌탈파트너',
-    metaDescription: '렌탈파트너 설치후기 페이지입니다.'
+    metaTitle: '설치후기 - 렌탈어때',
+    metaDescription: '렌탈어때 설치후기 페이지입니다.'
   }
 };
 
@@ -266,3 +266,4 @@ export const MiceBoardPage: React.FC<MiceBoardPageProps> = ({ boardType }) => {
     </>
   );
 };
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Hero } from '../components/Hero';
 import { Helmet } from 'react-helmet-async';
 import { QuickMenu } from '../components/QuickMenu';
@@ -79,8 +79,8 @@ export const MainPage: React.FC = () => {
     return (
         <main>
             <Helmet>
-                <title>렌탈파트너 | 사무기기 렌탈 플랫폼</title>
-                <meta name="description" content="복합기, 노트북, 데스크탑 등 사무기기를 합리적인 조건으로 렌탈하세요. 렌탈파트너 렌탈 서비스." />
+                <title>렌탈어때 | 사무기기 렌탈 플랫폼</title>
+                <meta name="description" content="복합기, 노트북, 데스크탑 등 사무기기를 합리적인 조건으로 렌탈하세요. 렌탈어때 렌탈 서비스." />
                 <link rel="canonical" href="https://rentalpartner.kr/" />
             </Helmet>
             <PopupManager />
@@ -124,3 +124,4 @@ export const MainPage: React.FC = () => {
         </main>
     );
 };
+

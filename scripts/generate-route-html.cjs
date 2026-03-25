@@ -1,7 +1,7 @@
-const fs = require('fs');
+﻿const fs = require('fs');
 const path = require('path');
 
-const SITE_NAME = '렌탈파트너';
+const SITE_NAME = '렌탈어때';
 const SITE_URL = 'https://rentalpartner.kr';
 const DEFAULT_IMAGE = `${SITE_URL}/logocard.jpg`;
 const BUILD_DATE = new Date().toISOString();
@@ -12,25 +12,25 @@ const distDir = path.join(__dirname, '..', 'dist');
 const baseHtmlPath = path.join(distDir, 'index.html');
 
 const BOARD_META = {
-  notice: { title: '공지사항', route: '/notice', description: '렌탈파트너 공지사항 페이지입니다.' },
-  event: { title: '이벤트', route: '/event', description: '렌탈파트너 이벤트 페이지입니다.' },
-  review: { title: '설치후기', route: '/review', description: '렌탈파트너 설치후기 페이지입니다.' },
+  notice: { title: '공지사항', route: '/notice', description: '렌탈어때 공지사항 페이지입니다.' },
+  event: { title: '이벤트', route: '/event', description: '렌탈어때 이벤트 페이지입니다.' },
+  review: { title: '설치후기', route: '/review', description: '렌탈어때 설치후기 페이지입니다.' },
 };
 
 const STATIC_ROUTES = [
-  ['/', '렌탈파트너 | 사무기기 렌탈 플랫폼', '복합기, 노트북, 데스크탑 등 사무기기를 합리적인 조건으로 렌탈하세요. 렌탈파트너 렌탈 서비스.', 'daily', '1.0'],
-  ['/products', '상품목록 | 렌탈파트너', '복합기, 노트북, 데스크탑 등 렌탈파트너의 사무기기 렌탈 상품을 확인해보세요.', 'daily', '0.8'],
-  ['/company', '회사소개 | 렌탈파트너', '렌탈파트너 회사소개입니다. 복합기, 노트북, 데스크탑 등 사무기기 렌탈 서비스를 제공합니다.', 'monthly', '0.7'],
-  ['/cs', '고객센터 | 렌탈파트너', '렌탈파트너 고객센터입니다. 자주 묻는 질문부터 실시간 상담까지 도와드립니다.', 'monthly', '0.6'],
-  ['/notice', '공지사항 - 렌탈파트너', '렌탈파트너 공지사항 페이지입니다.', 'daily', '0.7'],
-  ['/event', '이벤트 - 렌탈파트너', '렌탈파트너 이벤트 페이지입니다.', 'daily', '0.7'],
-  ['/review', '설치후기 - 렌탈파트너', '렌탈파트너 설치후기 페이지입니다.', 'weekly', '0.7'],
-  ['/terms', '서비스 이용약관 | 렌탈파트너', '렌탈파트너 서비스 이용약관입니다. 회원가입, 견적 요청, 계약 및 정산, 취소 및 환불 관련 기준을 안내합니다.', 'monthly', '0.4'],
-  ['/privacy', '개인정보처리방침 | 렌탈파트너', '렌탈파트너 개인정보처리방침입니다. 수집 항목, 이용 목적, 보유 기간, 이용자 권리와 보호조치를 안내합니다.', 'monthly', '0.4'],
-  ['/login', '로그인 | 렌탈파트너', '렌탈파트너 로그인 페이지입니다.', '', '', 'noindex, nofollow'],
-  ['/signup', '회원가입 | 렌탈파트너', '렌탈파트너 회원가입 페이지입니다.', '', '', 'noindex, nofollow'],
-  ['/quote-cart', '장바구니 | 렌탈파트너', '여러 품목을 장바구니에 담아 한 번에 견적 요청하세요. 온라인에서는 결제 없이 견적 접수만 진행됩니다.', '', '', 'noindex, nofollow'],
-  ['/search', '검색 결과 - 렌탈파트너', '렌탈파트너 사이트 내 검색 결과 페이지입니다.', '', '', 'noindex, nofollow'],
+  ['/', '렌탈어때 | 사무기기 렌탈 플랫폼', '복합기, 노트북, 데스크탑 등 사무기기를 합리적인 조건으로 렌탈하세요. 렌탈어때 렌탈 서비스.', 'daily', '1.0'],
+  ['/products', '상품목록 | 렌탈어때', '복합기, 노트북, 데스크탑 등 렌탈어때의 사무기기 렌탈 상품을 확인해보세요.', 'daily', '0.8'],
+  ['/company', '회사소개 | 렌탈어때', '렌탈어때 회사소개입니다. 복합기, 노트북, 데스크탑 등 사무기기 렌탈 서비스를 제공합니다.', 'monthly', '0.7'],
+  ['/cs', '고객센터 | 렌탈어때', '렌탈어때 고객센터입니다. 자주 묻는 질문부터 실시간 상담까지 도와드립니다.', 'monthly', '0.6'],
+  ['/notice', '공지사항 - 렌탈어때', '렌탈어때 공지사항 페이지입니다.', 'daily', '0.7'],
+  ['/event', '이벤트 - 렌탈어때', '렌탈어때 이벤트 페이지입니다.', 'daily', '0.7'],
+  ['/review', '설치후기 - 렌탈어때', '렌탈어때 설치후기 페이지입니다.', 'weekly', '0.7'],
+  ['/terms', '서비스 이용약관 | 렌탈어때', '렌탈어때 서비스 이용약관입니다. 회원가입, 견적 요청, 계약 및 정산, 취소 및 환불 관련 기준을 안내합니다.', 'monthly', '0.4'],
+  ['/privacy', '개인정보처리방침 | 렌탈어때', '렌탈어때 개인정보처리방침입니다. 수집 항목, 이용 목적, 보유 기간, 이용자 권리와 보호조치를 안내합니다.', 'monthly', '0.4'],
+  ['/login', '로그인 | 렌탈어때', '렌탈어때 로그인 페이지입니다.', '', '', 'noindex, nofollow'],
+  ['/signup', '회원가입 | 렌탈어때', '렌탈어때 회원가입 페이지입니다.', '', '', 'noindex, nofollow'],
+  ['/quote-cart', '장바구니 | 렌탈어때', '여러 품목을 장바구니에 담아 한 번에 견적 요청하세요. 온라인에서는 결제 없이 견적 접수만 진행됩니다.', '', '', 'noindex, nofollow'],
+  ['/search', '검색 결과 - 렌탈어때', '렌탈어때 사이트 내 검색 결과 페이지입니다.', '', '', 'noindex, nofollow'],
 ];
 
 if (!fs.existsSync(baseHtmlPath)) {
@@ -198,7 +198,7 @@ const isBasicProduct = (product) =>
 
 const productSeoDescription = (product) =>
   seoDescription(product.short_description, product.description) ||
-  `${product.name} 렌탈 서비스입니다. 렌탈파트너에서 합리적인 조건으로 상담받아보세요.`;
+  `${product.name} 렌탈 서비스입니다. 렌탈어때에서 합리적인 조건으로 상담받아보세요.`;
 
 const postSeoDescription = (post, sectionTitle) =>
   seoDescription(post.summary, postPlainText(post.content)) || `${sectionTitle} 상세 페이지입니다.`;
@@ -259,8 +259,8 @@ function homeBody(products, postsByBoard) {
       <main class="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14">
         <section class="overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 px-6 py-12 text-white md:px-10 md:py-16">
           <p class="text-sm font-semibold uppercase tracking-[0.32em] text-cyan-200">Office Rental Platform</p>
-          <h1 class="mt-5 max-w-4xl text-4xl font-black leading-tight md:text-6xl">사무기기 렌탈을 더 빠르고 명확하게, 렌탈파트너</h1>
-          <p class="mt-5 max-w-3xl text-base leading-7 text-slate-200 md:text-lg">복합기, 노트북, 데스크탑, 프린터 등 기업 운영에 필요한 사무기기를 렌탈파트너에서 합리적인 조건으로 상담하고 비교할 수 있습니다.</p>
+          <h1 class="mt-5 max-w-4xl text-4xl font-black leading-tight md:text-6xl">사무기기 렌탈을 더 빠르고 명확하게, 렌탈어때</h1>
+          <p class="mt-5 max-w-3xl text-base leading-7 text-slate-200 md:text-lg">복합기, 노트북, 데스크탑, 프린터 등 기업 운영에 필요한 사무기기를 렌탈어때에서 합리적인 조건으로 상담하고 비교할 수 있습니다.</p>
           <div class="mt-8 flex flex-wrap gap-3">
             <a href="/products" class="rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-900">상품 보러가기</a>
             <a href="/company" class="rounded-full border border-white/30 px-6 py-3 text-sm font-bold text-white">회사소개</a>
@@ -299,7 +299,7 @@ function productListBody(products) {
         <section class="rounded-[2rem] border border-slate-200 bg-slate-50 px-6 py-10 md:px-8">
           <p class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Products</p>
           <h1 class="mt-3 text-4xl font-black text-slate-900">상품목록</h1>
-          <p class="mt-4 max-w-3xl text-base leading-7 text-slate-600">복합기, 노트북, 데스크탑, 프린터 등 렌탈파트너의 주요 사무기기 상품을 한눈에 확인할 수 있습니다.</p>
+          <p class="mt-4 max-w-3xl text-base leading-7 text-slate-600">복합기, 노트북, 데스크탑, 프린터 등 렌탈어때의 주요 사무기기 상품을 한눈에 확인할 수 있습니다.</p>
           <p class="mt-3 text-sm font-medium text-slate-500">현재 노출 상품 ${products.length}개</p>
         </section>
         ${grid(cards)}
@@ -346,7 +346,7 @@ function productBody(product) {
             <div class="mt-6 rounded-2xl bg-slate-50 p-5">
               <p class="text-sm text-slate-500">렌탈 안내</p>
               <p class="mt-2 text-2xl font-black text-[#001E45]">${escapeHtml(priceText(product.price))}</p>
-              <p class="mt-3 text-sm leading-6 text-slate-500">상세 옵션과 설치 일정은 견적 상담을 통해 확인하실 수 있습니다. 렌탈파트너가 기업 환경에 맞는 구성을 제안해드립니다.</p>
+              <p class="mt-3 text-sm leading-6 text-slate-500">상세 옵션과 설치 일정은 견적 상담을 통해 확인하실 수 있습니다. 렌탈어때가 기업 환경에 맞는 구성을 제안해드립니다.</p>
             </div>
           </div>
         </article>
@@ -464,7 +464,7 @@ function buildStaticPages(products, postsByBoard) {
     if (route === '/') {
       bodyHtml = homeBody(products, postsByBoard);
       structuredData = [
-        itemListSchema('렌탈파트너 주요 상품', canonical('/products'), products.slice(0, 8).map((product) => ({
+        itemListSchema('렌탈어때 주요 상품', canonical('/products'), products.slice(0, 8).map((product) => ({
           name: product.name,
           url: canonical(`/products/${product.id}`),
         }))),
@@ -472,7 +472,7 @@ function buildStaticPages(products, postsByBoard) {
     } else if (route === '/products') {
       bodyHtml = productListBody(products);
       structuredData = [
-        itemListSchema('렌탈파트너 상품목록', canonical('/products'), products.slice(0, 24).map((product) => ({
+        itemListSchema('렌탈어때 상품목록', canonical('/products'), products.slice(0, 24).map((product) => ({
           name: product.name,
           url: canonical(`/products/${product.id}`),
         }))),
@@ -515,7 +515,7 @@ function buildProductPages(products) {
 
     return {
       route,
-      title: `${product.name} | 렌탈파트너`,
+      title: `${product.name} | 렌탈어때`,
       description,
       image,
       imageAlt: product.name,
@@ -562,7 +562,7 @@ function buildPostPages(posts) {
 
     return {
       route,
-      title: `${post.title} - ${meta.title} - 렌탈파트너`,
+      title: `${post.title} - ${meta.title} - 렌탈어때`,
       description,
       image,
       imageAlt: post.title,
@@ -625,3 +625,4 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+

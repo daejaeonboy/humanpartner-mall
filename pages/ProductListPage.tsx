@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Container } from '../components/ui/Container';
 import { Loader2 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -136,10 +136,10 @@ export const ProductListPage: React.FC = () => {
     return (
         <div className="pt-8 pb-12 bg-white">
             <Helmet>
-                <title>상품목록 | 렌탈파트너</title>
+                <title>상품목록 | 렌탈어때</title>
                 <meta
                     name="description"
-                    content="복합기, 노트북, 데스크탑 등 렌탈파트너의 사무기기 렌탈 상품을 확인해보세요."
+                    content="복합기, 노트북, 데스크탑 등 렌탈어때의 사무기기 렌탈 상품을 확인해보세요."
                 />
                 <link rel="canonical" href="https://rentalpartner.kr/products" />
             </Helmet>
@@ -221,3 +221,4 @@ export const ProductListPage: React.FC = () => {
         </div>
     );
 };
+

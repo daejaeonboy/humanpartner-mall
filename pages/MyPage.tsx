@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { Container } from '../components/ui/Container';
 import { Calendar, User, Clock, Loader2, CheckCircle, XCircle, AlertCircle, Package, Download, Ban, FileText } from 'lucide-react';
 import { getUserBookings, Booking, updateBookingStatus } from '../src/api/bookingApi';
@@ -553,7 +553,7 @@ export const MyPage: React.FC = () => {
                                                                                     <tr>
                                                                                         <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-bold w-16 text-center">상호명</td>
                                                                                         <td className="border border-gray-400 px-2 py-1 relative">
-                                                                                            렌탈파트너
+                                                                                            렌탈어때
                                                                                             <span className="absolute right-2 top-0 text-[#001E45] text-[10px] font-bold">[인]</span>
                                                                                         </td>
                                                                                     </tr>
@@ -656,7 +656,7 @@ export const MyPage: React.FC = () => {
                                                                     </div>
                                                                     <div className="text-center pt-4 border-t border-gray-300" style={{ fontSize: '11px' }}>
                                                                         <p className="text-gray-500">본 견적서는 정식 계약서가 아니며, 최종 계약 시 세부 사항이 변경될 수 있습니다.</p>
-                                                                        <p className="text-gray-600 mt-2 font-medium">렌탈파트너 | 사업자등록번호: 314-07-32520 | 대전 유성구 지족로 282번길 17</p>
+                                                                        <p className="text-gray-600 mt-2 font-medium">렌탈어때 | 사업자등록번호: 314-07-32520 | 대전 유성구 지족로 282번길 17</p>
                                                                         <p className="text-gray-500 mt-1">Tel. 010-4074-6967 | Email. micepartner@micepartner.co.kr</p>
                                                                     </div>
                                                                 </div>
@@ -676,3 +676,4 @@ export const MyPage: React.FC = () => {
         </div>
     );
 };
+

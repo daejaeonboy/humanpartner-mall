@@ -1,4 +1,4 @@
-export const SITE_NAME = '렌탈파트너';
+﻿export const SITE_NAME = '렌탈어때';
 export const SITE_URL = 'https://rentalpartner.kr';
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/logocard.jpg`;
 export const ORGANIZATION_ID = `${SITE_URL}/#organization`;
@@ -151,3 +151,4 @@ export const buildArticleJsonLd = (input: {
     '@id': ORGANIZATION_ID,
   },
 });
+

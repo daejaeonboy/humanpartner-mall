@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Container } from '../components/ui/Container';
 import { Helmet } from 'react-helmet-async';
 import { LayoutTemplate, Network, Wrench, Calculator } from 'lucide-react';
@@ -7,8 +7,8 @@ export const CompanyIntro: React.FC = () => {
     return (
         <div className="bg-white min-h-screen">
             <Helmet>
-                <title>회사소개 | 렌탈파트너</title>
-                <meta name="description" content="렌탈파트너 회사소개입니다. 복합기, 노트북, 데스크탑 등 사무기기 렌탈 서비스를 제공합니다." />
+                <title>회사소개 | 렌탈어때</title>
+                <meta name="description" content="렌탈어때 회사소개입니다. 복합기, 노트북, 데스크탑 등 사무기기 렌탈 서비스를 제공합니다." />
                 <link rel="canonical" href="https://rentalpartner.kr/company" />
             </Helmet>
 
@@ -27,7 +27,7 @@ export const CompanyIntro: React.FC = () => {
                         <span className="text-[#001E45]">최고의 파트너</span>
                     </h1>
                     <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto break-keep leading-relaxed">
-                        렌탈파트너는 복합기, 노트북, 데스크탑 등 사무기기 렌탈 운영 경험을 바탕으로<br className="hidden md:block" /> 표준화된 장비 공급 환경을 제공합니다.
+                        렌탈어때는 복합기, 노트북, 데스크탑 등 사무기기 렌탈 운영 경험을 바탕으로<br className="hidden md:block" /> 표준화된 장비 공급 환경을 제공합니다.
                     </p>
                 </Container>
             </div>
@@ -38,13 +38,13 @@ export const CompanyIntro: React.FC = () => {
                     <div className="flex flex-col md:flex-row gap-12 items-center">
                         <div className="flex-1">
                             <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-6 break-keep">
-                                ABOUT <span className="text-[#001E45]">렌탈파트너</span>
+                                ABOUT <span className="text-[#001E45]">렌탈어때</span>
                             </h2>
                             <p className="text-base md:text-lg text-gray-600 leading-relaxed mb-6 break-keep">
-                                렌탈파트너는 기업과 공공기관의 장비 운영 수요를 바탕으로<br className="hidden md:block" /> 설계된 사무기기 렌탈 플랫폼입니다.
+                                렌탈어때는 기업과 공공기관의 장비 운영 수요를 바탕으로<br className="hidden md:block" /> 설계된 사무기기 렌탈 플랫폼입니다.
                             </p>
                             <p className="text-base md:text-lg text-gray-600 leading-relaxed mb-6 break-keep">
-                                렌탈파트너의 10년 이상 축적된 현장 노하우를 기반으로,<br className="hidden md:block" /> 장비 준비 과정에서 발생하는 비효율을 줄이고<br className="hidden md:block" /> 견적·대여·설치 과정을 표준화하여 제공합니다.
+                                렌탈어때의 10년 이상 축적된 현장 노하우를 기반으로,<br className="hidden md:block" /> 장비 준비 과정에서 발생하는 비효율을 줄이고<br className="hidden md:block" /> 견적·대여·설치 과정을 표준화하여 제공합니다.
                             </p>
                             <p className="text-base md:text-lg text-gray-600 leading-relaxed break-keep">
                                 소규모 사무실부터 대규모 기관 운영까지,<br className="hidden md:block" /> 단순 장비 공급을 넘어 안정적인 렌탈 운영 기준을 제공하는 파트너입니다.
@@ -81,7 +81,7 @@ export const CompanyIntro: React.FC = () => {
                 <Container>
                     <div className="text-center mb-16">
                         <h2 className="text-3xl font-bold text-slate-800 mb-4">OUR SERVICES</h2>
-                        <p className="text-gray-500">렌탈파트너가 제공하는 핵심 서비스 분야입니다.</p>
+                        <p className="text-gray-500">렌탈어때가 제공하는 핵심 서비스 분야입니다.</p>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8">
@@ -131,3 +131,4 @@ export const CompanyIntro: React.FC = () => {
         </div>
     );
 };
+

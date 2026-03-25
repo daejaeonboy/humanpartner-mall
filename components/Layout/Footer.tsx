@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Container } from '../ui/Container';
 import { ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -77,7 +77,7 @@ export function Footer() {
 
                         <div className="text-[13px] md:text-[14px] leading-6 md:leading-7 text-gray-500">
                             <p>
-                                법인명(상호) : 렌탈파트너 <span className="mx-2 text-gray-300">|</span> 대표자(성명) : 이기섭 <span className="mx-2 text-gray-300">|</span> 사업자 등록번호 : 305-30-85537
+                                법인명(상호) : 렌탈어때 <span className="mx-2 text-gray-300">|</span> 대표자(성명) : 이기섭 <span className="mx-2 text-gray-300">|</span> 사업자 등록번호 : 305-30-85537
                             </p>
                             <p>
                                 통신판매업 신고 : 2025-대전대덕-0526 &nbsp; <span className="underline cursor-pointer hover:text-gray-800 transition-colors">[사업자정보확인]</span>
@@ -89,7 +89,7 @@ export function Footer() {
                                 개인정보보호책임자 : 이기섭(micepartner@micepartner.co.kr)
                             </p>
                             <p className="mt-5 text-[13px] md:text-[14px] text-gray-400 font-medium">
-                                Copyright © 2024 렌탈파트너. All rights reserved.
+                                Copyright © 2024 렌탈어때. All rights reserved.
                             </p>
                         </div>
                     </div>
@@ -126,3 +126,4 @@ export function Footer() {
         </footer>
     );
 }
+

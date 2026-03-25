@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Link } from 'react-router-dom';
 import { Container } from '../components/ui/Container';
 import { Home, ArrowLeft } from 'lucide-react';
@@ -8,7 +8,7 @@ export const NotFound: React.FC = () => {
     return (
         <div className="min-h-[70vh] flex items-center justify-center py-20 px-4">
             <Helmet>
-                <title>페이지를 찾을 수 없습니다 - 렌탈파트너</title>
+                <title>페이지를 찾을 수 없습니다 - 렌탈어때</title>
                 <meta name="robots" content="noindex, nofollow" />
             </Helmet>
             
@@ -60,3 +60,4 @@ export const NotFound: React.FC = () => {
         </div>
     );
 };
+

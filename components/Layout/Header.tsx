@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Container } from "../ui/Container";
@@ -345,7 +345,7 @@ export const Header: React.FC = () => {
               >
                 <img
                   src="/logo.png"
-                  alt="렌탈파트너"
+                  alt="렌탈어때"
                   className="h-[2.5rem] md:h-[2.8rem] object-contain"
                 />
               </a>
@@ -481,3 +481,4 @@ export const Header: React.FC = () => {
     </header>
   );
 };
+
