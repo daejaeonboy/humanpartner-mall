@@ -8,6 +8,7 @@ export const BlankPage: React.FC = () => {
       <Helmet>
         <title>BLANK - 렌탈파트너</title>
         <meta name="description" content="새로운 기능 준비중입니다." />
+        <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="pt-24 pb-16 bg-gray-50 min-h-screen">
         <Container>

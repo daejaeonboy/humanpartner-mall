@@ -5,6 +5,14 @@ import { ChevronLeft } from 'lucide-react';
 import { Container } from '../components/ui/Container';
 import { getMiceTabPostById, MiceTabPost, MiceTabType } from '../src/api/cmsApi';
 import { parseGnbContent, stripGnbContentImages } from '../src/utils/gnbContent';
+import {
+  buildArticleJsonLd,
+  buildBreadcrumbJsonLd,
+  buildSeoDescription,
+  SITE_URL,
+  toAbsoluteUrl,
+  toJsonLd,
+} from '../src/utils/seo';
 
 interface GnbPostDetailPageProps {
   boardType: MiceTabType;
@@ -82,15 +90,49 @@ export const GnbPostDetailPage: React.FC<GnbPostDetailPageProps> = ({ boardType 
   }, [meta.title, post]);
   const contentBlocks = useMemo(() => parseGnbContent(post?.content), [post?.content]);
   const plainContent = useMemo(() => stripGnbContentImages(post?.content), [post?.content]);
+  const canonicalUrl = `${SITE_URL}${meta.path}${id ? `/${id}` : ''}`;
+  const seoDescription =
+    buildSeoDescription(post?.summary, plainContent) || `${meta.title} 상세 페이지입니다.`;
+  const seoImage = toAbsoluteUrl(post?.image_url || post?.mobile_image_url);
+  const articleStructuredData = post
+    ? toJsonLd({
+        '@context': 'https://schema.org',
+        '@graph': [
+          buildBreadcrumbJsonLd([
+            { name: '홈', item: `${SITE_URL}/` },
+            { name: meta.title, item: `${SITE_URL}${meta.path}` },
+            { name: post.title, item: canonicalUrl },
+          ]),
+          buildArticleJsonLd({
+            headline: post.title,
+            description: seoDescription,
+            url: canonicalUrl,
+            image: seoImage,
+            datePublished: post.created_at,
+            dateModified: post.updated_at || post.created_at,
+            articleSection: meta.title,
+          }),
+        ],
+      })
+    : '';
 
   return (
     <>
       <Helmet>
         <title>{pageTitle}</title>
-        <meta
-          name="description"
-          content={post?.summary || plainContent || `${meta.title} 상세 페이지입니다.`}
-        />
+        <meta name="description" content={seoDescription} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:type" content={post ? 'article' : 'website'} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={seoDescription} />
+        <meta property="og:image" content={seoImage} />
+        <meta property="og:image:alt" content={post?.title || meta.title} />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={seoDescription} />
+        <meta name="twitter:image" content={seoImage} />
+        {!loading && !post && <meta name="robots" content="noindex, nofollow" />}
+        {post && <script type="application/ld+json">{articleStructuredData}</script>}
       </Helmet>
 
       <div className="bg-white min-h-screen pb-20">

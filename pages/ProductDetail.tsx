@@ -33,6 +33,14 @@ registerLocale("ko", ko);
 
 import "../src/styles/calendar.css";
 import { Helmet } from "react-helmet-async";
+import {
+  buildBreadcrumbJsonLd,
+  buildProductJsonLd,
+  buildSeoDescription,
+  SITE_URL,
+  toAbsoluteUrl,
+  toJsonLd,
+} from "../src/utils/seo";
 
 // Helper to get image for basic components
 const getComponentComponentImage = (name: string) => {
@@ -815,9 +823,16 @@ export const ProductDetailPage: React.FC = () => {
 
   if (!product) {
     return (
-      <div className="p-20 text-center text-gray-500">
-        상품을 찾을 수 없습니다.
-      </div>
+      <>
+        <Helmet>
+          <title>상품을 찾을 수 없습니다 | 렌탈파트너</title>
+          <meta name="robots" content="noindex, nofollow" />
+          <link rel="canonical" href={`${SITE_URL}/products`} />
+        </Helmet>
+        <div className="p-20 text-center text-gray-500">
+          상품을 찾을 수 없습니다.
+        </div>
+      </>
     );
   }
 
@@ -855,29 +870,49 @@ export const ProductDetailPage: React.FC = () => {
     },
   ].filter((tab) => tab.show);
   const hasAnyOptions = optionTabs.length > 0;
+  const canonicalUrl = `${SITE_URL}/products/${product.id || id || ""}`;
+  const seoTitle = `${product.name} | 렌탈파트너`;
+  const seoDescription =
+    buildSeoDescription(product.short_description, product.description) ||
+    `${product.name} 렌탈 서비스입니다. 렌탈파트너에서 합리적인 조건으로 상담받아보세요.`;
+  const seoImage = toAbsoluteUrl(product.image_url);
+  const structuredData = toJsonLd({
+    "@context": "https://schema.org",
+    "@graph": [
+      buildBreadcrumbJsonLd([
+        { name: "홈", item: `${SITE_URL}/` },
+        { name: "상품목록", item: `${SITE_URL}/products` },
+        { name: product.name, item: canonicalUrl },
+      ]),
+      buildProductJsonLd({
+        name: product.name,
+        description: seoDescription,
+        url: canonicalUrl,
+        image: seoImage,
+        category: product.category,
+        sku: product.id,
+        price: product.price,
+        stock: product.stock,
+      }),
+    ],
+  });
 
   return (
     <>
       <Helmet>
-        <title>{product.name} - 렌탈파트너 렌탈</title>
-        <meta
-          name="description"
-          content={
-            product.description ||
-            `${product.name} 렌탈 서비스. 렌탈파트너에서 합리적인 가격으로 만나보세요.`
-          }
-        />
-        <meta property="og:title" content={`${product.name} - 렌탈파트너`} />
-        <meta
-          property="og:description"
-          content={product.description || "최고의 파트너 렌탈파트너"}
-        />
-        <meta
-          property="og:image"
-          content={
-            product.image_url || "/logo.png"
-          }
-        />
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDescription} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:type" content="product" />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDescription} />
+        <meta property="og:image" content={seoImage} />
+        <meta property="og:image:alt" content={product.name} />
+        <meta name="twitter:title" content={seoTitle} />
+        <meta name="twitter:description" content={seoDescription} />
+        <meta name="twitter:image" content={seoImage} />
+        <script type="application/ld+json">{structuredData}</script>
       </Helmet>
       <div className="pt-8 pb-8 bg-gray-50 min-h-screen lg:pb-8">
         <Container>

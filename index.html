@@ -47,6 +47,36 @@
       content="복합기, 노트북, 데스크탑 등 사무기기를 합리적인 조건으로 렌탈하세요. 렌탈파트너 렌탈 서비스."
     />
     <meta name="twitter:image" content="https://rentalpartner.kr/logocard.jpg" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://rentalpartner.kr/#organization",
+            "name": "렌탈파트너",
+            "url": "https://rentalpartner.kr/",
+            "logo": "https://rentalpartner.kr/logocard.jpg",
+            "email": "mailto:micepartner@micepartner.co.kr"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://rentalpartner.kr/#website",
+            "url": "https://rentalpartner.kr/",
+            "name": "렌탈파트너",
+            "publisher": {
+              "@id": "https://rentalpartner.kr/#organization"
+            },
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://rentalpartner.kr/search?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          }
+        ]
+      }
+    </script>
+    <!-- PAGE_STRUCTURED_DATA -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link
       rel="stylesheet"
@@ -115,7 +145,7 @@
   </head>
 
   <body class="bg-white text-slate-800 antialiased">
-    <div id="root"></div>
+    <div id="root"><!-- PAGE_PRERENDER --></div>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>

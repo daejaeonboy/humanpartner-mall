@@ -9,6 +9,7 @@ export const NotFound: React.FC = () => {
         <div className="min-h-[70vh] flex items-center justify-center py-20 px-4">
             <Helmet>
                 <title>페이지를 찾을 수 없습니다 - 렌탈파트너</title>
+                <meta name="robots" content="noindex, nofollow" />
             </Helmet>
             
             <Container>
