@@ -41,8 +41,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return;
             }
             
-            // 승인되지 않은 사용자 로그아웃 처리
-            if (!profile.is_approved) {
+            // 일반 사용자만 승인 여부를 강제하고, 관리자는 세션을 유지한다.
+            if (!profile.is_admin && !profile.is_approved) {
                 await signOut(auth);
                 setUser(null);
                 setUserProfile(null);

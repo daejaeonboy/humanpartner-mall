@@ -6,8 +6,6 @@ export interface ProductItem {
   category: string;
   price: number;
   discountRate?: number;
-  reviewCount?: number;
-  rating?: number;
 }
 
 export interface PromoItem {

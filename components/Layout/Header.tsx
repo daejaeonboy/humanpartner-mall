@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Search } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Container } from "../ui/Container";
-import { NAV_LINKS, TOP_LINKS } from "../../constants";
-import { getActiveSections, Section } from "../../src/api/sectionApi";
 import {
   getAllNavMenuItems,
   getTabMenuItems,
@@ -157,9 +155,8 @@ const NotificationDropdown = ({
 export const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
-  const [navItems, setNavItems] = useState<Section[]>([]);
+  const navigate = useNavigate();
   const [allMenuItems, setAllMenuItems] = useState<NavMenuItem[]>([]);
-  const [loadingNav, setLoadingNav] = useState(true);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showDesktopMenu, setShowDesktopMenu] = useState(false);
   // Removed showNotifications state as it is now inside NotificationDropdown
@@ -247,20 +244,15 @@ export const Header: React.FC = () => {
   useEffect(() => {
     const loadNavItems = async () => {
       try {
-        const [items, menuData, tabData] = await Promise.all([
-          getActiveSections(),
+        const [menuData, tabData] = await Promise.all([
           getAllNavMenuItems(),
           getTabMenuItems(),
         ]);
-        setNavItems(items);
         setAllMenuItems(menuData);
         setGnbSectionTabs(tabData.length > 0 ? tabData : DEFAULT_GNB_TABS);
       } catch (error) {
         console.error("Failed to load sections:", error);
-        setNavItems([]);
         setGnbSectionTabs(DEFAULT_GNB_TABS);
-      } finally {
-        setLoadingNav(false);
       }
     };
     loadNavItems();
@@ -286,6 +278,18 @@ export const Header: React.FC = () => {
                     로그아웃
                   </button>
                   <Link
+                    to="/mypage"
+                    className="hover:text-gray-900 transition-colors"
+                  >
+                    마이페이지
+                  </Link>
+                  <Link
+                    to="/quote-cart"
+                    className="hover:text-gray-900 transition-colors"
+                  >
+                    장바구니
+                  </Link>
+                  <Link
                     to="/cs"
                     className="hover:text-gray-900 transition-colors"
                   >
@@ -305,6 +309,18 @@ export const Header: React.FC = () => {
                     className="hover:text-gray-900 transition-colors"
                   >
                     회원가입
+                  </Link>
+                  <Link
+                    to="/mypage"
+                    className="hover:text-gray-900 transition-colors"
+                  >
+                    마이페이지
+                  </Link>
+                  <Link
+                    to="/quote-cart"
+                    className="hover:text-gray-900 transition-colors"
+                  >
+                    장바구니
                   </Link>
                   <Link
                     to="/cs"
@@ -329,7 +345,7 @@ export const Header: React.FC = () => {
               >
                 <img
                   src="/logo.png"
-                  alt="휴먼파트너"
+                  alt="렌탈파트너"
                   className="h-[2.5rem] md:h-[2.8rem] object-contain"
                 />
               </a>
@@ -347,8 +363,9 @@ export const Header: React.FC = () => {
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         const target = e.target as HTMLInputElement;
-                        if (target.value.trim())
-                          window.location.href = `/search?q=${encodeURIComponent(target.value)}`;
+                        if (target.value.trim()) {
+                          navigate(`/search?q=${encodeURIComponent(target.value.trim())}`);
+                        }
                       }
                     }}
                   />
@@ -388,7 +405,7 @@ export const Header: React.FC = () => {
         <div className="border-t border-b border-gray-100 relative bg-white z-40">
           <Container>
             <div className="relative flex justify-start w-full h-[56px]">
-              <nav className="flex h-full items-stretch justify-between sm:justify-start sm:gap-6 md:gap-2 w-full md:w-auto overflow-x-auto md:overflow-visible no-scrollbar scroll-smooth snap-x md:-ml-4 px-0">
+              <nav className="flex h-full items-stretch justify-start gap-1 min-[375px]:gap-2 sm:gap-6 md:gap-2 w-max min-w-full md:w-auto overflow-x-auto md:overflow-visible no-scrollbar scroll-smooth snap-x md:-ml-4 px-0">
                 <div
                   className="hidden md:block h-full"
                   onMouseEnter={() => setShowDesktopMenu(true)}
@@ -405,7 +422,7 @@ export const Header: React.FC = () => {
                   const path = resolveGnbTabPath(tab);
                   const isExternal = /^https?:\/\//i.test(path);
                   const isActive = !isExternal && isGnbSectionActive(path);
-                  const className = `relative flex h-full items-center whitespace-nowrap text-[14px] min-[357px]:text-[15px] font-[550] transition-all px-0.5 min-[375px]:px-2 sm:px-4 after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 md:after:-bottom-[2px] after:h-[2px] after:transition-colors ${isActive
+                  const className = `relative flex h-full flex-shrink-0 items-center whitespace-nowrap text-[14px] min-[357px]:text-[15px] font-[550] transition-all px-1 min-[375px]:px-2 sm:px-4 after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 md:after:-bottom-[2px] after:h-[2px] after:transition-colors ${isActive
                     ? 'text-[#001E45] after:bg-[#001E45]'
                     : 'text-gray-900 hover:text-[#001E45] after:bg-transparent hover:after:bg-[#001E45]'
                     }`;

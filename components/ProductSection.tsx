@@ -53,17 +53,17 @@ export const ProductSection: React.FC<ProductSectionProps> = ({
 
   switch (layoutMode) {
     case 'grid-5':
-      cardWidthClass = 'w-[140px] md:w-[calc(20%-0.8rem)]';
+      cardWidthClass = 'w-[140px] md:w-[calc(20%_-_0.8rem)]';
       break;
     case 'grid-3':
-      cardWidthClass = 'w-[220px] md:w-[calc(33.333%-0.666rem)]';
+      cardWidthClass = 'w-[220px] md:w-[calc(33.333%_-_0.666rem)]';
       break;
     case 'grid-2':
-      cardWidthClass = 'w-[300px] md:w-[calc(50%-0.5rem)]';
+      cardWidthClass = 'w-[300px] md:w-[calc(50%_-_0.5rem)]';
       break;
     case 'grid-4':
     default:
-      cardWidthClass = 'w-[180px] md:w-[calc(25%-0.75rem)]';
+      cardWidthClass = 'w-[180px] md:w-[calc(25%_-_0.75rem)]';
       break;
   }
 
@@ -146,13 +146,13 @@ export const ProductSection: React.FC<ProductSectionProps> = ({
                 </div>
 
                 <div className="space-y-1">
-                  <h3 className="font-bold text-[16px] text-slate-800 truncate group-hover/card:text-[#001E45] transition-colors">{product.title}</h3>
+                  <h3 className="font-bold text-[15px] text-slate-800 truncate group-hover/card:text-[#001E45] transition-colors">{product.title}</h3>
 
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-1 mt-1">
                     {product.discountRate && (
-                      <span className="text-rose-500 font-bold text-[24px]">{product.discountRate}%</span>
+                      <span className="text-rose-500 font-bold text-[18px]">{product.discountRate}%</span>
                     )}
-                    <span className="font-medium text-[20px] text-slate-900">
+                    <span className="font-medium text-[18px] text-slate-900">
                       {product.price?.toLocaleString()}<span className="text-sm font-medium ml-0.5">원</span>
                     </span>
                   </div>

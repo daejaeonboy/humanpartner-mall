@@ -126,7 +126,10 @@ export const MyInfoPage: React.FC = () => {
                             <p className="text-sm text-gray-500 mb-6">{userProfile?.email || user.email}</p>
                             <div className="text-left space-y-1 border-t border-gray-100 pt-4">
                                 <Link to="/mypage" className="text-sm text-gray-500 block w-full text-left py-2 px-2 rounded hover:bg-gray-50 hover:text-black">
-                                    대여 내역
+                                    대여 신청 내역
+                                </Link>
+                                <Link to="/quote-cart" className="text-sm text-gray-500 block w-full text-left py-2 px-2 rounded hover:bg-gray-50 hover:text-black">
+                                    장바구니
                                 </Link>
                                 <Link to="/mypage/info" className="text-sm font-bold text-[#001E45] block w-full text-left py-2 px-2 rounded hover:bg-[#001E45]/5">
                                     내 정보 관리

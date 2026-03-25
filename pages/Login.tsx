@@ -3,6 +3,7 @@ import { Container } from '../components/ui/Container';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth } from '../src/firebase';
 import { signInWithEmailAndPassword, setPersistence, browserSessionPersistence, browserLocalPersistence } from 'firebase/auth';
+import { getUserProfileByFirebaseUid } from '../src/api/userApi';
 import { getAuthErrorMessage } from '../src/utils/authErrors';
 import { getMissingSupabaseTableName, isMissingSupabaseTableError } from '../src/utils/supabaseErrors';
 
@@ -48,7 +49,6 @@ export const Login: React.FC = () => {
             const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
             
             // 승인 여부 확인
-            const { getUserProfileByFirebaseUid } = await import('../src/api/userApi');
             const profile = await getUserProfileByFirebaseUid(userCredential.user.uid);
 
             if (!profile) {
@@ -89,7 +89,7 @@ export const Login: React.FC = () => {
                 <div className="w-full max-w-xl md:max-w-3xl mx-auto bg-white p-6 md:p-16 rounded-3xl shadow-lg border border-gray-100 mb-20">
                     <div className="text-center mb-6 md:mb-10">
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">로그인</h1>
-                        <p className="text-gray-500 text-sm md:text-base mt-2 md:mt-3">휴먼파트너 서비스 이용을 위해 로그인해주세요.</p>
+                        <p className="text-gray-500 text-sm md:text-base mt-2 md:mt-3">렌탈파트너 서비스 이용을 위해 로그인해주세요.</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">

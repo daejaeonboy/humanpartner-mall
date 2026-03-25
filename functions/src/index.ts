@@ -34,7 +34,7 @@ export const sendEmailVerification = functions.https.onRequest((req, res) => {
         // 설정 확인
         const emailUser = normalizeEnvValue(process.env.EMAIL_USER);
         const emailPass = normalizeEnvValue(process.env.EMAIL_PASS);
-        const emailFromName = normalizeEnvValue(process.env.EMAIL_FROM_NAME) || "휴먼파트너";
+        const emailFromName = normalizeEnvValue(process.env.EMAIL_FROM_NAME) || "렌탈파트너";
 
         // 커스텀 SMTP 설정 (옵션)
         const smtpHost = normalizeEnvValue(process.env.SMTP_HOST);

@@ -2,13 +2,12 @@ export interface Product {
     id: string;
     name: string;
     category: string;
+    catalogType?: 'general' | 'package';
     price: number;
     description: string;
     imageUrl: string;
     stock: number;
     discountRate?: number;
-    reviewCount?: number;
-    rating?: number;
 }
 
 export interface Booking {
@@ -18,5 +17,5 @@ export interface Booking {
     startDate: string;
     endDate: string;
     totalPrice: number;
-    status: 'pending' | 'confirmed' | 'cancelled';
+    status: 'pending' | 'quote_sent' | 'negotiating' | 'confirmed' | 'completed' | 'cancelled';
 }

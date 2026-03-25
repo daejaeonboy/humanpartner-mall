@@ -21,7 +21,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/email', emailRoutes);
 
 app.get('/', (req: Request, res: Response) => {
-    res.send('휴먼파트너 Backend is running!');
+    res.send('렌탈파트너 Backend is running!');
 });
 
 app.listen(port, () => {

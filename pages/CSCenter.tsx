@@ -3,33 +3,54 @@ import { Container } from '../components/ui/Container';
 import { Phone, MessageCircle, ChevronDown, Loader2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { getFAQs, FAQ, getFAQCategories } from '../src/api/faqApi';
+import {
+    DEFAULT_CS_CENTER_SETTINGS,
+    getCSCenterSettings,
+    type CSCenterSettings
+} from '../src/api/siteSettingsApi';
+import {
+    deriveCategoriesFromFaqs,
+    normalizeLegacyFaqCategory,
+    normalizeLegacyFaqCategoryList
+} from '../src/utils/faqCategoryPolicy';
 
 
 export const CSCenter: React.FC = () => {
     const [faqs, setFaqs] = useState<FAQ[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeCategory, setActiveCategory] = useState('자주 묻는 질문');
+    const [activeCategory, setActiveCategory] = useState('');
     const [expandedId, setExpandedId] = useState<string | null>(null);
-    const [categories, setCategories] = useState<string[]>(['자주 묻는 질문']);
-
-    const normalizeCategory = (value: string) => value === '예약/결제' ? '대여/결제' : value;
+    const [categories, setCategories] = useState<string[]>([]);
+    const [csCenterSettings, setCsCenterSettings] = useState<CSCenterSettings>(DEFAULT_CS_CENTER_SETTINGS);
 
     useEffect(() => {
         const loadData = async () => {
             try {
-                const [faqData, catData] = await Promise.all([
+                const [faqResult, categoryResult, settingsResult] = await Promise.allSettled([
                     getFAQs(),
-                    getFAQCategories()
+                    getFAQCategories(),
+                    getCSCenterSettings()
                 ]);
-                setFaqs(faqData.map(item => ({ ...item, category: normalizeCategory(item.category) })));
-                if (catData.length > 0) {
-                    setCategories(catData.map(c => normalizeCategory(c.name)));
+
+                const faqData = faqResult.status === 'fulfilled' ? faqResult.value : [];
+                const normalizedFaqs = faqData.map((item) => ({
+                    ...item,
+                    category: normalizeLegacyFaqCategory(item.category)
+                }));
+                setFaqs(normalizedFaqs);
+
+                if (categoryResult.status === 'fulfilled') {
+                    setCategories(normalizeLegacyFaqCategoryList(categoryResult.value.map((c) => c.name)));
                 } else {
-                    setCategories(['자주 묻는 질문', '공통', '이용문의', '대여/결제', '취소/환불', '상품문의', '기타']);
+                    // Fallback for category-table read failure only: infer from FAQ rows.
+                    setCategories(deriveCategoriesFromFaqs(normalizedFaqs));
+                }
+
+                if (settingsResult.status === 'fulfilled') {
+                    setCsCenterSettings(settingsResult.value);
                 }
             } catch (error) {
                 console.error('Failed to load data:', error);
-                setCategories(['자주 묻는 질문', '공통', '이용문의', '대여/결제', '취소/환불', '상품문의', '기타']);
             } finally {
                 setLoading(false);
             }
@@ -37,19 +58,28 @@ export const CSCenter: React.FC = () => {
         loadData();
     }, []);
 
+    useEffect(() => {
+        setActiveCategory((prev) => {
+            if (prev && categories.includes(prev)) {
+                return prev;
+            }
+            return categories[0] || '';
+        });
+    }, [categories]);
+
     const toggleAccordion = (id: string) => {
         setExpandedId(expandedId === id ? null : id);
     };
 
     const filteredFAQ = faqs.filter(item => {
-        return item.category === activeCategory;
+        return activeCategory ? item.category === activeCategory : false;
     });
 
     return (
         <div className="pb-20 pt-[64px] bg-white min-h-screen">
             <Helmet>
-                <title>고객센터 | 휴먼파트너</title>
-                <meta name="description" content="휴먼파트너 고객센터입니다. 자주 묻는 질문부터 실시간 상담까지 도와드립니다." />
+                <title>고객센터 | 렌탈파트너</title>
+                <meta name="description" content="렌탈파트너 고객센터입니다. 자주 묻는 질문부터 실시간 상담까지 도와드립니다." />
             </Helmet>
 
             <Container>
@@ -66,16 +96,16 @@ export const CSCenter: React.FC = () => {
                             <Phone size={24} className="md:w-8 md:h-8" />
                         </div>
                         <div>
-                            <div className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-1">1800-1985</div>
+                            <div className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-1">{csCenterSettings.phone}</div>
                             <div className="text-xs md:text-sm text-slate-500 font-medium space-y-0.5">
-                                <p>고객행복센터(전화): <br className="md:hidden" />오전 9시 ~ 오후 6시 운영</p>
-                                <p>채팅 상담 문의: 24시간 운영</p>
+                                <p>{csCenterSettings.business_hours_text}</p>
+                                <p>{csCenterSettings.chat_hours_text}</p>
                             </div>
                         </div>
                     </div>
 
                     <a
-                        href="https://pf.kakao.com/_iRxghX/chat"
+                        href={csCenterSettings.chat_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full md:w-auto px-8 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm hover:bg-slate-50 transition-all flex items-center justify-center gap-2 font-bold text-slate-700 hover:scale-[1.02] active:scale-[0.98]"
@@ -90,23 +120,31 @@ export const CSCenter: React.FC = () => {
                     <h2 className="text-xl font-bold text-slate-900 mb-6">자주 묻는 질문</h2>
 
                     {/* Category Tabs */}
-                    <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-8 -mx-4 px-4 md:mx-0 md:px-0">
-                        {categories.map(cat => (
-                            <button
-                                key={cat}
-                                onClick={() => setActiveCategory(cat)}
-                                className={`
-                                    whitespace-nowrap px-4 py-2.5 rounded-full text-sm font-bold transition-all
-                                    ${activeCategory === cat
-                                        ? 'bg-[#001E45] text-white shadow-md shadow-[#001E45]/20'
-                                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                                    }
-                                `}
-                            >
-                                {cat}
-                            </button>
-                        ))}
-                    </div>
+                    {categories.length > 0 ? (
+                        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-8 -mx-4 px-4 md:mx-0 md:px-0">
+                            {categories.map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setActiveCategory(cat)}
+                                    className={`
+                                        whitespace-nowrap px-4 py-2.5 rounded-full text-sm font-bold transition-all
+                                        ${activeCategory === cat
+                                            ? 'bg-[#001E45] text-white shadow-md shadow-[#001E45]/20'
+                                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                        }
+                                    `}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+                    ) : (
+                        !loading && (
+                            <div className="mb-8 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                                FAQ 카테고리가 아직 등록되지 않았습니다. 관리자에서 카테고리를 먼저 생성해주세요.
+                            </div>
+                        )
+                    )}
 
                     {/* FAQ List (Accordion) */}
                     <div className="border-t border-slate-100">
@@ -114,7 +152,7 @@ export const CSCenter: React.FC = () => {
                             <div className="py-20 flex justify-center">
                                 <Loader2 className="animate-spin text-[#001E45]" size={40} />
                             </div>
-                        ) : filteredFAQ.length > 0 ? (
+                        ) : activeCategory && filteredFAQ.length > 0 ? (
                             filteredFAQ.map(item => (
                                 <div key={item.id} className="border-b border-slate-100">
                                     <button
@@ -139,9 +177,13 @@ export const CSCenter: React.FC = () => {
                                     )}
                                 </div>
                             ))
-                        ) : (
+                        ) : activeCategory ? (
                             <div className="py-20 text-center text-slate-400 font-medium">
                                 해당 카테고리에 등록된 질문이 없습니다.
+                            </div>
+                        ) : (
+                            <div className="py-20 text-center text-slate-400 font-medium">
+                                표시할 FAQ 카테고리가 없습니다.
                             </div>
                         )}
                     </div>

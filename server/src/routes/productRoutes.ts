@@ -13,9 +13,7 @@ const products: Product[] = [
         description: '최신 그래픽 카드가 탑재된 고성능 노트북입니다.',
         imageUrl: 'https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&q=80&w=1000',
         stock: 5,
-        discountRate: 15,
-        reviewCount: 42,
-        rating: 4.8
+        discountRate: 15
     },
     {
         id: '2',
@@ -25,9 +23,7 @@ const products: Product[] = [
         description: '가볍고 배터리가 오래가는 비즈니스용 노트북입니다.',
         imageUrl: 'https://images.unsplash.com/photo-1531297461136-82lw8zz1223?auto=format&fit=crop&q=80&w=1000',
         stock: 10,
-        discountRate: 8,
-        reviewCount: 15,
-        rating: 4.5
+        discountRate: 8
     },
     {
         id: '3',
@@ -36,9 +32,7 @@ const products: Product[] = [
         price: 40000,
         description: '고속 출력과 스캔이 가능한 컬러 레이저 복합기입니다.',
         imageUrl: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&q=80&w=1000',
-        stock: 3,
-        reviewCount: 5,
-        rating: 4.0
+        stock: 3
     },
     {
         id: '4',
@@ -48,9 +42,7 @@ const products: Product[] = [
         description: '선명한 화질의 회의실용 빔프로젝터입니다.',
         imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=1000',
         stock: 4,
-        discountRate: 20,
-        reviewCount: 120,
-        rating: 4.9
+        discountRate: 20
     }
 ];
 

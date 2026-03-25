@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+﻿import React, { useState, useEffect } from "react";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { Container } from "../components/ui/Container";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -9,35 +9,25 @@ import {
   Minus,
   Plus,
   ChevronRight,
-  ArrowLeft,
   Package,
   Users,
   MapPin,
   UtensilsCrossed,
   ShoppingBag,
-  FileText,
-  MessageCircle,
-  X,
-  Download,
+  ShoppingCart,
   Check,
   RotateCcw,
   CheckCircle,
   XCircle,
-  ListPlus,
-  PlusCircle,
-
-  ChevronDown
 } from "lucide-react";
 import { getProductById, getProductsByType, Product } from "../src/api/productApi";
-import { getActiveSections, Section } from "../src/api/sectionApi";
 import { createBooking, checkAvailability } from "../src/api/bookingApi";
 import { getAllNavMenuItems, NavMenuItem } from "../src/api/cmsApi";
 import { createNotification } from "../src/api/notificationApi";
 import { useAuth } from "../src/context/AuthContext";
+import { addQuoteCartItem, getQuoteCartCount } from "../src/utils/quoteCart";
 import { registerLocale } from "react-datepicker";
 import { ko } from "date-fns/locale/ko";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 
 registerLocale("ko", ko);
 
@@ -54,6 +44,50 @@ const getComponentComponentImage = (name: string) => {
   if (name.includes("커피")) return "/comp-coffee.png";
   return null;
 };
+
+interface SelectedOptionSummary {
+  name: string;
+  qty: number;
+  subtotal: number;
+}
+
+interface SummaryRow {
+  label: string;
+  value: React.ReactNode;
+}
+
+const SummaryRows = ({ rows }: { rows: SummaryRow[] }) => (
+  <div className="space-y-3 text-sm">
+    {rows.map((row) => (
+      <div key={row.label} className="flex justify-between gap-4">
+        <span className="text-gray-500">{row.label}</span>
+        <span className="font-medium text-gray-900 text-right">{row.value}</span>
+      </div>
+    ))}
+  </div>
+);
+
+const SelectedOptionsSection = ({
+  items,
+  scrollable = false,
+}: {
+  items: SelectedOptionSummary[];
+  scrollable?: boolean;
+}) => (
+  <div className="mt-4 pt-4 border-t border-gray-100">
+    <p className="text-xs font-semibold text-gray-500 mb-2">선택한 옵션</p>
+    <div className={`${scrollable ? "max-h-40 overflow-y-auto " : ""}space-y-2 text-sm`}>
+      {items.map((opt, idx) => (
+        <div key={`${opt.name}-${idx}`} className="flex justify-between text-gray-700">
+          <span className="truncate flex-1">
+            {opt.name} x{opt.qty}
+          </span>
+          <span className="font-medium ml-2">{opt.subtotal.toLocaleString()}원</span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 // Sub-component for individual option items to handle local state and focus
 const OptionItem = ({
@@ -221,18 +255,6 @@ const OptionItem = ({
       </div>
     </div>
   );
-};
-
-const getParentMenus = (menuItems: NavMenuItem[]): NavMenuItem[] => {
-  return menuItems
-    .filter((m) => !m.category)
-    .sort((a, b) => a.display_order - b.display_order);
-};
-
-const getChildMenus = (parentName: string, menuItems: NavMenuItem[]): NavMenuItem[] => {
-  return menuItems
-    .filter((m) => m.category === parentName)
-    .sort((a, b) => a.display_order - b.display_order);
 };
 
 const getCategorizedGroups = (items: Product[], menuItems: NavMenuItem[], tabType?: string): { name: string, display_order: number }[] => {
@@ -415,12 +437,7 @@ export const ProductDetailPage: React.FC = () => {
     d.setDate(d.getDate() + 1);
     return d;
   });
-  const [totalPrice, setTotalPrice] = useState(0);
-  const [days, setDays] = useState(1);
   const [isBooking, setIsBooking] = useState(false);
-  const [availabilityError, setAvailabilityError] = useState<string | null>(
-    null,
-  );
   const [activeTab, setActiveTab] = useState("detail");
   const [expectedPeople, setExpectedPeople] = useState<number | string>(1);
 
@@ -431,12 +448,6 @@ export const ProductDetailPage: React.FC = () => {
     "cooperative" | "additional" | "place" | "food"
   >("cooperative");
 
-
-
-  // Quote Modal State
-  const [showQuoteModal, setShowQuoteModal] = useState(false);
-  const quoteRef = useRef<HTMLDivElement>(null);
-
   // Booking Result Modal State
   const [bookingModal, setBookingModal] = useState<{
     show: boolean;
@@ -444,9 +455,12 @@ export const ProductDetailPage: React.FC = () => {
     type: 'success' | 'error' | 'info';
     onClose?: () => void;
   }>({ show: false, message: '', type: 'info' });
-
-  // Mobile Floating Bar Expand State (Solution 2)
+  const [actionConfirmModal, setActionConfirmModal] = useState<{
+    show: boolean;
+    action: 'booking' | 'cart' | null;
+  }>({ show: false, action: null });
   const [mobileBarExpanded, setMobileBarExpanded] = useState(false);
+  const [quoteCartCount, setQuoteCartCount] = useState(0);
 
   // Basic Components Expand State
   const [basicComponentsExpanded, setBasicComponentsExpanded] = useState(true);
@@ -473,6 +487,10 @@ export const ProductDetailPage: React.FC = () => {
     fetchComponentProducts();
   }, []);
 
+  useEffect(() => {
+    setQuoteCartCount(getQuoteCartCount());
+  }, []);
+
   // Menu Items for hierarchical selection
   const [menuItems, setMenuItems] = useState<NavMenuItem[]>([]);
 
@@ -489,11 +507,6 @@ export const ProductDetailPage: React.FC = () => {
   const [selectedFoods, setSelectedFoods] = useState<{ [key: string]: number }>(
     {},
   );
-
-  // 계층형 네비게이션 상태
-  const [categoryPath, setCategoryPath] = useState<{
-    [sectionKey: string]: string[];
-  }>({});
 
 
 
@@ -553,50 +566,174 @@ export const ProductDetailPage: React.FC = () => {
     window.scrollTo(0, 0);
   }, [id]);
 
-  useEffect(() => {
-    if (startDate && endDate && product) {
-      const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-      const validDays = Math.max(2, diffDays); // 최소 2일 보장
-      setDays(validDays);
-
-      let total = product.price || 0;
-      Object.keys(selectedCooperative).forEach((key) => {
-        const qty = selectedCooperative[key];
-        const item = globalCooperative.find((p) => p.id === key);
-        if (item) total += (item.price || 0) * qty;
-      });
-      Object.keys(selectedAdditional).forEach((key) => {
-        const qty = selectedAdditional[key];
-        const item = globalAdditional.find((p) => p.id === key);
-        if (item) total += (item.price || 0) * qty;
-      });
-      Object.keys(selectedPlaces).forEach((key) => {
-        const qty = selectedPlaces[key];
-        const item = globalPlaces.find((p) => p.id === key);
-        if (item) total += (item.price || 0) * qty;
-      });
-      Object.keys(selectedFoods).forEach((key) => {
-        const qty = selectedFoods[key];
-        const item = globalFoods.find((p) => p.id === key);
-        if (item) total += (item.price || 0) * qty;
-      });
-      setTotalPrice(total); // Fixed price regardless of days
-      setAvailabilityError(null);
+  const days = React.useMemo(() => {
+    if (!startDate || !endDate) {
+      return 1;
     }
+
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    return Math.max(2, diffDays);
+  }, [startDate, endDate]);
+
+  const selectedSummary = React.useMemo<SelectedOptionSummary[]>(() => {
+    const summary: SelectedOptionSummary[] = [];
+
+    Object.entries(selectedCooperative).forEach(([key, qty]) => {
+      const quantity = qty as number;
+      const item = globalCooperative.find((p) => p.id === key);
+      if (item && quantity > 0) {
+        summary.push({ name: item.name, qty: quantity, subtotal: item.price * quantity });
+      }
+    });
+
+    Object.entries(selectedAdditional).forEach(([key, qty]) => {
+      const quantity = qty as number;
+      const item = globalAdditional.find((p) => p.id === key);
+      if (item && quantity > 0) {
+        summary.push({ name: item.name, qty: quantity, subtotal: item.price * quantity });
+      }
+    });
+
+    Object.entries(selectedPlaces).forEach(([key, qty]) => {
+      const quantity = qty as number;
+      const item = globalPlaces.find((p) => p.id === key);
+      if (item && quantity > 0) {
+        summary.push({ name: item.name, qty: quantity, subtotal: item.price * quantity });
+      }
+    });
+
+    Object.entries(selectedFoods).forEach(([key, qty]) => {
+      const quantity = qty as number;
+      const item = globalFoods.find((p) => p.id === key);
+      if (item && quantity > 0) {
+        summary.push({ name: item.name, qty: quantity, subtotal: item.price * quantity });
+      }
+    });
+
+    return summary;
   }, [
-    startDate,
-    endDate,
-    product,
     selectedCooperative,
-    selectedAdditional,
-    selectedPlaces,
-    selectedFoods,
     globalCooperative,
+    selectedAdditional,
     globalAdditional,
+    selectedPlaces,
     globalPlaces,
+    selectedFoods,
     globalFoods,
   ]);
+
+  const totalPrice = React.useMemo(() => {
+    const basePrice = product?.price || 0;
+    return selectedSummary.reduce((total, item) => total + item.subtotal, basePrice);
+  }, [product, selectedSummary]);
+
+  const summaryRows: SummaryRow[] = [
+    { label: "희망 사용 기간", value: `${days}일` },
+    { label: "예상 수량", value: `${expectedPeople || 0}대` },
+    { label: product?.name || "상품", value: `${(product?.price || 0).toLocaleString()}원` },
+  ];
+
+  const buildSelectedOptions = () => {
+    const selectedOptions: {
+      name: string;
+      quantity: number;
+      price: number;
+    }[] = [];
+
+    Object.keys(selectedCooperative).forEach((key) => {
+      const qty = selectedCooperative[key];
+      const item = globalCooperative.find((p) => p.id === key);
+      if (item && qty > 0) {
+        selectedOptions.push({
+          name: item.name,
+          quantity: qty,
+          price: item.price || 0,
+        });
+      }
+    });
+
+    Object.keys(selectedAdditional).forEach((key) => {
+      const qty = selectedAdditional[key];
+      const item = globalAdditional.find((p) => p.id === key);
+      if (item && qty > 0) {
+        selectedOptions.push({
+          name: item.name,
+          quantity: qty,
+          price: item.price || 0,
+        });
+      }
+    });
+
+    Object.keys(selectedPlaces).forEach((key) => {
+      const qty = selectedPlaces[key];
+      const item = globalPlaces.find((p) => p.id === key);
+      if (item && qty > 0) {
+        selectedOptions.push({
+          name: item.name,
+          quantity: qty,
+          price: item.price || 0,
+        });
+      }
+    });
+
+    Object.keys(selectedFoods).forEach((key) => {
+      const qty = selectedFoods[key];
+      const item = globalFoods.find((p) => p.id === key);
+      if (item && qty > 0) {
+        selectedOptions.push({
+          name: item.name,
+          quantity: qty,
+          price: item.price || 0,
+        });
+      }
+    });
+
+    return selectedOptions;
+  };
+
+  const buildBasicComponents = () =>
+    product?.basic_components?.map((comp) => ({
+      name: comp.name,
+      quantity: comp.quantity,
+      model_name: comp.model_name,
+    })) || [];
+
+  const openActionConfirm = (action: 'booking' | 'cart') => {
+    if (!product || !startDate || !endDate || !id || product.stock === 0) return;
+    setActionConfirmModal({ show: true, action });
+  };
+
+  const closeActionConfirm = () => {
+    setActionConfirmModal({ show: false, action: null });
+  };
+
+  const handleAddToQuoteCart = () => {
+    if (!product || !startDate || !endDate || !id) return;
+
+    addQuoteCartItem({
+      product_id: id,
+      product_name: product.name,
+      product_image_url: product.image_url,
+      start_date: startDate.toISOString().split("T")[0],
+      end_date: endDate.toISOString().split("T")[0],
+      expected_people:
+        typeof expectedPeople === "string"
+          ? parseInt(expectedPeople || "0", 10) || 0
+          : expectedPeople,
+      total_price: totalPrice,
+      selected_options: buildSelectedOptions(),
+      basic_components: buildBasicComponents(),
+    });
+
+    setQuoteCartCount(getQuoteCartCount());
+    setBookingModal({
+      show: true,
+      message:
+        "장바구니에 담았습니다.\n여러 품목을 모아서 한 번에 견적 요청할 수 있습니다.",
+      type: "success",
+    });
+  };
 
   const handleBooking = async () => {
     if (!product || !startDate || !endDate || !id) return;
@@ -610,7 +747,6 @@ export const ProductDetailPage: React.FC = () => {
       return;
     }
     setIsBooking(true);
-    setAvailabilityError(null);
     try {
       const isAvailable = await checkAvailability(
         id,
@@ -620,79 +756,15 @@ export const ProductDetailPage: React.FC = () => {
       if (!isAvailable) {
         setBookingModal({
           show: true,
-          message: '선택한 날짜에 이미 대여 신청이 있습니다.\n다른 날짜를 선택해주세요.',
+          message: "선택한 일정에 이미 확정된 대여 건이 있습니다.\n다른 날짜를 선택해주세요.",
           type: 'error',
         });
         setIsBooking(false);
         return;
       }
 
-      // Collect selected options
-      const selectedOptions: {
-        name: string;
-        quantity: number;
-        price: number;
-      }[] = [];
-
-      // Cooperative Items
-      Object.keys(selectedCooperative).forEach((key) => {
-        const qty = selectedCooperative[key];
-        const item = globalCooperative.find((p) => p.id === key);
-        if (item && qty > 0) {
-          selectedOptions.push({
-            name: item.name,
-            quantity: qty,
-            price: item.price || 0,
-          });
-        }
-      });
-
-      // Additional Items
-      Object.keys(selectedAdditional).forEach((key) => {
-        const qty = selectedAdditional[key];
-        const item = globalAdditional.find((p) => p.id === key);
-        if (item && qty > 0) {
-          selectedOptions.push({
-            name: item.name,
-            quantity: qty,
-            price: item.price || 0,
-          });
-        }
-      });
-
-      // Place Items
-      Object.keys(selectedPlaces).forEach((key) => {
-        const qty = selectedPlaces[key];
-        const item = globalPlaces.find((p) => p.id === key);
-        if (item && qty > 0) {
-          selectedOptions.push({
-            name: item.name,
-            quantity: qty,
-            price: item.price || 0,
-          });
-        }
-      });
-
-      // Food Items
-      Object.keys(selectedFoods).forEach((key) => {
-        const qty = selectedFoods[key];
-        const item = globalFoods.find((p) => p.id === key);
-        if (item && qty > 0) {
-          selectedOptions.push({
-            name: item.name,
-            quantity: qty,
-            price: item.price || 0,
-          });
-        }
-      });
-
-      // Basic Components
-      const basicComponents =
-        product.basic_components?.map((comp) => ({
-          name: comp.name,
-          quantity: comp.quantity,
-          model_name: comp.model_name,
-        })) || [];
+      const selectedOptions = buildSelectedOptions();
+      const basicComponents = buildBasicComponents();
 
       await createBooking({
         product_id: id,
@@ -709,15 +781,15 @@ export const ProductDetailPage: React.FC = () => {
       // Send Notification
       await createNotification(
         user.uid,
-        "대여 신청 완료",
-        `${product.name} 대여 신청이 접수되었습니다. 관리자 확인 후 확정됩니다.`,
+        "견적 요청 접수",
+        `${product.name} 견적 요청이 접수되었습니다. 담당자가 확인 후 견적서를 발송해드립니다.`,
         "info",
         "/mypage" // Link to mypage
       );
 
       setBookingModal({
         show: true,
-        message: '대여 신청이 완료되었습니다!\n마이페이지에서 확인하세요.',
+        message: "견적 요청이 접수되었습니다.\n마이페이지에서 진행 상태를 확인하세요.",
         type: 'success',
         onClose: () => navigate('/mypage'),
       });
@@ -725,42 +797,12 @@ export const ProductDetailPage: React.FC = () => {
       console.error("Booking failed", error);
       setBookingModal({
         show: true,
-        message: '대여 신청 처리에 실패했습니다.\n잠시 후 다시 시도해주세요.',
+        message: "견적 요청 처리에 실패했습니다.\n잠시 후 다시 시도해주세요.",
         type: 'error',
       });
     } finally {
       setIsBooking(false);
     }
-  };
-
-  // Calculate selected options summary
-  const getSelectedOptionsSummary = () => {
-    const summary: { name: string; qty: number; subtotal: number }[] = [];
-    Object.entries(selectedCooperative).forEach(([key, qty]) => {
-      const quantity = qty as number;
-      const item = globalCooperative.find((p) => p.id === key);
-      if (item && quantity > 0)
-        summary.push({ name: item.name, qty: quantity, subtotal: item.price * quantity });
-    });
-    Object.entries(selectedAdditional).forEach(([key, qty]) => {
-      const quantity = qty as number;
-      const item = globalAdditional.find((p) => p.id === key);
-      if (item && quantity > 0)
-        summary.push({ name: item.name, qty: quantity, subtotal: item.price * quantity });
-    });
-    Object.entries(selectedPlaces).forEach(([key, qty]) => {
-      const quantity = qty as number;
-      const item = globalPlaces.find((p) => p.id === key);
-      if (item && quantity > 0)
-        summary.push({ name: item.name, qty: quantity, subtotal: item.price * quantity });
-    });
-    Object.entries(selectedFoods).forEach(([key, qty]) => {
-      const quantity = qty as number;
-      const item = globalFoods.find((p) => p.id === key);
-      if (item && quantity > 0)
-        summary.push({ name: item.name, qty: quantity, subtotal: item.price * quantity });
-    });
-    return summary;
   };
 
   if (loading) {
@@ -778,20 +820,6 @@ export const ProductDetailPage: React.FC = () => {
       </div>
     );
   }
-
-  const hasAdditionalOptions =
-    product.additional_components &&
-    product.additional_components.length > 0 &&
-    globalAdditional.length > 0;
-  const hasPlaceOptions =
-    product.place_components &&
-    product.place_components.length > 0 &&
-    globalPlaces.length > 0;
-  const hasFoodOptions =
-    product.food_components &&
-    product.food_components.length > 0 &&
-    globalFoods.length > 0;
-  const hasAnyOptions = true;
 
   const optionTabs = [
     {
@@ -826,24 +854,23 @@ export const ProductDetailPage: React.FC = () => {
       count: Object.values(selectedFoods).filter(qty => (qty as number) > 0).length,
     },
   ].filter((tab) => tab.show);
-
-  const selectedSummary = getSelectedOptionsSummary();
+  const hasAnyOptions = optionTabs.length > 0;
 
   return (
     <>
       <Helmet>
-        <title>{product.name} - 휴먼파트너 렌탈</title>
+        <title>{product.name} - 렌탈파트너 렌탈</title>
         <meta
           name="description"
           content={
             product.description ||
-            `${product.name} 렌탈 서비스. 휴먼파트너에서 합리적인 가격으로 만나보세요.`
+            `${product.name} 렌탈 서비스. 렌탈파트너에서 합리적인 가격으로 만나보세요.`
           }
         />
-        <meta property="og:title" content={`${product.name} - 휴먼파트너`} />
+        <meta property="og:title" content={`${product.name} - 렌탈파트너`} />
         <meta
           property="og:description"
-          content={product.description || "최고의 파트너 휴먼파트너"}
+          content={product.description || "최고의 파트너 렌탈파트너"}
         />
         <meta
           property="og:image"
@@ -1043,12 +1070,6 @@ export const ProductDetailPage: React.FC = () => {
                     </button>
                   </div>
                 </div>
-                {availabilityError && (
-                  <div className="mt-4 flex items-center gap-2 text-red-500 text-sm bg-red-50 p-3 rounded-lg">
-                    <AlertCircle size={18} />
-                    {availabilityError}
-                  </div>
-                )}
               </div>
 
               {/* Basic Configuration (Restored Box/Frame Style) */}
@@ -1151,10 +1172,7 @@ export const ProductDetailPage: React.FC = () => {
                     {optionTabs.map((tab) => (
                       <button
                         key={tab.id}
-                        onClick={() => {
-                          setActiveOptionTab(tab.id);
-                          setCategoryPath((prev) => ({ ...prev, [tab.id]: [] }));
-                        }}
+                        onClick={() => setActiveOptionTab(tab.id)}
                         className={`flex-1 py-4 font-bold text-sm transition-all relative
                                  ${activeOptionTab === tab.id
                             ? "text-[#001E45]"
@@ -1186,19 +1204,18 @@ export const ProductDetailPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Tabbed Product Details (Restored Box Style) */}
+              {/* Product Details Tabs */}
               <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-10 border border-gray-100">
                 <div className="flex border-b border-gray-200">
                   {[
                     { id: "detail", label: "상세정보" },
                     { id: "guide", label: "대여안내" },
-                    { id: "review", label: "사용후기" },
                   ].map((tab) => (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
                       className={`flex-1 py-4 font-semibold text-sm transition-colors relative
-                                                ${activeTab === tab.id ? "text-[#001E45]" : "text-gray-500 hover:text-gray-700"}`}
+                        ${activeTab === tab.id ? "text-[#001E45]" : "text-gray-500 hover:text-gray-700"}`}
                     >
                       {tab.label}
                       {activeTab === tab.id && (
@@ -1222,21 +1239,66 @@ export const ProductDetailPage: React.FC = () => {
                       </p>
                     ))}
                   {activeTab === "guide" && (
-                    <div className="space-y-4 text-gray-600">
-                      <p>
-                        상품 대여는 대여 신청 확정 후 진행되며, 지정된 날짜와
-                        장소에서 수령 가능합니다.
-                      </p>
-                      <p>
-                        반납은 종료일 18:00까지 지정된 반납 장소로 반납해주셔야
-                        합니다.
-                      </p>
+                    <div className="space-y-8 text-gray-600">
+                      <div className="rounded-2xl border border-[#001E45]/10 bg-[#001E45]/[0.03] p-5 md:p-6">
+                        <p className="text-xs font-semibold tracking-[0.12em] text-[#001E45] uppercase mb-2">
+                          대여 안내
+                        </p>
+                        <h4 className="text-lg font-bold text-slate-900 mb-2">
+                          온라인에서는 견적 요청만 접수합니다.
+                        </h4>
+                        <p className="text-sm md:text-base leading-7">
+                          사이트에서는 상품 구성과 예상 금액을 확인한 뒤 견적을 요청하실 수 있습니다.
+                          최종 금액과 진행 조건은 담당자 검토 후 별도로 안내드립니다.
+                        </p>
+                      </div>
+
+                      <div>
+                        <h5 className="text-sm font-bold text-slate-900 mb-4">진행 절차</h5>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                          {[
+                            { step: "01", title: "견적 요청 접수", desc: "상품과 일정, 옵션을 선택해 요청을 남깁니다." },
+                            { step: "02", title: "담당자 검토", desc: "재고, 일정, 설치 조건을 확인합니다." },
+                            { step: "03", title: "견적 안내", desc: "최종 금액과 진행 조건을 회신드립니다." },
+                            { step: "04", title: "확정 및 설치", desc: "일정 확정 후 납품, 설치, 회수를 진행합니다." },
+                          ].map((item) => (
+                            <div key={item.step} className="rounded-xl border border-slate-200 bg-white p-4">
+                              <p className="text-xs font-bold text-[#001E45] mb-2">{item.step}</p>
+                              <p className="font-semibold text-slate-900 mb-2">{item.title}</p>
+                              <p className="text-sm leading-6 text-slate-600">{item.desc}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
+                          <p className="text-xs text-slate-500">납품 가능 지역</p>
+                          <p className="font-bold text-slate-900 mt-1">수도권 당일 대응, 전국 협력망 운영</p>
+                        </div>
+                        <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
+                          <p className="text-xs text-slate-500">평균 응답 시간</p>
+                          <p className="font-bold text-slate-900 mt-1">영업일 기준 1일 이내 1차 회신</p>
+                        </div>
+                        <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
+                          <p className="text-xs text-slate-500">운영 기준</p>
+                          <p className="font-bold text-slate-900 mt-1">설치 일정 확정 후 납품 및 회수 진행</p>
+                        </div>
+                        <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
+                          <p className="text-xs text-slate-500">안내 항목</p>
+                          <p className="font-bold text-slate-900 mt-1">견적서, 계약 조건, 세금계산서 등 별도 안내</p>
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200 p-5">
+                        <p className="text-sm font-bold text-slate-900 mb-3">견적 요청 전 확인하면 좋은 정보</p>
+                        <ul className="space-y-2 text-sm text-slate-600 leading-6">
+                          <li>설치 지역, 희망 일정, 사용 기간</li>
+                          <li>수량, 추가 옵션, 현장 반입 조건</li>
+                          <li>엘리베이터, 주차, 설치 가능 시간 여부</li>
+                        </ul>
+                      </div>
                     </div>
-                  )}
-                  {activeTab === "review" && (
-                    <p className="text-center text-gray-400 py-8">
-                      아직 등록된 후기가 없습니다.
-                    </p>
                   )}
                 </div>
               </div>
@@ -1248,7 +1310,7 @@ export const ProductDetailPage: React.FC = () => {
                 <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
                   <h3 className="font-bold text-lg text-gray-900 mb-2 flex items-center gap-2">
                     <ShoppingBag size={20} className="text-[#001E45]" />
-                    대여 요약
+                    견적 요청 요약
                   </h3>
                   <p className="text-[14px] text-gray-500 leading-[1.4] mb-6">
                     상기 금액은 기본 운영 기준 구성에 대한 최소 금액이며,<br />
@@ -1256,50 +1318,10 @@ export const ProductDetailPage: React.FC = () => {
                   </p>
 
                   {/* Selected Dates */}
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">대여 기간</span>
-                      <span className="font-medium text-gray-900">
-                        {days}일
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">예상 수량</span>
-                      <span className="font-medium text-gray-900">
-                        {expectedPeople || 0}대
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">{product.name}</span>
-                      <span className="font-medium text-gray-900">
-                        {(product.price || 0).toLocaleString()}원
-                      </span>
-                    </div>
-                  </div>
+                  <SummaryRows rows={summaryRows} />
 
                   {/* Selected Options Summary */}
-                  {selectedSummary.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-gray-100">
-                      <p className="text-xs font-semibold text-gray-500 mb-2">
-                        선택한 옵션
-                      </p>
-                      <div className="space-y-2 text-sm max-h-40 overflow-y-auto">
-                        {selectedSummary.map((opt, idx) => (
-                          <div
-                            key={idx}
-                            className="flex justify-between text-gray-700"
-                          >
-                            <span className="truncate flex-1">
-                              {opt.name} x{opt.qty}
-                            </span>
-                            <span className="font-medium ml-2">
-                              {(opt.subtotal).toLocaleString()}원
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {selectedSummary.length > 0 && <SelectedOptionsSection items={selectedSummary} scrollable />}
 
                   {/* Total Price */}
                   <div className="mt-6 pt-4 border-t-2 border-gray-900">
@@ -1315,7 +1337,7 @@ export const ProductDetailPage: React.FC = () => {
 
                   {/* Booking Button */}
                   <button
-                    onClick={handleBooking}
+                    onClick={() => openActionConfirm('booking')}
                     disabled={isBooking || product.stock === 0}
                     className="w-full mt-6 bg-[#001E45] text-white py-4 rounded-xl font-bold hover:bg-[#001E45]/90 transition-all flex items-center justify-center gap-2 disabled:bg-gray-400 shadow-lg"
                   >
@@ -1326,43 +1348,40 @@ export const ProductDetailPage: React.FC = () => {
                     ) : product.stock === 0 ? (
                       "품절"
                     ) : (
-                      "견적 받기"
+                      "견적 요청 접수"
                     )}
                   </button>
-                  <p className="text-xs text-gray-400 text-center mt-3">
-                    대여 신청 확정 후 알림톡이 발송됩니다.
-                  </p>
-
-                  {/* Payment Notice */}
-                  <div className="mt-4 p-3 bg-white rounded-xl border border-gray-200">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">💳</span>
-                      <p className="text-sm font-bold text-gray-800">
-                        법인카드 결제 및 세금계산서 발행 가능
-                      </p>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1 ml-7">
-                      기업 행정 처리를 위한 모든 서류를 지원합니다.
+                  <button
+                    onClick={() => openActionConfirm('cart')}
+                    className="w-full mt-3 bg-white text-[#001E45] py-3 rounded-xl font-bold border-2 border-[#001E45] hover:bg-sky-50 transition-all flex items-center justify-center gap-2"
+                  >
+                    <ShoppingCart size={18} />
+                    장바구니 담기
+                  </button>
+                  <div className="mt-3">
+                    <p className="text-[13px] font-medium text-gray-500 text-left px-1">
+                      접수 후 1영업일 내 담당자가 연락드립니다.
                     </p>
                   </div>
 
-                  {/* Quote Button */}
-                  <div className="mt-4 pt-4 border-t border-gray-100">
-                    <button
-                      onClick={() => setShowQuoteModal(true)}
-                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-[#001E45] text-[#001E45] font-semibold hover:bg-sky-50 transition-all"
-                    >
-                      <FileText size={18} />
-                      견적서 다운로드 (PDF)
-                    </button>
-                  </div>
-
-                  {/* Certification Badges */}
+                  {/* Additional Info & Certification Badges */}
                   <div className="mt-6 pt-4 border-t border-gray-100">
-                    <p className="text-xs font-semibold text-gray-500 mb-3">
-                      인증 기업
-                    </p>
                     <div className="space-y-4">
+                      {/* Quote Notice */}
+                      <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-gray-100 border border-gray-100">
+                          <span className="text-xl">💳</span>
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900 text-sm">
+                            온라인 결제 없이 견적 접수 후 계약 진행
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            법인카드, 세금계산서 등 기업 행정 서류를 지원합니다.
+                          </p>
+                        </div>
+                      </div>
+
                       {/* Certified Company 1 */}
                       <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
                         <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-gray-100 border border-gray-100">
@@ -1409,11 +1428,9 @@ export const ProductDetailPage: React.FC = () => {
         </Container>
       </div>
 
-      {/* Mobile Floating Bar - Expandable Version (Solution 2) */}
       <div
         className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-2xl z-50 lg:hidden transition-all duration-300 ${mobileBarExpanded ? "max-h-[80vh]" : "max-h-[140px]"}`}
       >
-        {/* Expand Toggle Button */}
         <button
           onClick={() => setMobileBarExpanded(!mobileBarExpanded)}
           className="w-full flex items-center justify-center py-2 bg-gray-50 border-b border-gray-100"
@@ -1427,88 +1444,31 @@ export const ProductDetailPage: React.FC = () => {
           </span>
         </button>
 
-        {/* Expanded Content */}
         {mobileBarExpanded && (
           <div className="p-4 max-h-[60vh] overflow-y-auto">
             <h3 className="font-bold text-lg text-gray-900 mb-2 flex items-center gap-2">
               <ShoppingBag size={20} className="text-[#001E45]" />
-              대여 요약
+              견적 요청 요약
             </h3>
             <p className="text-[14px] text-gray-500 leading-[1.4] mb-6">
               상기 금액은 기본 운영 기준 구성에 대한 최소 금액이며,<br />
               수량 및 대여 일정에 따라 조정될 수 있습니다.
             </p>
 
-            {/* Summary Details */}
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">대여 기간</span>
-                <span className="font-medium text-gray-900">{days}일</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">예상 수량</span>
-                <span className="font-medium text-gray-900">
-                  {expectedPeople || 0}대
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">{product.name}</span>
-                <span className="font-medium text-gray-900">
-                  {(product.price || 0).toLocaleString()}원
-                </span>
-              </div>
-            </div>
+            <SummaryRows rows={summaryRows} />
 
-            {/* Selected Options */}
-            {selectedSummary.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <p className="text-xs font-semibold text-gray-500 mb-2">
-                  선택한 옵션
-                </p>
-                <div className="space-y-2 text-sm">
-                  {selectedSummary.map((opt, idx) => (
-                    <div
-                      key={idx}
-                      className="flex justify-between text-gray-700"
-                    >
-                      <span className="truncate flex-1">
-                        {opt.name} x{opt.qty}
-                      </span>
-                      <span className="font-medium ml-2">
-                        {(opt.subtotal).toLocaleString()}원
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {selectedSummary.length > 0 && <SelectedOptionsSection items={selectedSummary} />}
 
-            {/* Payment Notice */}
-            {/* Payment Notice */}
-            <div className="mt-4 p-3 bg-white rounded-xl border border-gray-200">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">💳</span>
-                <p className="text-sm font-bold text-gray-800">
-                  법인카드 결제 및 세금계산서 발행 가능
-                </p>
-              </div>
-              <p className="text-xs text-gray-500 mt-1 ml-7">
-                기업 행정 처리를 위한 모든 서류를 지원합니다.
-              </p>
-            </div>
-
-            {/* Quote Button */}
             <button
-              onClick={() => setShowQuoteModal(true)}
-              className="w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-blue-500 text-blue-600 font-semibold hover:bg-blue-50 transition-all"
+              onClick={() => openActionConfirm('cart')}
+              className="w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-[#001E45] text-[#001E45] font-semibold hover:bg-sky-50 transition-all"
             >
-              <FileText size={18} />
-              견적서 다운로드 (PDF)
+              <ShoppingCart size={18} />
+              장바구니 담기 ({quoteCartCount})
             </button>
           </div>
         )}
 
-        {/* Bottom Bar (Always Visible) */}
         <div className="p-4 border-t border-gray-100 bg-white">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -1518,7 +1478,7 @@ export const ProductDetailPage: React.FC = () => {
               </p>
             </div>
             <button
-              onClick={handleBooking}
+              onClick={() => openActionConfirm('booking')}
               disabled={isBooking || product.stock === 0}
               className="flex-1 max-w-[200px] bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2 disabled:bg-gray-400"
             >
@@ -1529,428 +1489,66 @@ export const ProductDetailPage: React.FC = () => {
                 ? "처리중..."
                 : product.stock === 0
                   ? "품절"
-                  : "견적 받기"}
+                  : "견적 요청 접수"}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Quote Preview Modal */}
-      {showQuoteModal && (
+      {actionConfirmModal.show && (
         <div
           className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4"
-          onClick={() => setShowQuoteModal(false)}
+          onClick={closeActionConfirm}
         >
           <div
-            className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+            className="bg-white rounded-2xl max-w-lg w-full shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
             <div className="flex justify-between items-center p-6 border-b border-gray-200">
               <h2 className="text-xl font-bold text-gray-900">
-                견적서 미리보기
+                {actionConfirmModal.action === 'booking' ? '견적 요청 확인' : '장바구니 확인'}
               </h2>
-              <button
-                onClick={() => setShowQuoteModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-full"
-              >
-                <X size={20} />
-              </button>
             </div>
-
-            {/* Quote Content (for PDF capture) */}
-            <div className="w-full overflow-x-auto bg-gray-100 p-2 sm:p-4 rounded-b-2xl">
-              <div ref={quoteRef} className="min-w-[650px] mx-auto bg-white shadow-sm ring-1 ring-gray-200">
-                <div
-                  className="p-8 bg-white"
-                  style={{ fontFamily: "Malgun Gothic, sans-serif" }}
-                >
-                  {/* Document Title */}
-                  <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold tracking-widest text-gray-900 border-b-4 border-double border-gray-900 pb-4 inline-block px-8">
-                      견 적 서
-                    </h1>
-                  </div>
-
-                  {/* Document Info Table */}
-                  <table
-                    className="w-full border-collapse mb-6"
-                    style={{ fontSize: "12px" }}
-                  >
-                    <tbody>
-                      <tr>
-                        <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-bold w-24 text-center">
-                          문서번호
-                        </td>
-                        <td className="border border-gray-400 px-3 py-2 w-48">
-                          Q-{new Date().getFullYear()}
-                          {String(new Date().getMonth() + 1).padStart(2, "0")}
-                          {String(new Date().getDate()).padStart(2, "0")}-
-                          {String(Math.floor(Math.random() * 10000)).padStart(
-                            4,
-                            "0",
-                          )}
-                        </td>
-                        <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-bold w-24 text-center">
-                          발행일자
-                        </td>
-                        <td className="border border-gray-400 px-3 py-2">
-                          {new Date().toLocaleDateString("ko-KR")}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-bold text-center">
-                          유효기간
-                        </td>
-                        <td className="border border-gray-400 px-3 py-2">
-                          발행일로부터 30일
-                        </td>
-                        <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-bold text-center">
-                          담당자
-                        </td>
-                        <td className="border border-gray-400 px-3 py-2">영업팀</td>
-                      </tr>
-                    </tbody>
-                  </table>
-
-                  {/* Recipient & Supplier Info */}
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    {/* Recipient */}
-                    <div>
-                      <p className="font-bold text-sm mb-2 border-b border-gray-900 pb-1">
-                        【 수 신 】
-                      </p>
-                      <table
-                        className="w-full border-collapse"
-                        style={{ fontSize: "11px" }}
-                      >
-                        <tbody>
-                          <tr>
-                            <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-bold w-16 text-center">
-                              상호명
-                            </td>
-                            <td className="border border-gray-400 px-2 py-1">
-                              {userProfile?.company_name || '(미기재)'}
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-bold text-center">
-                              담당자
-                            </td>
-                            <td className="border border-gray-400 px-2 py-1">
-                              {userProfile?.manager_name || userProfile?.name || '(미기재)'}
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-bold text-center">
-                              연락처
-                            </td>
-                            <td className="border border-gray-400 px-2 py-1">
-                              {userProfile?.phone || '(미기재)'}
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                    {/* Supplier */}
-                    <div>
-                      <p className="font-bold text-sm mb-2 border-b border-gray-900 pb-1">
-                        【 발 신 】
-                      </p>
-                      <table
-                        className="w-full border-collapse"
-                        style={{ fontSize: "11px" }}
-                      >
-                        <tbody>
-                          <tr>
-                            <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-bold w-16 text-center">
-                              상호명
-                            </td>
-                            <td className="border border-gray-400 px-2 py-1 relative">
-                              휴먼파트너
-                              <span className="absolute right-2 top-0 text-[#001E45] text-[10px] font-bold">
-                                [인]
-                              </span>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-bold text-center">
-                              대표자
-                            </td>
-                            <td className="border border-gray-400 px-2 py-1">
-                              이기섭
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-bold text-center">
-                              연락처
-                            </td>
-                            <td className="border border-gray-400 px-2 py-1">
-                              010-4074-6967
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  {/* Rental Period Info */}
-                  <table
-                    className="w-full border-collapse mb-6"
-                    style={{ fontSize: "12px" }}
-                  >
-                    <tbody>
-                      <tr>
-                        <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-bold w-24 text-center">
-                          대여기간
-                        </td>
-                        <td className="border border-gray-400 px-3 py-2">
-                          {startDate ? startDate.toLocaleDateString("ko-KR") : "-"}{" "}
-                          ~ {endDate ? endDate.toLocaleDateString("ko-KR") : "-"} (
-                          {days}일간)
-                        </td>
-                        <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-bold w-24 text-center">
-                          예상 수량
-                        </td>
-                        <td className="border border-gray-400 px-3 py-2 w-32">
-                          {expectedPeople || "-"}대
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-
-                  {/* Main Title */}
-                  <p className="font-bold text-sm mb-2">■ 견적 내역</p>
-
-                  {/* Quote Table */}
-                  <table
-                    className="w-full border-collapse mb-4"
-                    style={{ fontSize: "11px" }}
-                  >
-                    <thead>
-                      <tr className="bg-gray-800 text-white">
-                        <th className="border border-gray-600 px-3 py-2 text-center font-bold w-12">
-                          No
-                        </th>
-                        <th className="border border-gray-600 px-3 py-2 text-left font-bold">
-                          품목
-                        </th>
-                        <th className="border border-gray-600 px-3 py-2 text-center font-bold w-16">
-                          수량
-                        </th>
-                        <th className="border border-gray-600 px-3 py-2 text-right font-bold w-24">
-                          단가
-                        </th>
-                        <th className="border border-gray-600 px-3 py-2 text-right font-bold w-28">
-                          금액
-                        </th>
-                        <th className="border border-gray-600 px-3 py-2 text-center font-bold w-20">
-                          비고
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {/* Base Product */}
-                      <tr>
-                        <td className="border border-gray-400 px-3 py-2 text-center">
-                          1
-                        </td>
-                        <td className="border border-gray-400 px-3 py-2 font-medium">
-                          {product.name}
-                        </td>
-                        <td className="border border-gray-400 px-3 py-2 text-center">
-                          {days}일
-                        </td>
-                        <td className="border border-gray-400 px-3 py-2 text-right">
-                          {product.price?.toLocaleString()}
-                        </td>
-                        <td className="border border-gray-400 px-3 py-2 text-right font-medium">
-                          {((product.price || 0) * days).toLocaleString()}
-                        </td>
-                        <td className="border border-gray-400 px-3 py-2 text-center text-gray-500">
-                          기본
-                        </td>
-                      </tr>
-                      {/* Basic Components (기본 구성) */}
-                      {product.basic_components &&
-                        product.basic_components.map((item, idx) => (
-                          <tr key={`basic-${idx}`} className="bg-blue-50">
-                            <td className="border border-gray-400 px-3 py-1.5 text-center text-gray-400">
-                              -
-                            </td>
-                            <td className="border border-gray-400 px-3 py-1.5 pl-6 text-gray-700">
-                              {item.name}
-                              {item.model_name && (
-                                <span className="text-gray-400 ml-1">
-                                  ({item.model_name})
-                                </span>
-                              )}
-                            </td>
-                            <td className="border border-gray-400 px-3 py-1.5 text-center">
-                              {item.quantity}
-                            </td>
-                            <td className="border border-gray-400 px-3 py-1.5 text-right text-gray-400">
-                              -
-                            </td>
-                            <td className="border border-gray-400 px-3 py-1.5 text-right text-gray-400">
-                              -
-                            </td>
-                            <td className="border border-gray-400 px-3 py-1.5 text-center text-blue-600">
-                              기본포함
-                            </td>
-                          </tr>
-                        ))}
-                      {/* Selected Options */}
-                      {selectedSummary.map((opt, idx) => (
-                        <tr key={idx}>
-                          <td className="border border-gray-400 px-3 py-2 text-center">
-                            {(product.basic_components?.length || 0) + idx + 2}
-                          </td>
-                          <td className="border border-gray-400 px-3 py-2">
-                            {opt.name}
-                          </td>
-                          <td className="border border-gray-400 px-3 py-2 text-center">
-                            {opt.qty}
-                          </td>
-                          <td className="border border-gray-400 px-3 py-2 text-right">
-                            {(opt.subtotal / opt.qty).toLocaleString()}
-                          </td>
-                          <td className="border border-gray-400 px-3 py-2 text-right">
-                            {(opt.subtotal * days).toLocaleString()}
-                          </td>
-                          <td className="border border-gray-400 px-3 py-2 text-center text-gray-500">
-                            추가
-                          </td>
-                        </tr>
-                      ))}
-                      {/* Empty rows for cleaner look */}
-                      {selectedSummary.length === 0 &&
-                        !product.basic_components?.length && (
-                          <tr>
-                            <td
-                              colSpan={6}
-                              className="border border-gray-400 px-3 py-4 text-center text-gray-400"
-                            >
-                              추가 옵션 없음
-                            </td>
-                          </tr>
-                        )}
-                    </tbody>
-                  </table>
-
-                  {/* Total Section */}
-                  <table
-                    className="w-full border-collapse mb-8"
-                    style={{ fontSize: "12px" }}
-                  >
-                    <tbody>
-                      <tr>
-                        <td className="border-2 border-gray-800 bg-gray-100 px-4 py-3 font-bold text-center w-24 whitespace-nowrap">
-                          공급가액
-                        </td>
-                        <td className="border-2 border-gray-800 px-4 py-3 text-right font-medium whitespace-nowrap">
-                          {Math.round(totalPrice / 1.1).toLocaleString()}원
-                        </td>
-                        <td className="border-2 border-gray-800 bg-gray-100 px-4 py-3 font-bold text-center w-20 whitespace-nowrap">
-                          부가세
-                        </td>
-                        <td className="border-2 border-gray-800 px-4 py-3 text-right font-medium whitespace-nowrap">
-                          {Math.round(
-                            totalPrice - totalPrice / 1.1,
-                          ).toLocaleString()}
-                          원
-                        </td>
-                        <td className="border-2 border-gray-800 bg-gray-800 text-white px-4 py-3 font-bold text-center w-24 whitespace-nowrap">
-                          합계금액
-                        </td>
-                        <td className="border-2 border-gray-800 px-4 py-3 text-right font-bold text-lg text-[#001E45] whitespace-nowrap">
-                          {totalPrice.toLocaleString()}원
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-
-                  {/* Notes Section */}
-                  <div className="mb-6">
-                    <p className="font-bold text-sm mb-2">■ 유의사항</p>
-                    <div
-                      className="border border-gray-400 p-3"
-                      style={{ fontSize: "11px", lineHeight: "1.7" }}
-                    >
-                      <ul className="list-disc pl-4 space-y-1.5 text-gray-700">
-                        <li>본 견적서의 유효기간은 발행일로부터 30일입니다.</li>
-                        <li>
-                          상기 금액은 부가가치세(VAT 10%)가 포함된 금액입니다.
-                        </li>
-                        <li>
-                          대여 일정 및 장소에 따라 운송비가 별도로 청구될 수
-                          있습니다.
-                        </li>
-                        <li>
-                          현장 설치 및 철거가 필요한 경우 별도 협의가 필요합니다.
-                        </li>
-                        <li>
-                          대여 물품의 파손 또는 분실 시 수리비 또는 원가를 청구할 수
-                          있습니다.
-                        </li>
-                        <li>
-                          대여 확정을 위해 계약금(총 금액의 50%) 선입금이
-                          필요합니다.
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div
-                    className="text-center pt-4 border-t border-gray-300"
-                    style={{ fontSize: "11px" }}
-                  >
-                    <p className="text-gray-500">
-                      본 견적서는 정식 계약서가 아니며, 최종 계약 시 세부 사항이
-                      변경될 수 있습니다.
-                    </p>
-                    <p className="text-gray-600 mt-2 font-medium">
-                      휴먼파트너 | 사업자등록번호: 314-07-32520 | 대전
-                      유성구 지족로 282번길 17
-                    </p>
-                    <p className="text-gray-500 mt-1">
-                      Tel. 010-4074-6967 | Email. humanpartner@humanpartner.co.kr
-                    </p>
-                  </div>
+            <div className="p-6 space-y-5">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-sm font-semibold text-slate-900 mb-3">
+                  아래 내용으로 {actionConfirmModal.action === 'booking' ? '견적 요청을 접수' : '장바구니에 저장'}합니다.
+                </p>
+                <SummaryRows rows={summaryRows} />
+                {selectedSummary.length > 0 && (
+                  <SelectedOptionsSection items={selectedSummary} />
+                )}
+                <div className="mt-4 pt-4 border-t border-slate-200 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-slate-900">예상 견적 비용</span>
+                  <span className="text-xl font-bold text-[#001E45]">{totalPrice.toLocaleString()}원</span>
                 </div>
               </div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                {actionConfirmModal.action === 'booking'
+                  ? '확인 후 견적 요청이 바로 접수되며, 담당자가 검토 후 마이페이지로 진행 상태를 안내합니다.'
+                  : '확인 후 현재 구성으로 장바구니에 저장되며, 여러 품목을 모아서 한 번에 접수할 수 있습니다.'}
+              </p>
             </div>
-
-            {/* Modal Actions */}
             <div className="flex gap-3 p-6 border-t border-gray-200 bg-gray-50">
               <button
-                onClick={async () => {
-                  if (quoteRef.current) {
-                    const canvas = await html2canvas(quoteRef.current, {
-                      scale: 2,
-                      backgroundColor: "#ffffff",
-                    });
-                    const imgData = canvas.toDataURL("image/png");
-                    const pdf = new jsPDF("p", "mm", "a4");
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-                    pdf.save(
-                      `견적서_${product.name}_${new Date().toLocaleDateString("ko-KR").replace(/\. /g, "-").replace(".", "")}.pdf`,
-                    );
-                  }
-                }}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-all"
+                onClick={closeActionConfirm}
+                className="flex-1 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-100 transition-all"
               >
-                <Download size={18} />
-                PDF 다운로드
+                다시 검토
               </button>
               <button
-                onClick={() => setShowQuoteModal(false)}
-                className="px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-100 transition-all"
+                onClick={() => {
+                  const action = actionConfirmModal.action;
+                  closeActionConfirm();
+                  if (action === 'booking') {
+                    void handleBooking();
+                    return;
+                  }
+                  handleAddToQuoteCart();
+                }}
+                className="flex-1 py-3 rounded-xl bg-[#001E45] text-white font-semibold hover:bg-[#002D66] transition-all"
               >
-                닫기
+                {actionConfirmModal.action === 'booking' ? '이대로 요청하기' : '이대로 담기'}
               </button>
             </div>
           </div>
@@ -1970,8 +1568,8 @@ export const ProductDetailPage: React.FC = () => {
           >
             <div className="mb-5">
               {bookingModal.type === 'success' && (
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                  <CheckCircle size={32} className="text-green-500" />
+                <div className="w-16 h-16 bg-[#001E45]/10 rounded-full flex items-center justify-center mx-auto">
+                  <CheckCircle size={32} className="text-[#001E45]" />
                 </div>
               )}
               {bookingModal.type === 'error' && (
@@ -2003,3 +1601,4 @@ export const ProductDetailPage: React.FC = () => {
     </>
   );
 };
+

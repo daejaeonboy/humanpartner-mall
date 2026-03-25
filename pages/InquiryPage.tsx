@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Container } from '../components/ui/Container';
-import { User, MessageSquare, Clock, Loader2, Plus, X, Send, ChevronDown, CheckCircle, AlertCircle } from 'lucide-react';
+import { User, MessageSquare, Clock, Loader2, Plus, X, Send, ChevronDown, CheckCircle } from 'lucide-react';
 import { useAuth } from '../src/context/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { getMyInquiries, addInquiry, Inquiry } from '../src/api/inquiryApi';
+import { getFAQCategories } from '../src/api/faqApi';
+import { normalizeLegacyFaqCategory, normalizeLegacyFaqCategoryList } from '../src/utils/faqCategoryPolicy';
 
 export const InquiryPage: React.FC = () => {
     const { user, userProfile } = useAuth();
-    const navigate = useNavigate();
     const [inquiries, setInquiries] = useState<Inquiry[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [saving, setSaving] = useState(false);
     const [expandedId, setExpandedId] = useState<string | null>(null);
-    const [formData, setFormData] = useState({ title: '', content: '', category: '서비스 이용' });
-    const normalizeCategory = (value: string) => value === '예약/결제' ? '대여/결제' : value;
+    const [inquiryCategories, setInquiryCategories] = useState<string[]>([]);
+    const [formData, setFormData] = useState({ title: '', content: '', category: '' });
 
     const loadInquiries = async () => {
         if (!user) return;
@@ -28,13 +29,36 @@ export const InquiryPage: React.FC = () => {
         }
     };
 
+    const loadInquiryCategories = async () => {
+        try {
+            // 정책: 문의 분류는 FAQ 카테고리와 동일 소스를 사용한다.
+            const data = await getFAQCategories();
+            const categories = normalizeLegacyFaqCategoryList(data.map((item) => item.name));
+            setInquiryCategories(categories);
+            setFormData((prev) => ({
+                ...prev,
+                category: categories.includes(prev.category) ? prev.category : (categories[0] || ''),
+            }));
+        } catch (error) {
+            console.error('Failed to load inquiry categories:', error);
+            setInquiryCategories([]);
+            setFormData((prev) => ({ ...prev, category: '' }));
+        }
+    };
+
     useEffect(() => {
+        if (!user) return;
         loadInquiries();
+        loadInquiryCategories();
     }, [user]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) return;
+        if (!formData.category) {
+            alert('문의 카테고리를 먼저 설정해주세요. FAQ 카테고리 관리에서 추가할 수 있습니다.');
+            return;
+        }
         setSaving(true);
         try {
             await addInquiry({
@@ -42,11 +66,11 @@ export const InquiryPage: React.FC = () => {
                 user_name: userProfile?.name || '',
                 user_email: userProfile?.email || user.email || '',
                 company_name: userProfile?.company_name || '',
-                category: normalizeCategory(formData.category),
+                category: formData.category,
                 title: formData.title,
                 content: formData.content,
             });
-            setFormData({ title: '', content: '', category: '서비스 이용' });
+            setFormData({ title: '', content: '', category: inquiryCategories[0] || '' });
             setShowForm(false);
             await loadInquiries();
         } catch (error) {
@@ -87,7 +111,10 @@ export const InquiryPage: React.FC = () => {
                             <p className="text-sm text-gray-500 mb-6">{userProfile?.email || user.email}</p>
                             <div className="text-left space-y-1 border-t border-gray-100 pt-4">
                                 <Link to="/mypage" className="text-sm text-gray-500 block w-full text-left py-2 px-2 rounded hover:bg-gray-50 hover:text-black">
-                                    대여 내역
+                                    대여 신청 내역
+                                </Link>
+                                <Link to="/quote-cart" className="text-sm text-gray-500 block w-full text-left py-2 px-2 rounded hover:bg-gray-50 hover:text-black">
+                                    장바구니
                                 </Link>
                                 <Link to="/mypage/info" className="text-sm text-gray-500 block w-full text-left py-2 px-2 rounded hover:bg-gray-50 hover:text-black">
                                     내 정보 관리
@@ -125,13 +152,25 @@ export const InquiryPage: React.FC = () => {
                                             <select
                                                 value={formData.category}
                                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                                disabled={inquiryCategories.length === 0}
                                                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:ring-4 focus:ring-[#001E45]/10 focus:border-[#001E45] outline-none transition-all font-medium appearance-none"
+                                                required
                                             >
-                                                <option value="서비스 이용">서비스 이용</option>
-                                                <option value="대여/결제">대여/결제</option>
-                                                <option value="취소/환불">취소/환불</option>
-                                                <option value="기타">기타</option>
+                                                {inquiryCategories.length > 0 ? (
+                                                    inquiryCategories.map((category) => (
+                                                        <option key={category} value={category}>
+                                                            {category}
+                                                        </option>
+                                                    ))
+                                                ) : (
+                                                    <option value="">카테고리 없음</option>
+                                                )}
                                             </select>
+                                            {inquiryCategories.length === 0 && (
+                                                <p className="text-xs text-amber-600 mt-1">
+                                                    문의 카테고리가 없습니다. 관리자에서 FAQ 카테고리를 먼저 등록해주세요.
+                                                </p>
+                                            )}
                                         </div>
                                         <div>
                                             <label className="block text-sm font-bold text-gray-700 mb-1">제목</label>
@@ -205,7 +244,7 @@ export const InquiryPage: React.FC = () => {
                                                     )}
                                                     <span className="text-gray-300 mx-1 font-light text-xs">|</span>
                                                     <span className="text-[12px] font-bold text-gray-700">
-                                                        {normalizeCategory(item.category || '서비스 이용')}
+                                                        {normalizeLegacyFaqCategory(item.category || '미분류')}
                                                     </span>
                                                 </div>
                                                 <div className="text-[12px] font-medium text-gray-400">
@@ -255,7 +294,7 @@ export const InquiryPage: React.FC = () => {
                                                             <div className="flex-1 space-y-2">
                                                                 <div className="flex items-center justify-between">
                                                                     <div className="flex items-center gap-1.5">
-                                                                        <span className="text-xs font-black text-[#001E45] uppercase tracking-tight">휴먼파트너 답변</span>
+                                                                        <span className="text-xs font-black text-[#001E45] uppercase tracking-tight">렌탈파트너 답변</span>
                                                                         <CheckCircle size={10} className="text-[#001E45]" />
                                                                     </div>
                                                                     <span className="text-[10px] font-medium text-gray-300">{formatDate(item.answered_at!)}</span>

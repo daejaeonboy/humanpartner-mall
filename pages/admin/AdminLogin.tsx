@@ -79,7 +79,7 @@ export const AdminLogin: React.FC = () => {
                         <Shield className="text-white" size={32} />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900">관리자 로그인</h1>
-                    <p className="text-gray-500 mt-2">휴먼파트너 관리 시스템</p>
+                    <p className="text-gray-500 mt-2">렌탈파트너 관리 시스템</p>
                 </div>
 
                 {/* Login Form */}
@@ -101,7 +101,7 @@ export const AdminLogin: React.FC = () => {
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#001E45] focus:border-transparent outline-none transition-all"
-                                placeholder="admin@humanpartner.co.kr"
+                                placeholder="admin@example.com"
                             />
                         </div>
 
@@ -164,7 +164,7 @@ export const AdminLogin: React.FC = () => {
                 </div>
 
                 <p className="text-center text-gray-400 text-xs mt-6">
-                    © 2025 휴먼파트너. All rights reserved.
+                    © 2025 렌탈파트너. All rights reserved.
                 </p>
             </div>
         </div>

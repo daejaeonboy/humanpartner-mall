@@ -1,7 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import { Check, X, Loader2, Clock, Calendar, CheckCircle, XCircle, Trash2, Phone, Building2 } from 'lucide-react';
+import { Loader2, Clock, Calendar, CheckCircle, XCircle, Trash2, Phone, Building2, AlertCircle, Package } from 'lucide-react';
 import { getBookings, updateBookingStatus, deleteBooking, Booking } from '../../src/api/bookingApi';
 import { createNotification } from '../../src/api/notificationApi';
+
+const STATUS_OPTIONS: Array<{ value: Booking['status']; label: string }> = [
+    { value: 'pending', label: '견적 요청 접수' },
+    { value: 'quote_sent', label: '견적서 발송' },
+    { value: 'negotiating', label: '조건 조정 중' },
+    { value: 'confirmed', label: '계약 확정' },
+    { value: 'completed', label: '진행 완료' },
+    { value: 'cancelled', label: '요청 취소' },
+];
+
+const STATUS_NOTIFICATION_MAP: Record<Booking['status'], {
+    title: string;
+    message: (name: string) => string;
+    type: 'info' | 'success' | 'warning' | 'error';
+}> = {
+    pending: {
+        title: '견적 요청 접수',
+        message: (name) => `${name} 견적 요청이 정상 접수되었습니다. 담당자가 순차적으로 확인합니다.`,
+        type: 'info',
+    },
+    quote_sent: {
+        title: '견적서 발송',
+        message: (name) => `${name} 견적서가 발송되었습니다. 검토 후 조정 요청이 가능합니다.`,
+        type: 'info',
+    },
+    negotiating: {
+        title: '견적 조정 진행',
+        message: (name) => `${name} 견적 조건 조정이 진행 중입니다. 요청사항을 반영해 안내드리겠습니다.`,
+        type: 'info',
+    },
+    confirmed: {
+        title: '계약 확정',
+        message: (name) => `${name} 계약이 확정되었습니다. 설치 일정을 안내드리겠습니다.`,
+        type: 'success',
+    },
+    completed: {
+        title: '진행 완료',
+        message: (name) => `${name} 건이 완료 처리되었습니다. 이용해주셔서 감사합니다.`,
+        type: 'success',
+    },
+    cancelled: {
+        title: '요청 취소',
+        message: (name) => `${name} 요청이 취소 처리되었습니다.`,
+        type: 'error',
+    },
+};
 
 export const BookingList = () => {
     const [bookings, setBookings] = useState<Booking[]>([]);
@@ -9,6 +55,7 @@ export const BookingList = () => {
     const [updatingId, setUpdatingId] = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [statusDrafts, setStatusDrafts] = useState<Record<string, Booking['status']>>({});
 
     useEffect(() => {
         loadBookings();
@@ -19,6 +66,14 @@ export const BookingList = () => {
             setLoading(true);
             const data = await getBookings();
             setBookings(data);
+            setStatusDrafts(
+                data.reduce<Record<string, Booking['status']>>((acc, booking) => {
+                    if (booking.id) {
+                        acc[booking.id] = booking.status;
+                    }
+                    return acc;
+                }, {}),
+            );
         } catch (error) {
             console.error('Failed to load bookings:', error);
         } finally {
@@ -27,29 +82,29 @@ export const BookingList = () => {
     };
 
     const handleStatusChange = async (id: string, status: Booking['status']) => {
-        const statusLabel = status === 'confirmed' ? '확정' : '취소';
-        if (!confirm(`이 대여 요청을 ${statusLabel} 처리하시겠습니까?`)) return;
+        const statusLabel = STATUS_OPTIONS.find((option) => option.value === status)?.label || status;
+        if (!confirm(`이 요청 상태를 '${statusLabel}'로 변경하시겠습니까?`)) return;
 
         setUpdatingId(id);
         try {
             await updateBookingStatus(id, status);
             setBookings(bookings.map(b => b.id === id ? { ...b, status } : b));
+            setStatusDrafts((prev) => ({ ...prev, [id]: status }));
 
             // Send Notification
             const targetBooking = bookings.find(b => b.id === id);
             if (targetBooking?.user_id) {
+                const statusNotification = STATUS_NOTIFICATION_MAP[status];
                  await createNotification(
                     targetBooking.user_id,
-                    status === 'confirmed' ? '대여 확정' : '대여 취소',
-                    status === 'confirmed' 
-                        ? `${targetBooking.products?.name || '상품'} 대여 요청이 확정되었습니다. 이용해주셔서 감사합니다.` 
-                        : `${targetBooking.products?.name || '상품'} 대여 요청이 취소되었습니다.`,
-                    status === 'confirmed' ? 'success' : 'error',
+                    statusNotification.title,
+                    statusNotification.message(targetBooking.products?.name || '상품'),
+                    statusNotification.type,
                     '/mypage'
                 );
             }
 
-            alert(`대여 요청이 ${statusLabel}되었습니다.`);
+            alert(`요청 상태가 '${statusLabel}'로 변경되었습니다.`);
         } catch (error) {
             console.error('Failed to update status:', error);
             alert('상태 변경에 실패했습니다.');
@@ -59,13 +114,18 @@ export const BookingList = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('이 대여 요청을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+        if (!confirm('이 견적 요청을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
 
         setDeletingId(id);
         try {
             await deleteBooking(id);
             setBookings(bookings.filter(b => b.id !== id));
-            alert('대여 요청이 삭제되었습니다.');
+            setStatusDrafts((prev) => {
+                const next = { ...prev };
+                delete next[id];
+                return next;
+            });
+            alert('견적 요청이 삭제되었습니다.');
         } catch (error) {
             console.error('Failed to delete booking:', error);
             alert('삭제에 실패했습니다.');
@@ -79,17 +139,32 @@ export const BookingList = () => {
             pending: { 
                 className: 'bg-orange-100 border border-orange-300 text-orange-800', 
                 icon: Calendar, 
-                label: '대여 신청 접수' 
+                label: '견적 요청 접수' 
+            },
+            quote_sent: {
+                className: 'bg-cyan-100 border border-cyan-300 text-cyan-800',
+                icon: Clock,
+                label: '견적서 발송'
+            },
+            negotiating: {
+                className: 'bg-amber-100 border border-amber-300 text-amber-800',
+                icon: AlertCircle,
+                label: '조건 조정 중'
             },
             confirmed: { 
                 className: 'bg-blue-100 border border-blue-300 text-blue-800', 
                 icon: CheckCircle, 
-                label: '대여 확정' 
+                label: '계약 확정' 
+            },
+            completed: {
+                className: 'bg-emerald-100 border border-emerald-300 text-emerald-800',
+                icon: Package,
+                label: '진행 완료'
             },
             cancelled: { 
                 className: 'bg-gray-100 border border-gray-300 text-gray-700', 
                 icon: XCircle, 
-                label: '대여 취소' 
+                label: '요청 취소' 
             },
         };
         const { className, icon: Icon, label } = config[status];
@@ -121,7 +196,7 @@ export const BookingList = () => {
         <div>
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h2 className="text-2xl font-bold text-slate-800">대여 요청 관리</h2>
+                    <h2 className="text-2xl font-bold text-slate-800">견적 요청 관리</h2>
                     <p className="text-slate-500 text-sm mt-1">총 {bookings.length}건</p>
                 </div>
                 <button
@@ -151,7 +226,7 @@ export const BookingList = () => {
                             {bookings.length === 0 ? (
                                 <tr>
                                     <td colSpan={8} className="text-center py-12 text-slate-400">
-                                        대여 요청 내역이 없습니다.
+                                        견적 요청 내역이 없습니다.
                                     </td>
                                 </tr>
                             ) : (
@@ -214,29 +289,34 @@ export const BookingList = () => {
                                                 {getStatusBadge(booking.status)}
                                             </td>
                                             <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
-                                                <div className="flex items-center justify-center gap-1">
+                                                <div className="flex items-center justify-center gap-2">
                                                     {updatingId === booking.id || deletingId === booking.id ? (
                                                         <Loader2 className="animate-spin text-slate-400" size={20} />
                                                     ) : (
                                                         <>
-                                                            {booking.status !== 'confirmed' && (
-                                                                <button
-                                                                    onClick={() => handleStatusChange(booking.id!, 'confirmed')}
-                                                                    className="p-1.5 text-green-500 hover:bg-green-50 rounded-lg transition-colors"
-                                                                    title="확정"
-                                                                >
-                                                                    <Check size={18} />
-                                                                </button>
-                                                            )}
-                                                            {booking.status !== 'cancelled' && (
-                                                                <button
-                                                                    onClick={() => handleStatusChange(booking.id!, 'cancelled')}
-                                                                    className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
-                                                                    title="취소"
-                                                                >
-                                                                    <X size={18} />
-                                                                </button>
-                                                            )}
+                                                            <select
+                                                                value={statusDrafts[booking.id!] || booking.status}
+                                                                onChange={(e) =>
+                                                                    setStatusDrafts((prev) => ({
+                                                                        ...prev,
+                                                                        [booking.id!]: e.target.value as Booking['status'],
+                                                                    }))
+                                                                }
+                                                                className="text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-white min-w-[122px]"
+                                                            >
+                                                                {STATUS_OPTIONS.map((option) => (
+                                                                    <option key={option.value} value={option.value}>
+                                                                        {option.label}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                            <button
+                                                                onClick={() => handleStatusChange(booking.id!, statusDrafts[booking.id!] || booking.status)}
+                                                                disabled={(statusDrafts[booking.id!] || booking.status) === booking.status}
+                                                                className="px-2.5 py-1.5 text-xs rounded-lg bg-[#001E45] text-white disabled:bg-slate-300 disabled:cursor-not-allowed hover:bg-[#03295b] transition-colors"
+                                                            >
+                                                                저장
+                                                            </button>
                                                             <button
                                                                 onClick={() => handleDelete(booking.id!)}
                                                                 className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"

@@ -4,7 +4,7 @@ import { Container } from './ui/Container';
 import { getQuickMenuItems, QuickMenuItem } from '../src/api/cmsApi';
 import {
   Hotel, Zap, Ticket, Gift, Globe, ShoppingBag, Utensils, Car,
-  LayoutGrid, Key, Monitor, Laptop, Printer, Phone, Camera, Plus, Loader2, ChevronsLeft, ChevronsRight, MoveHorizontal
+  LayoutGrid, Key, Monitor, Laptop, Printer, Phone, Camera, Plus, Loader2
 } from 'lucide-react';
 
 // Dynamic icon mapping based on icon name stored in DB
@@ -70,7 +70,7 @@ export const QuickMenu: React.FC = () => {
   }
 
   return (
-    <div className="py-8 md:py-16 bg-white overflow-hidden">
+    <div className="py-12 md:py-16 bg-white overflow-hidden">
       <Container>
         <div className="relative">
             {/* 2-row Grid for mobile, Flex for desktop */}

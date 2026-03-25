@@ -15,8 +15,6 @@ export interface APIProduct {
     imageUrl: string;
     stock: number;
     discountRate?: number;
-    reviewCount?: number;
-    rating?: number;
 }
 
 export interface APIBookingRequest {

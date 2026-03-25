@@ -3,9 +3,11 @@ import {
     Plus, Edit2, Trash2, X, Save, Loader2, HelpCircle, Tag, Check
 } from 'lucide-react';
 import { getFAQs, addFAQ, updateFAQ, deleteFAQ, FAQ, getFAQCategories, addFAQCategory, updateFAQCategory, deleteFAQCategory, FAQCategory } from '../../src/api/faqApi';
-
-const DEFAULT_CATEGORIES = ['자주 묻는 질문', '공통', '이용문의', '대여/결제', '취소/환불', '상품문의', '기타'];
-const normalizeCategory = (value: string) => value === '예약/결제' ? '대여/결제' : value;
+import {
+    DEFAULT_CS_CENTER_SETTINGS,
+    getCSCenterSettings,
+    upsertCSCenterSettings
+} from '../../src/api/siteSettingsApi';
 
 export const FAQManager: React.FC = () => {
     const [faqs, setFaqs] = useState<FAQ[]>([]);
@@ -13,7 +15,7 @@ export const FAQManager: React.FC = () => {
     const [showModal, setShowModal] = useState(false);
     const [editingFaq, setEditingFaq] = useState<FAQ | null>(null);
     const [formData, setFormData] = useState({
-        category: '공통',
+        category: '',
         question: '',
         answer: '',
         display_order: 1
@@ -21,34 +23,32 @@ export const FAQManager: React.FC = () => {
     const [saving, setSaving] = useState(false);
 
     // Category Management State
-    const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+    const [categories, setCategories] = useState<string[]>([]);
     const [dbCategories, setDbCategories] = useState<FAQCategory[]>([]);
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
     const [editingCategoryName, setEditingCategoryName] = useState('');
     const [categoryLoading, setCategoryLoading] = useState(false);
+    const [csCenterSettings, setCsCenterSettings] = useState(DEFAULT_CS_CENTER_SETTINGS);
+    const [csCenterSaving, setCsCenterSaving] = useState(false);
 
     const loadCategories = async () => {
         try {
             const data = await getFAQCategories();
-            if (data.length > 0) {
-                setDbCategories(data);
-                setCategories(data.map(c => normalizeCategory(c.name)));
-            } else {
-                setCategories(DEFAULT_CATEGORIES);
-                setDbCategories([]);
-            }
+            setDbCategories(data);
+            setCategories(data.map(c => c.name));
         } catch (error) {
-            console.error('Failed to load categories, using defaults:', error);
-            setCategories(DEFAULT_CATEGORIES);
+            console.error('Failed to load categories:', error);
+            setDbCategories([]);
+            setCategories([]);
         }
     };
 
     const loadFAQs = async () => {
         try {
             const data = await getFAQs();
-            setFaqs(data.map(faq => ({ ...faq, category: normalizeCategory(faq.category) })));
+            setFaqs(data);
         } catch (error) {
             console.error('Failed to load FAQs:', error);
         } finally {
@@ -56,14 +56,42 @@ export const FAQManager: React.FC = () => {
         }
     };
 
+    const loadCSCenterSettings = async () => {
+        try {
+            const data = await getCSCenterSettings();
+            setCsCenterSettings(data);
+        } catch (error) {
+            console.error('Failed to load CS center settings:', error);
+            setCsCenterSettings(DEFAULT_CS_CENTER_SETTINGS);
+        }
+    };
+
     useEffect(() => {
-        Promise.all([loadFAQs(), loadCategories()]);
+        Promise.all([loadFAQs(), loadCategories(), loadCSCenterSettings()]);
     }, []);
 
+    useEffect(() => {
+        setFormData((prev) => {
+            if (prev.category && categories.includes(prev.category)) {
+                return prev;
+            }
+            return {
+                ...prev,
+                category: categories[0] || ''
+            };
+        });
+    }, [categories]);
+
     const openAddModal = () => {
+        if (categories.length === 0) {
+            alert('FAQ 카테고리가 없습니다. 먼저 카테고리를 생성해주세요.');
+            setShowCategoryModal(true);
+            return;
+        }
+
         setEditingFaq(null);
         setFormData({
-            category: categories[0] || '공통',
+            category: categories[0],
             question: '',
             answer: '',
             display_order: faqs.length + 1
@@ -84,6 +112,10 @@ export const FAQManager: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!formData.category) {
+            alert('FAQ 카테고리를 선택해주세요.');
+            return;
+        }
         setSaving(true);
         try {
             if (editingFaq?.id) {
@@ -177,6 +209,20 @@ export const FAQManager: React.FC = () => {
         }
     };
 
+    const handleSaveCSCenterSettings = async () => {
+        setCsCenterSaving(true);
+        try {
+            await upsertCSCenterSettings(csCenterSettings);
+            alert('고객센터 운영정보가 저장되었습니다.');
+            await loadCSCenterSettings();
+        } catch (error) {
+            console.error('Failed to save cs center settings:', error);
+            alert('고객센터 운영정보 저장에 실패했습니다.');
+        } finally {
+            setCsCenterSaving(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20">
@@ -211,6 +257,67 @@ export const FAQManager: React.FC = () => {
                         <Plus size={20} />
                         FAQ 추가
                     </button>
+                </div>
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-8">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                    <h2 className="text-lg font-bold text-slate-800">고객센터 운영정보</h2>
+                    <button
+                        onClick={handleSaveCSCenterSettings}
+                        disabled={csCenterSaving}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#001E45] text-white text-sm font-bold hover:bg-[#002D66] transition-colors disabled:bg-slate-300"
+                    >
+                        {csCenterSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                        저장
+                    </button>
+                </div>
+                <p className="text-xs text-slate-500 mb-4">
+                    고객센터 전화번호/운영시간/채팅 링크를 설정하면 배포 없이 사용자 화면에 즉시 반영됩니다.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                        <label className="block text-sm font-bold text-slate-700">전화번호</label>
+                        <input
+                            type="text"
+                            value={csCenterSettings.phone}
+                            onChange={(e) => setCsCenterSettings((prev) => ({ ...prev, phone: e.target.value }))}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:ring-4 focus:ring-[#001E45]/10 focus:border-[#001E45] outline-none transition-all font-medium"
+                            placeholder="예: 1800-1985"
+                        />
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="block text-sm font-bold text-slate-700">채팅 링크(URL)</label>
+                        <input
+                            type="url"
+                            value={csCenterSettings.chat_url}
+                            onChange={(e) => setCsCenterSettings((prev) => ({ ...prev, chat_url: e.target.value }))}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:ring-4 focus:ring-[#001E45]/10 focus:border-[#001E45] outline-none transition-all font-medium"
+                            placeholder="https://..."
+                        />
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="block text-sm font-bold text-slate-700">전화 상담 운영시간 문구</label>
+                        <input
+                            type="text"
+                            value={csCenterSettings.business_hours_text}
+                            onChange={(e) =>
+                                setCsCenterSettings((prev) => ({ ...prev, business_hours_text: e.target.value }))
+                            }
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:ring-4 focus:ring-[#001E45]/10 focus:border-[#001E45] outline-none transition-all font-medium"
+                        />
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="block text-sm font-bold text-slate-700">채팅 상담 운영시간 문구</label>
+                        <input
+                            type="text"
+                            value={csCenterSettings.chat_hours_text}
+                            onChange={(e) =>
+                                setCsCenterSettings((prev) => ({ ...prev, chat_hours_text: e.target.value }))
+                            }
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:ring-4 focus:ring-[#001E45]/10 focus:border-[#001E45] outline-none transition-all font-medium"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -292,10 +399,21 @@ export const FAQManager: React.FC = () => {
                                     <select
                                         value={formData.category}
                                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                        disabled={categories.length === 0}
                                         className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 focus:ring-4 focus:ring-[#001E45]/10 focus:border-[#001E45] outline-none transition-all font-medium"
+                                        required
                                     >
-                                        {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                        {categories.length > 0 ? (
+                                            categories.map(c => <option key={c} value={c}>{c}</option>)
+                                        ) : (
+                                            <option value="">카테고리 없음</option>
+                                        )}
                                     </select>
+                                    {categories.length === 0 && (
+                                        <p className="text-xs text-amber-600">
+                                            FAQ 카테고리가 없습니다. 카테고리 관리에서 먼저 생성해주세요.
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="block text-sm font-bold text-slate-700 ml-1">노출 순서</label>

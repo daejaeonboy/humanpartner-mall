@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /mypage/
 
-Sitemap: https://humanpartner.co.kr/sitemap.xml
+Sitemap: https://rentalpartner.kr/sitemap.xml

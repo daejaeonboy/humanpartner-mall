@@ -6,52 +6,37 @@ import { PromoSection } from '../components/PromoSection';
 import { ProductSection } from '../components/ProductSection';
 import { getProducts, Product } from '../src/api/productApi';
 import { getActiveSections, getProductsBySection, Section } from '../src/api/sectionApi';
-import { getAllNavMenuItems, NavMenuItem } from '../src/api/cmsApi';
 import { Loader2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { PopupManager } from '../components/Layout/PopupManager';
 
 interface SectionWithProducts {
     section: Section;
-    products: any[];
+    products: Product[];
 }
 
 export const MainPage: React.FC = () => {
     const [sectionsWithProducts, setSectionsWithProducts] = useState<SectionWithProducts[]>([]);
     const [allProducts, setAllProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
-    const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch sections, all products, and nav menu items in parallel
-                const [sections, products, navItems] = await Promise.all([
-                    getActiveSections(),
-                    getProducts(),
-                    getAllNavMenuItems()
-                ]);
+                const sections = await getActiveSections();
 
-                setAllProducts(products);
+                if (sections.length === 0) {
+                    setAllProducts(await getProducts());
+                    setSectionsWithProducts([]);
+                    return;
+                }
 
-                // Build Category Map (Child Name -> Parent Name)
-                const map: Record<string, string> = {};
-                navItems.forEach(item => {
-                    // Check if item is a child (has a category field pointing to parent)
-                    if (item.category && item.name) {
-                        map[item.name] = item.category;
-                    }
-                });
-                setCategoryMap(map);
-
-                // Fetch products for each section
-                const sectionsData: SectionWithProducts[] = await Promise.all(
+                const sectionsData = await Promise.all(
                     sections.map(async (section) => {
                         const sectionProducts = await getProductsBySection(section.id!);
                         return {
                             section,
                             products: sectionProducts
-                        };
+                        } satisfies SectionWithProducts;
                     })
                 );
 
@@ -65,36 +50,26 @@ export const MainPage: React.FC = () => {
         fetchData();
     }, []);
 
-    // Helper to resolve category name (Child -> Parent if linked)
-    const resolveCategory = (childCategory: string) => {
-        return categoryMap[childCategory] || childCategory;
-    };
-
     // Helper to format products for ProductSection
-    const formatProducts = (products: any[]) => {
+    const formatProducts = (products: Product[]) => {
         return products.map(p => ({
             id: p.id || '',
             title: p.name,
             subtitle: p.name,
             imageUrl: p.image_url || 'https://picsum.photos/seed/product/400/500',
-            category: p.category, // Use raw category
+            category: p.category || '',
             price: p.price,
             discountRate: p.discount_rate,
-            reviewCount: p.review_count,
-            rating: p.rating,
         }));
     };
 
-    // Get unique categories from all products (using raw category)
-    const getCategories = (products: any[]) => {
+    const getCategories = (products: Product[]) => {
         const cats = products.map(p => p.category).filter(Boolean);
         return ['전체', ...Array.from(new Set(cats))];
     };
 
-    // Get unique categories for a section (using raw category)
-    const getSectionCategories = (section: Section, products: any[]) => {
+    const getSectionCategories = (section: Section, products: Product[]) => {
         if (section.categories && section.categories.length > 0) {
-            // Map configured child categories
             const cats = section.categories.map(c => c.name);
             return ['전체', ...Array.from(new Set(cats))];
         }
@@ -104,9 +79,9 @@ export const MainPage: React.FC = () => {
     return (
         <main>
             <Helmet>
-                <title>휴먼파트너 | 사무기기 렌탈 플랫폼</title>
-                <meta name="description" content="복합기, 노트북, 데스크탑 등 사무기기를 합리적인 조건으로 렌탈하세요. 휴먼파트너 렌탈 서비스." />
-                <link rel="canonical" href="https://humanpartner.co.kr/" />
+                <title>렌탈파트너 | 사무기기 렌탈 플랫폼</title>
+                <meta name="description" content="복합기, 노트북, 데스크탑 등 사무기기를 합리적인 조건으로 렌탈하세요. 렌탈파트너 렌탈 서비스." />
+                <link rel="canonical" href="https://rentalpartner.kr/" />
             </Helmet>
             <PopupManager />
             <Hero />
@@ -143,7 +118,7 @@ export const MainPage: React.FC = () => {
                 />
             ) : (
                 <div className="text-center py-20 text-slate-400">
-                    등록된 상품이 없습니다. <Link to="/admin/products" className="text-[#001E45] underline">Admin에서 상품을 추가</Link>해주세요.
+                    등록된 상품이 없습니다. 상품이 준비되는 대로 업데이트하겠습니다.
                 </div>
             )}
         </main>

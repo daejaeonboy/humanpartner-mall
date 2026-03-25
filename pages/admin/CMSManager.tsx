@@ -498,7 +498,7 @@ export const CMSManager: React.FC = () => {
                                             type="text"
                                             value={formData.brand_text || ''}
                                             onChange={(e) => setFormData({ ...formData, brand_text: e.target.value })}
-                                            placeholder="휴먼파트너"
+                                            placeholder="렌탈파트너"
                                             className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45]"
                                         />
                                         <p className="text-xs text-slate-500 mt-1">제목 위에 표시되는 작은 텍스트 (비우면 기본값 사용)</p>

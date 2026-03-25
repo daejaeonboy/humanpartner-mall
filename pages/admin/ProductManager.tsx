@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Plus, Pencil, Trash2, X, Save, Loader2, Upload, Image as ImageIcon, Grid3X3, Bold, Italic, Underline } from 'lucide-react';
-import { getProducts, addProduct, updateProduct, deleteProduct, Product } from '../../src/api/productApi';
+import { getProducts, addProduct, updateProduct, deleteProduct, Product, ProductCatalogType } from '../../src/api/productApi';
 import { getSections, getProductSections, setProductSections, Section } from '../../src/api/sectionApi';
 import { getAllNavMenuItems, NavMenuItem } from '../../src/api/cmsApi';
 import { uploadImage } from '../../src/api/storageApi';
@@ -78,12 +78,13 @@ export const ProductManager = () => {
 
     const [formData, setFormData] = useState({
         name: '', category: '', price: 0, description: '', short_description: '', image_url: '', stock: 99999, discount_rate: 0,
+        catalog_type: 'general' as ProductCatalogType,
         product_type: 'basic' as any,
         basic_components: [] as any[], additional_components: [] as any[],
         cooperative_components: [] as any[], place_components: [] as any[], food_components: [] as any[],
     });
 
-    const [viewMode, setViewMode] = useState<'products' | 'options'>('products');
+    const [viewMode, setViewMode] = useState<'general' | 'package' | 'options'>('general');
     const [viewTab, setViewTab] = useState<'essential' | 'cooperative' | 'additional' | 'place' | 'food'>('additional');
     const [selectedParentCategoryFilter, setSelectedParentCategoryFilter] = useState<string | null>(null);
     const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
@@ -99,14 +100,16 @@ export const ProductManager = () => {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [p, s, m] = await Promise.all([getProducts(), getSections(), getAllNavMenuItems()]);
+            const [p, s, m] = await Promise.all([getProducts({ catalogType: 'all' }), getSections(), getAllNavMenuItems()]);
             setProducts(p); setSections(s); setMenuItems(m);
         } catch (error) { console.error(error); } finally { setLoading(false); }
     };
 
     const resetForm = () => {
+        const defaultCatalogType: ProductCatalogType = viewMode === 'package' ? 'package' : 'general';
         setFormData({
             name: '', category: '', price: 0, description: '', short_description: '', image_url: '', stock: 99999, discount_rate: 0,
+            catalog_type: defaultCatalogType,
             product_type: 'basic',
             basic_components: [], additional_components: [], cooperative_components: [], place_components: [], food_components: [],
         });
@@ -126,6 +129,7 @@ export const ProductManager = () => {
             description: product.description || '', short_description: product.short_description || '',
             image_url: product.image_url || '',
             stock: product.stock, discount_rate: product.discount_rate || 0,
+            catalog_type: product.catalog_type || 'general',
             product_type: product.product_type || 'basic',
             basic_components: product.basic_components || [],
             additional_components: product.additional_components || [],
@@ -162,13 +166,14 @@ export const ProductManager = () => {
         setSaving(true);
         try {
             const clean = (arr: any[]) => (arr || []).filter(i => i.name).map(({ _category, ...rest }) => rest);
+            const isPackageProduct = formData.catalog_type === 'package' && formData.product_type === 'basic';
             const data = {
                 ...formData,
-                basic_components: clean(formData.basic_components),
-                cooperative_components: clean(formData.cooperative_components),
-                additional_components: clean(formData.additional_components),
-                place_components: clean(formData.place_components),
-                food_components: clean(formData.food_components),
+                basic_components: isPackageProduct ? clean(formData.basic_components) : [],
+                cooperative_components: isPackageProduct ? clean(formData.cooperative_components) : [],
+                additional_components: isPackageProduct ? clean(formData.additional_components) : [],
+                place_components: isPackageProduct ? clean(formData.place_components) : [],
+                food_components: isPackageProduct ? clean(formData.food_components) : [],
             };
 
             let id;
@@ -217,32 +222,40 @@ export const ProductManager = () => {
     };
 
     if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="animate-spin text-[#001E45]" size={40} /></div>;
+    const activeCatalogType: ProductCatalogType = viewMode === 'package' ? 'package' : 'general';
+    const generalProductCount = products.filter(p => (p.catalog_type || 'general') === 'general' && (p.product_type === 'basic' || !p.product_type)).length;
+    const packageProductCount = products.filter(p => (p.catalog_type || 'general') === 'package' && (p.product_type === 'basic' || !p.product_type)).length;
 
     return (
         <div className="p-6 max-w-7xl mx-auto">
-            {/* 상단 탭: 패키지 관리 vs 공통 옵션 관리 */}
+            {/* 상단 탭: 일반상품 / 패키지 / 공통 옵션 */}
             <div className="flex border-b mb-6">
-                <button onClick={() => setViewMode('products')} className={`px-6 py-3 font-bold transition-all ${viewMode === 'products' ? 'border-b-2 border-[#001E45] text-[#001E45]' : 'text-slate-400'}`}>패키지 상품 관리</button>
-                <button onClick={() => setViewMode('options')} className={`px-6 py-3 font-bold transition-all ${viewMode === 'options' ? 'border-b-2 border-[#001E45] text-[#001E45]' : 'text-slate-400'}`}>공통 옵션 관리</button>
+                <button onClick={() => { setViewMode('general'); setSelectedParentCategoryFilter(null); setSelectedCategoryFilter(null); }} className={`px-6 py-3 font-bold transition-all ${viewMode === 'general' ? 'border-b-2 border-[#001E45] text-[#001E45]' : 'text-slate-400'}`}>일반 상품 관리</button>
+                <button onClick={() => { setViewMode('package'); setSelectedParentCategoryFilter(null); setSelectedCategoryFilter(null); }} className={`px-6 py-3 font-bold transition-all ${viewMode === 'package' ? 'border-b-2 border-[#001E45] text-[#001E45]' : 'text-slate-400'}`}>패키지 상품 관리</button>
+                <button onClick={() => { setViewMode('options'); setSelectedCategoryFilter(null); }} className={`px-6 py-3 font-bold transition-all ${viewMode === 'options' ? 'border-b-2 border-[#001E45] text-[#001E45]' : 'text-slate-400'}`}>공통 옵션 관리</button>
             </div>
 
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">{viewMode === 'products' ? '패키지 목록' : '품목 목록'}</h2>
+                <h2 className="text-xl font-bold">{viewMode === 'general' ? '일반상품 목록' : viewMode === 'package' ? '패키지 목록' : '품목 목록'}</h2>
                 <button
                     onClick={() => {
-                        const type = viewMode === 'products' ? 'basic' : viewTab;
-                        setFormData({ ...formData, product_type: type });
+                        const type = viewMode === 'options' ? viewTab : 'basic';
+                        const catalogType = viewMode === 'package' ? 'package' : 'general';
+                        setFormData({ ...formData, product_type: type, catalog_type: catalogType });
                         setShowForm(true);
                     }}
                     className="flex items-center gap-2 bg-[#001E45] text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-all font-medium"
                 >
-                    <Plus size={20} /> {viewMode === 'products' ? '새 패키지 추가' : '새 옵션 품목 추가'}
+                    <Plus size={20} /> {viewMode === 'general' ? '새 일반상품 추가' : viewMode === 'package' ? '새 패키지 추가' : '새 옵션 품목 추가'}
                 </button>
             </div>
 
-            {/* 패키지 상품 관리 - 계층형 카테고리 필터 */}
-            {viewMode === 'products' && (() => {
-                const packageProducts = products.filter(p => p.product_type === 'basic' || !p.product_type);
+            {/* 일반/패키지 상품 관리 - 계층형 카테고리 필터 */}
+            {viewMode !== 'options' && (() => {
+                const packageProducts = products.filter(p =>
+                    (p.catalog_type || 'general') === activeCatalogType &&
+                    (p.product_type === 'basic' || !p.product_type)
+                );
 
                 // 상품에 있는 카테고리(중분류) 목록
                 const productCategories = new Set(packageProducts.map(p => p.category).filter(Boolean) as string[]);
@@ -402,7 +415,7 @@ export const ProductManager = () => {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-[1000px] max-h-[90vh] flex flex-col">
                         <div className="flex justify-between p-4 border-b bg-slate-50 rounded-t-xl">
-                            <h3 className="font-bold text-lg">{editingProduct ? '상품 수정' : '새 상품 등록'} <span className="text-sm font-normal text-slate-400">({formData.product_type})</span></h3>
+                            <h3 className="font-bold text-lg">{editingProduct ? '상품 수정' : '새 상품 등록'} <span className="text-sm font-normal text-slate-400">({formData.catalog_type}/{formData.product_type})</span></h3>
                             <button onClick={resetForm} className="text-slate-400 hover:text-red-500"><X size={24} /></button>
                         </div>
 
@@ -477,8 +490,8 @@ export const ProductManager = () => {
                             {/* 상세 설명 */}
                             <div><label className="block text-sm font-bold text-slate-700 mb-2">상세 설명</label><SimpleEditor initialValue={formData.description} onChange={(v) => setFormData({ ...formData, description: v })} /></div>
 
-                            {/* 패키지 구성 (패키지 상품일 때만 노출) */}
-                            {formData.product_type === 'basic' && (
+                            {/* 패키지 상품 구성 설정 */}
+                            {formData.catalog_type === 'package' && formData.product_type === 'basic' && (
                                 <div className="space-y-6 pt-8 border-t">
                                     <h4 className="font-bold text-lg flex items-center gap-2"><Grid3X3 size={22} className="text-[#001E45]" /> 패키지 구성 세부 설정</h4>
 
@@ -570,8 +583,10 @@ export const ProductManager = () => {
                             .filter(p => {
                                 // 상품 타입 필터
                                 let typeMatch = false;
-                                if (viewMode === 'products') {
-                                    typeMatch = p.product_type === 'basic' || !p.product_type;
+                                if (viewMode === 'general' || viewMode === 'package') {
+                                    typeMatch =
+                                        (p.product_type === 'basic' || !p.product_type) &&
+                                        (p.catalog_type || 'general') === activeCatalogType;
                                 } else if (viewTab === 'additional') {
                                     typeMatch = p.product_type === 'essential' || p.product_type === 'additional';
                                 } else if (viewTab === 'cooperative') {
@@ -582,8 +597,8 @@ export const ProductManager = () => {
 
                                 if (!typeMatch) return false;
 
-                                // 패키지 상품 관리: 대분류/중분류 필터
-                                if (viewMode === 'products') {
+                                // 일반/패키지 상품 관리: 대분류/중분류 필터
+                                if (viewMode === 'general' || viewMode === 'package') {
                                     if (selectedCategoryFilter) {
                                         // 중분류가 선택된 경우
                                         return p.category === selectedCategoryFilter;

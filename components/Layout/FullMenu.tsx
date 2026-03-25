@@ -141,7 +141,7 @@ export const FullMenu: React.FC<FullMenuProps> = ({ onClose, variant = 'mobile',
                 {variant === 'mobile' && (
                     <>
                         <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-white sticky top-0 z-10">
-                            <img src="/logo.png" alt="휴먼파트너" className="h-[22px] object-contain" />
+                            <img src="/logo.png" alt="렌탈파트너" className="h-[40px] object-contain" />
                             <button onClick={onClose} className="p-2 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors">
                                 <X size={24} className="text-slate-800" />
                             </button>
@@ -159,7 +159,7 @@ export const FullMenu: React.FC<FullMenuProps> = ({ onClose, variant = 'mobile',
                                             <h3 className="font-bold text-lg text-slate-800 mb-1">
                                                 {userProfile?.name || '사용자'}님, 안녕하세요!
                                             </h3>
-                                            <p className="text-xs text-slate-500">휴먼파트너와 함께<br />필요한 장비를 빠르게 렌탈해보세요.</p>
+                                            <p className="text-xs text-slate-500">렌탈파트너와 함께<br />필요한 장비를 빠르게 렌탈해보세요.</p>
                                         </div>
                                         <div className="flex gap-3">
                                             <Link to="/mypage" onClick={onClose} className="flex-1 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm hover:bg-[#001E45]/10 hover:text-[#001E45] transition-all text-center">마이페이지</Link>

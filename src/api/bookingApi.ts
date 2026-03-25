@@ -1,5 +1,13 @@
 import { supabase } from '../lib/supabase';
 
+export type BookingStatus =
+    | 'pending'
+    | 'quote_sent'
+    | 'negotiating'
+    | 'confirmed'
+    | 'completed'
+    | 'cancelled';
+
 export interface Booking {
     id?: string;
     product_id: string;
@@ -8,7 +16,7 @@ export interface Booking {
     start_date: string;
     end_date: string;
     total_price: number;
-    status: 'pending' | 'confirmed' | 'cancelled';
+    status: BookingStatus;
     created_at?: string;
     selected_options?: { name: string; quantity: number; price: number }[];
     basic_components?: { name: string; quantity: number; model_name?: string }[];

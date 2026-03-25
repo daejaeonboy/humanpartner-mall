@@ -14,6 +14,11 @@ import {
     updateMiceTabPost
 } from '../../src/api/cmsApi';
 import { uploadImage } from '../../src/api/storageApi';
+import {
+    buildGnbContentImageToken,
+    extractGnbContentImageUrls,
+    stripGnbContentImages
+} from '../../src/utils/gnbContent';
 
 type FilterType = 'all' | MiceTabType;
 
@@ -35,7 +40,6 @@ interface FormData {
     summary: string;
     content: string;
     image_url: string;
-    mobile_image_url: string;
     link: string;
     display_order: number;
     is_active: boolean;
@@ -54,7 +58,6 @@ const EMPTY_FORM: FormData = {
     summary: '',
     content: '',
     image_url: '',
-    mobile_image_url: '',
     link: '',
     display_order: 1,
     is_active: true
@@ -90,8 +93,10 @@ export const GnbSectionManager = () => {
     const [showModal, setShowModal] = useState(false);
     const [editingPost, setEditingPost] = useState<MiceTabPost | null>(null);
     const [formData, setFormData] = useState<FormData>(EMPTY_FORM);
-    const desktopFileInputRef = useRef<HTMLInputElement>(null);
-    const mobileFileInputRef = useRef<HTMLInputElement>(null);
+    const thumbnailFileInputRef = useRef<HTMLInputElement>(null);
+    const contentFileInputRef = useRef<HTMLInputElement>(null);
+    const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
+    const [contentSelection, setContentSelection] = useState({ start: 0, end: 0 });
 
     const loadData = async () => {
         setLoading(true);
@@ -118,6 +123,7 @@ export const GnbSectionManager = () => {
         if (filterType === 'all') return posts;
         return posts.filter((post) => post.board_type === filterType);
     }, [posts, filterType]);
+    const contentImageUrls = useMemo(() => extractGnbContentImageUrls(formData.content), [formData.content]);
 
     const openAddTabModal = () => {
         setEditingTab(null);
@@ -190,6 +196,7 @@ export const GnbSectionManager = () => {
         const inferredType = filterType === 'all' ? 'notice' : filterType;
         const nextOrder = posts.filter((p) => p.board_type === inferredType).length + 1;
         setEditingPost(null);
+        setContentSelection({ start: 0, end: 0 });
         setFormData({
             ...EMPTY_FORM,
             board_type: inferredType,
@@ -200,13 +207,13 @@ export const GnbSectionManager = () => {
 
     const openEditModal = (post: MiceTabPost) => {
         setEditingPost(post);
+        setContentSelection({ start: 0, end: 0 });
         setFormData({
             board_type: post.board_type,
             title: post.title || '',
             summary: post.summary || '',
             content: post.content || '',
-            image_url: post.image_url || '',
-            mobile_image_url: post.mobile_image_url || '',
+            image_url: post.image_url || post.mobile_image_url || '',
             link: post.link || '',
             display_order: post.display_order || 1,
             is_active: post.is_active
@@ -217,12 +224,13 @@ export const GnbSectionManager = () => {
     const closeModal = () => {
         setShowModal(false);
         setEditingPost(null);
+        setContentSelection({ start: 0, end: 0 });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
-        const payload: Omit<FormData, 'mobile_image_url'> & { mobile_image_url?: string } = {
+        const payload = {
             board_type: formData.board_type,
             title: formData.title,
             summary: formData.summary,
@@ -232,10 +240,6 @@ export const GnbSectionManager = () => {
             display_order: formData.display_order,
             is_active: formData.is_active
         };
-
-        if (formData.mobile_image_url.trim()) {
-            payload.mobile_image_url = formData.mobile_image_url.trim();
-        }
 
         try {
             if (editingPost?.id) {
@@ -247,13 +251,13 @@ export const GnbSectionManager = () => {
             closeModal();
         } catch (error) {
             console.error('Failed to save GNB tab post:', error);
-            alert('저장에 실패했습니다. 모바일 이미지 저장이 실패한다면 add_mice_tab_posts_mobile_image_col.sql 을 먼저 실행해주세요.');
+            alert('저장에 실패했습니다.');
         } finally {
             setSaving(false);
         }
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: 'desktop' | 'mobile') => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
         if (!file.type.startsWith('image/')) {
@@ -264,18 +268,69 @@ export const GnbSectionManager = () => {
         setUploading(true);
         try {
             const imageUrl = await uploadImage(file);
-            if (target === 'desktop') {
-                setFormData((prev) => ({ ...prev, image_url: imageUrl }));
-            } else {
-                setFormData((prev) => ({ ...prev, mobile_image_url: imageUrl }));
-            }
+            setFormData((prev) => ({ ...prev, image_url: imageUrl }));
         } catch (error) {
             console.error('Failed to upload image:', error);
             alert('이미지 업로드에 실패했습니다.');
         } finally {
             setUploading(false);
-            if (target === 'desktop' && desktopFileInputRef.current) desktopFileInputRef.current.value = '';
-            if (target === 'mobile' && mobileFileInputRef.current) mobileFileInputRef.current.value = '';
+            if (thumbnailFileInputRef.current) thumbnailFileInputRef.current.value = '';
+        }
+    };
+
+    const handleContentSelectionChange = (element: HTMLTextAreaElement) => {
+        setContentSelection({
+            start: element.selectionStart ?? 0,
+            end: element.selectionEnd ?? element.selectionStart ?? 0
+        });
+    };
+
+    const insertContentImageToken = (imageUrl: string) => {
+        setFormData((prev) => {
+            const content = prev.content || '';
+            const start = Math.min(contentSelection.start, content.length);
+            const end = Math.min(contentSelection.end, content.length);
+            const prefix = content.slice(0, start);
+            const suffix = content.slice(end);
+            const token = buildGnbContentImageToken(imageUrl);
+            const leadingSpacing = prefix.length > 0 && !prefix.endsWith('\n') ? '\n\n' : '';
+            const trailingSpacing = suffix.length > 0 && !suffix.startsWith('\n') ? '\n\n' : '';
+            const nextContent = `${prefix}${leadingSpacing}${token}${trailingSpacing}${suffix}`;
+            const nextCursorPosition = prefix.length + leadingSpacing.length + token.length + trailingSpacing.length;
+
+            requestAnimationFrame(() => {
+                const textarea = contentTextareaRef.current;
+                if (!textarea) return;
+                textarea.focus();
+                textarea.setSelectionRange(nextCursorPosition, nextCursorPosition);
+                setContentSelection({ start: nextCursorPosition, end: nextCursorPosition });
+            });
+
+            return {
+                ...prev,
+                content: nextContent
+            };
+        });
+    };
+
+    const handleContentImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            alert('이미지 파일만 업로드할 수 있습니다.');
+            return;
+        }
+
+        setUploading(true);
+        try {
+            const imageUrl = await uploadImage(file, 'gnb-posts/content');
+            insertContentImageToken(imageUrl);
+        } catch (error) {
+            console.error('Failed to upload content image:', error);
+            alert('본문 이미지 업로드에 실패했습니다.');
+        } finally {
+            setUploading(false);
+            if (contentFileInputRef.current) contentFileInputRef.current.value = '';
         }
     };
 
@@ -499,7 +554,7 @@ export const GnbSectionManager = () => {
                                                     {post.title}
                                                 </h4>
                                                 <p className="text-sm text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                                                    {(post.summary || post.content || '').trim() || '입력된 상세 내용이 없습니다.'}
+                                                    {(post.summary || stripGnbContentImages(post.content) || '').trim() || '입력된 상세 내용이 없습니다.'}
                                                 </p>
                                                 {post.link && (
                                                     <div className="mt-2 flex items-center gap-1.5 text-[#001E45] text-xs font-semibold overflow-hidden">
@@ -661,7 +716,7 @@ export const GnbSectionManager = () => {
 
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between p-4 border-b border-slate-200">
                             <h2 className="text-lg font-bold text-slate-800">{editingPost ? '항목 수정' : '항목 추가'}</h2>
                             <button onClick={closeModal} className="text-slate-400 hover:text-slate-600">
@@ -718,103 +773,97 @@ export const GnbSectionManager = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">본문</label>
+                                <div className="flex items-center justify-between gap-3 mb-1">
+                                    <label className="block text-sm font-medium text-slate-700">본문</label>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="file"
+                                            ref={contentFileInputRef}
+                                            accept="image/*"
+                                            onChange={handleContentImageUpload}
+                                            className="hidden"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => contentFileInputRef.current?.click()}
+                                            disabled={uploading}
+                                            className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg transition-colors text-sm font-medium disabled:opacity-60"
+                                        >
+                                            {uploading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
+                                            본문 이미지 업로드
+                                        </button>
+                                    </div>
+                                </div>
                                 <textarea
+                                    ref={contentTextareaRef}
                                     value={formData.content}
                                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45] min-h-[120px]"
+                                    onClick={(e) => handleContentSelectionChange(e.currentTarget)}
+                                    onKeyUp={(e) => handleContentSelectionChange(e.currentTarget)}
+                                    onSelect={(e) => handleContentSelectionChange(e.currentTarget)}
+                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45] min-h-[280px]"
                                     placeholder="상세 내용을 입력하세요."
                                 />
+                                <p className="text-[11px] text-slate-500 mt-2">
+                                    이미지를 업로드하면 현재 커서 위치에 자동 삽입됩니다. 본문 이미지 삭제는 입력창에서 해당 줄을 지우면 됩니다.
+                                </p>
+                                {contentImageUrls.length > 0 && (
+                                    <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                        <p className="text-xs font-semibold text-slate-600 mb-2">본문 삽입 이미지 {contentImageUrls.length}개</p>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                            {contentImageUrls.map((imageUrl, index) => (
+                                                <div key={`${imageUrl}-${index}`} className="aspect-square rounded-lg overflow-hidden border border-slate-200 bg-white">
+                                                    <img src={imageUrl} alt={`본문 이미지 ${index + 1}`} className="w-full h-full object-cover" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">PC 썸네일 이미지 (16:9 권장)</label>
-                                        <input
-                                            type="text"
-                                            value={formData.image_url}
-                                            onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45] text-sm"
-                                            placeholder="PC 이미지 URL 입력 또는 업로드"
-                                        />
-                                        <input
-                                            type="file"
-                                            ref={desktopFileInputRef}
-                                            accept="image/*"
-                                            onChange={(e) => handleImageUpload(e, 'desktop')}
-                                            className="hidden"
-                                        />
-                                        <div className="flex gap-2 mt-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => desktopFileInputRef.current?.click()}
-                                                disabled={uploading}
-                                                className="flex-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg transition-colors text-sm font-medium disabled:opacity-60"
-                                            >
-                                                {uploading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
-                                                PC 이미지 업로드
-                                            </button>
-                                            {formData.image_url && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setFormData({ ...formData, image_url: '' })}
-                                                    className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm"
-                                                >
-                                                    삭제
-                                                </button>
-                                            )}
-                                        </div>
-                                        <p className="text-[11px] text-slate-500 mt-1">메인 배너/목록 카드의 기본 이미지로 사용됩니다.</p>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">썸네일 이미지 (16:9 권장)</label>
+                                    <input
+                                        type="text"
+                                        value={formData.image_url}
+                                        onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45] text-sm"
+                                        placeholder="썸네일 이미지 URL 입력 또는 업로드"
+                                    />
+                                    <input
+                                        type="file"
+                                        ref={thumbnailFileInputRef}
+                                        accept="image/*"
+                                        onChange={handleImageUpload}
+                                        className="hidden"
+                                    />
+                                    <div className="flex gap-2 mt-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => thumbnailFileInputRef.current?.click()}
+                                            disabled={uploading}
+                                            className="flex-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg transition-colors text-sm font-medium disabled:opacity-60"
+                                        >
+                                            {uploading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
+                                            이미지 업로드
+                                        </button>
                                         {formData.image_url && (
-                                            <div className="mt-2 aspect-[16/9] w-full max-w-[220px] bg-slate-50 border border-slate-200 rounded-lg overflow-hidden">
-                                                <img src={formData.image_url} alt="PC 썸네일 미리보기" className="w-full h-full object-cover" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">모바일 썸네일 이미지 (16:18 권장)</label>
-                                        <input
-                                            type="text"
-                                            value={formData.mobile_image_url}
-                                            onChange={(e) => setFormData({ ...formData, mobile_image_url: e.target.value })}
-                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45] text-sm"
-                                            placeholder="모바일 이미지 URL 입력 또는 업로드"
-                                        />
-                                        <input
-                                            type="file"
-                                            ref={mobileFileInputRef}
-                                            accept="image/*"
-                                            onChange={(e) => handleImageUpload(e, 'mobile')}
-                                            className="hidden"
-                                        />
-                                        <div className="flex gap-2 mt-2">
                                             <button
                                                 type="button"
-                                                onClick={() => mobileFileInputRef.current?.click()}
-                                                disabled={uploading}
-                                                className="flex-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg transition-colors text-sm font-medium disabled:opacity-60"
+                                                onClick={() => setFormData({ ...formData, image_url: '' })}
+                                                className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm"
                                             >
-                                                {uploading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
-                                                모바일 이미지 업로드
+                                                삭제
                                             </button>
-                                            {formData.mobile_image_url && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setFormData({ ...formData, mobile_image_url: '' })}
-                                                    className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm"
-                                                >
-                                                    삭제
-                                                </button>
-                                            )}
-                                        </div>
-                                        <p className="text-[11px] text-slate-500 mt-1">모바일에서 우선 노출되며, 비어 있으면 PC 이미지로 자동 대체됩니다.</p>
-                                        {formData.mobile_image_url && (
-                                            <div className="mt-2 aspect-[16/18] w-full max-w-[180px] bg-slate-50 border border-slate-200 rounded-lg overflow-hidden">
-                                                <img src={formData.mobile_image_url} alt="모바일 썸네일 미리보기" className="w-full h-full object-cover" />
-                                            </div>
                                         )}
                                     </div>
+                                    <p className="text-[11px] text-slate-500 mt-1">메인 프로모션 카드와 목록 썸네일에 공통으로 사용됩니다.</p>
+                                    {formData.image_url && (
+                                        <div className="mt-2 aspect-[16/9] w-full max-w-[220px] bg-slate-50 border border-slate-200 rounded-lg overflow-hidden">
+                                            <img src={formData.image_url} alt="썸네일 미리보기" className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">링크 (선택)</label>

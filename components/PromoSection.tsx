@@ -108,9 +108,9 @@ export const PromoSection: React.FC = () => {
   const activeBoardType = activeTab ? resolveBoardType(activeTab) : null;
 
   return (
-    <div className="pb-16 bg-white">
+    <div className="pb-12 md:pb-16 bg-white">
       <Container>
-        <div className="flex w-full mb-10 bg-gray-100/80 p-1.5 rounded-2xl overflow-hidden relative border border-gray-200">
+        <div className="flex w-full mb-[20px] bg-gray-100/80 p-1.5 rounded-2xl overflow-hidden relative border border-gray-200">
           <div className="absolute inset-1.5 z-0 pointer-events-none">
             {tabs.length > 0 && activeTabKey && (
               <div
@@ -129,7 +129,7 @@ export const PromoSection: React.FC = () => {
             <button
               key={getTabKey(tab)}
               onClick={() => setActiveTabKey(getTabKey(tab))}
-              className={`flex-1 py-3 md:py-4 text-center text-[13px] md:text-[15px] font-bold transition-colors duration-300 relative z-10
+                className={`flex-1 py-3 md:py-4 text-center text-[16px] font-bold transition-colors duration-300 relative z-10
                 ${activeTabKey === getTabKey(tab) ? 'text-white' : 'text-slate-500 hover:text-slate-900'}`}
             >
               {tab.name}
@@ -145,7 +145,7 @@ export const PromoSection: React.FC = () => {
           <div className="text-center py-16 text-slate-400">
             이 탭에 표시할 게시글이 없습니다.
             <br />
-            <span className="text-sm">Admin → GNB 섹션 관리에서 썸네일/게시글을 등록해주세요.</span>
+            <span className="text-sm">새 소식이 준비되는 대로 업데이트하겠습니다.</span>
           </div>
         ) : (
           <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory scrollbar-hide [&::-webkit-scrollbar]:hidden">
@@ -156,7 +156,7 @@ export const PromoSection: React.FC = () => {
                 <Link
                   key={post.id || `${post.title}-${index}`}
                   to={detailPath}
-                  className="relative aspect-[16/18] md:aspect-[16/9] w-[330px] md:w-[calc(50%-0.6rem)] overflow-hidden block rounded-2xl cursor-pointer snap-start flex-shrink-0 bg-slate-100 shadow-sm border border-slate-100"
+                  className="relative aspect-[16/9] w-[330px] md:w-[calc(50%_-_0.6rem)] overflow-hidden block rounded-2xl cursor-pointer snap-start flex-shrink-0 bg-slate-100 shadow-sm border border-slate-100"
                 >
                   {(post.image_url || post.mobile_image_url) ? (
                     <picture className="block w-full h-full">

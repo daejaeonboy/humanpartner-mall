@@ -108,8 +108,7 @@ create table if not exists public.products (
     image_url text,
     stock integer not null default 0,
     discount_rate integer default 0,
-    rating numeric(2, 1) default 0,
-    review_count integer default 0,
+    catalog_type text not null default 'general' check (catalog_type in ('general', 'package')),
     product_type text default 'basic' check (product_type in ('basic', 'essential', 'additional', 'cooperative', 'place', 'food')),
     basic_components jsonb not null default '[]'::jsonb,
     additional_components jsonb not null default '[]'::jsonb,
@@ -120,6 +119,7 @@ create table if not exists public.products (
 );
 
 create index if not exists idx_products_category on public.products(category);
+create index if not exists idx_products_catalog_type on public.products(catalog_type);
 create index if not exists idx_products_product_type on public.products(product_type);
 create index if not exists idx_products_created_at on public.products(created_at desc);
 
@@ -196,7 +196,7 @@ create table if not exists public.bookings (
     start_date date not null,
     end_date date not null,
     total_price integer not null default 0,
-    status text not null default 'pending' check (status in ('pending', 'confirmed', 'cancelled')),
+    status text not null default 'pending' check (status in ('pending', 'quote_sent', 'negotiating', 'confirmed', 'completed', 'cancelled')),
     selected_options jsonb not null default '[]'::jsonb,
     basic_components jsonb not null default '[]'::jsonb,
     created_at timestamp with time zone not null default now()
@@ -492,6 +492,30 @@ create policy "Allow all on faqs"
 grant select, insert, update, delete on public.faq_categories to anon, authenticated;
 grant select, insert, update, delete on public.faqs to anon, authenticated;
 
+-- =========================================================
+-- Site Settings (운영 설정)
+-- =========================================================
+create table if not exists public.site_settings (
+    setting_key text primary key,
+    setting_value text not null,
+    updated_at timestamp with time zone not null default now()
+);
+
+drop trigger if exists trg_site_settings_set_updated_at on public.site_settings;
+create trigger trg_site_settings_set_updated_at
+before update on public.site_settings
+for each row
+execute function public.set_updated_at();
+
+alter table public.site_settings enable row level security;
+drop policy if exists "Allow all on site_settings" on public.site_settings;
+create policy "Allow all on site_settings"
+    on public.site_settings
+    for all to anon, authenticated
+    using (true) with check (true);
+
+grant select, insert, update, delete on public.site_settings to anon, authenticated;
+
 -- 기본 FAQ 카테고리
 insert into public.faq_categories (name, display_order)
 values
@@ -503,6 +527,15 @@ values
     ('상품문의', 6),
     ('기타', 7)
 on conflict (name) do nothing;
+
+-- 기본 고객센터 운영정보
+insert into public.site_settings (setting_key, setting_value)
+values
+    ('cs_center_phone', '1800-1985'),
+    ('cs_center_business_hours_text', '고객행복센터(전화): 오전 9시 ~ 오후 6시 운영'),
+    ('cs_center_chat_url', 'https://pf.kakao.com/_iRxghX/chat'),
+    ('cs_center_chat_hours_text', '채팅 상담 문의: 24시간 운영')
+on conflict (setting_key) do nothing;
 
 -- =========================================================
 -- Storage bucket (이미지 업로드용)

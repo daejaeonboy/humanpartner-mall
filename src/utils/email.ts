@@ -18,7 +18,7 @@ export const sendVerificationEmail = async (toName: string, toEmail: string, cod
     const htmlContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
             <div style="text-align: center; margin-bottom: 20px;">
-                <h1 style="color: #001E45; margin: 0;">휴먼파트너</h1>
+                <h1 style="color: #001E45; margin: 0;">렌탈파트너</h1>
                 <p style="color: #666; font-size: 14px;">장소, 장비 </p>
             </div>
             
@@ -26,7 +26,7 @@ export const sendVerificationEmail = async (toName: string, toEmail: string, cod
                 <h2 style="color: #333; margin-top: 0;">이메일 인증 안내</h2>
                 <p style="color: #555; line-height: 1.5;">
                     안녕하세요, ${toName}님.<br/>
-                    휴먼파트너 회원가입을 환영합니다.<br/>
+                    렌탈파트너 회원가입을 환영합니다.<br/>
                     아래 인증번호를 회원가입 화면에 입력해주세요.
                 </p>
                 
@@ -43,7 +43,7 @@ export const sendVerificationEmail = async (toName: string, toEmail: string, cod
             </div>
             
             <div style="text-align: center; margin-top: 20px; color: #aaa; font-size: 12px;">
-                &copy; 2026 Humanpartner. All rights reserved.
+                &copy; 2026 Rentalpartner. All rights reserved.
             </div>
         </div>
     `;
@@ -61,7 +61,7 @@ export const sendVerificationEmail = async (toName: string, toEmail: string, cod
             },
             body: JSON.stringify({
                 to: toEmail,
-                subject: '[휴먼파트너] 회원가입 이메일 인증번호',
+                subject: '[렌탈파트너] 회원가입 이메일 인증번호',
                 html: htmlContent
             }),
         });

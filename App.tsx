@@ -1,65 +1,104 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { lazy, Suspense, useEffect, type ComponentType, type ReactNode } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Header } from './components/Layout/Header';
-import { BottomNav } from './components/Layout/BottomNav';
 import { Footer } from './components/Layout/Footer';
-import { MainPage } from './pages/MainPage';
-import { ProductListPage } from './pages/ProductListPage';
-import { ProductDetailPage } from './pages/ProductDetail';
-import { MyPage } from './pages/MyPage';
-import { MyInfoPage } from './pages/MyInfoPage';
-import { InquiryPage } from './pages/InquiryPage';
-import { Login } from './pages/Login';
-import { SignUp } from './pages/SignUp';
-import { RedirectToProduct } from './pages/RedirectToProduct';
-import { CSCenter } from './pages/CSCenter';
-import { ProductSearchResult } from './pages/ProductSearchResult';
-import { CompanyIntro } from './pages/CompanyIntro';
-import { TermsOfService } from './pages/TermsOfService';
-import { PrivacyPolicy } from './pages/PrivacyPolicy';
-import { MiceBoardPage } from './pages/MiceBoardPage';
-import { GnbPostDetailPage } from './pages/GnbPostDetailPage';
-import { BlankPage } from './pages/BlankPage';
-import { NotFound } from './pages/NotFound';
 import { AuthProvider } from './src/context/AuthContext';
-import { AdminDashboard } from './pages/admin/AdminDashboard';
-import { ProductManager } from './pages/admin/ProductManager';
-import { BookingList } from './pages/admin/BookingList';
-import { SectionManager } from './pages/admin/SectionManager';
-import { CategoryManager } from './pages/admin/CategoryManager';
-import { CMSManager } from './pages/admin/CMSManager';
-import { UserManager } from './pages/admin/UserManager';
-import { AdminLogin } from './pages/admin/AdminLogin';
-import { AdminSignup } from './pages/admin/AdminSignup';
-import { NavMenuManager } from './pages/admin/NavMenuManager';
-import { FAQManager } from './pages/admin/FAQManager';
-import { InquiryManager } from './pages/admin/InquiryManager';
-import { GnbSectionManager } from './pages/admin/GnbSectionManager';
 import { AdminRoute } from './src/components/AdminRoute';
+
+const lazyPage = <T extends Record<string, unknown>>(
+  factory: () => Promise<T>,
+  exportName: keyof T,
+) =>
+  lazy(async () => ({
+    default: (await factory())[exportName] as ComponentType<any>,
+  }));
+
+const MainPage = lazyPage(() => import('./pages/MainPage'), 'MainPage');
+const ProductListPage = lazyPage(() => import('./pages/ProductListPage'), 'ProductListPage');
+const ProductDetailPage = lazyPage(() => import('./pages/ProductDetail'), 'ProductDetailPage');
+const MyPage = lazyPage(() => import('./pages/MyPage'), 'MyPage');
+const MyInfoPage = lazyPage(() => import('./pages/MyInfoPage'), 'MyInfoPage');
+const InquiryPage = lazyPage(() => import('./pages/InquiryPage'), 'InquiryPage');
+const Login = lazyPage(() => import('./pages/Login'), 'Login');
+const SignUp = lazyPage(() => import('./pages/SignUp'), 'SignUp');
+const RedirectToProduct = lazyPage(() => import('./pages/RedirectToProduct'), 'RedirectToProduct');
+const CSCenter = lazyPage(() => import('./pages/CSCenter'), 'CSCenter');
+const ProductSearchResult = lazyPage(() => import('./pages/ProductSearchResult'), 'ProductSearchResult');
+const QuoteCartPage = lazyPage(() => import('./pages/QuoteCart'), 'QuoteCartPage');
+const CompanyIntro = lazyPage(() => import('./pages/CompanyIntro'), 'CompanyIntro');
+const TermsOfService = lazyPage(() => import('./pages/TermsOfService'), 'TermsOfService');
+const PrivacyPolicy = lazyPage(() => import('./pages/PrivacyPolicy'), 'PrivacyPolicy');
+const MiceBoardPage = lazyPage(() => import('./pages/MiceBoardPage'), 'MiceBoardPage');
+const GnbPostDetailPage = lazyPage(() => import('./pages/GnbPostDetailPage'), 'GnbPostDetailPage');
+const BlankPage = lazyPage(() => import('./pages/BlankPage'), 'BlankPage');
+const NotFound = lazyPage(() => import('./pages/NotFound'), 'NotFound');
+const AdminDashboard = lazyPage(() => import('./pages/admin/AdminDashboard'), 'AdminDashboard');
+const ProductManager = lazyPage(() => import('./pages/admin/ProductManager'), 'ProductManager');
+const BookingList = lazyPage(() => import('./pages/admin/BookingList'), 'BookingList');
+const SectionManager = lazyPage(() => import('./pages/admin/SectionManager'), 'SectionManager');
+const CategoryManager = lazyPage(() => import('./pages/admin/CategoryManager'), 'CategoryManager');
+const CMSManager = lazyPage(() => import('./pages/admin/CMSManager'), 'CMSManager');
+const UserManager = lazyPage(() => import('./pages/admin/UserManager'), 'UserManager');
+const AdminLogin = lazyPage(() => import('./pages/admin/AdminLogin'), 'AdminLogin');
+const AdminSignup = lazyPage(() => import('./pages/admin/AdminSignup'), 'AdminSignup');
+const NavMenuManager = lazyPage(() => import('./pages/admin/NavMenuManager'), 'NavMenuManager');
+const FAQManager = lazyPage(() => import('./pages/admin/FAQManager'), 'FAQManager');
+const InquiryManager = lazyPage(() => import('./pages/admin/InquiryManager'), 'InquiryManager');
+const GnbSectionManager = lazyPage(() => import('./pages/admin/GnbSectionManager'), 'GnbSectionManager');
+
+const RouteFallback = () => (
+  <div className="flex min-h-[40vh] items-center justify-center text-sm font-medium text-slate-400">
+    불러오는 중...
+  </div>
+);
+
+const withSuspense = (element: ReactNode) => (
+  <Suspense fallback={<RouteFallback />}>{element}</Suspense>
+);
+
+const ScrollToTop = () => {
+  const { pathname, search, hash } = useLocation();
+
+  useEffect(() => {
+    if (hash) return;
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [pathname, search, hash]);
+
+  return null;
+};
 
 function App() {
   return (
     <AuthProvider>
       <Router>
+        <ScrollToTop />
         <Routes>
           {/* Admin Routes - Protected */}
-          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>}>
-            <Route path="cms" element={<CMSManager />} />
-            <Route path="sections" element={<SectionManager />} />
-            <Route path="categories" element={<CategoryManager />} />
-            <Route path="products" element={<ProductManager />} />
-            <Route path="rental-requests" element={<BookingList />} />
+          <Route
+            path="/admin"
+            element={withSuspense(
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>,
+            )}
+          >
+            <Route path="cms" element={withSuspense(<CMSManager />)} />
+            <Route path="sections" element={withSuspense(<SectionManager />)} />
+            <Route path="categories" element={withSuspense(<CategoryManager />)} />
+            <Route path="products" element={withSuspense(<ProductManager />)} />
+            <Route path="rental-requests" element={withSuspense(<BookingList />)} />
             <Route path="bookings" element={<Navigate to="/admin/rental-requests" replace />} />
-            <Route path="users" element={<UserManager />} />
-            <Route path="menus" element={<NavMenuManager />} />
-            <Route path="faqs" element={<FAQManager />} />
-            <Route path="inquiries" element={<InquiryManager />} />
-            <Route path="gnb-sections" element={<GnbSectionManager />} />
+            <Route path="users" element={withSuspense(<UserManager />)} />
+            <Route path="menus" element={withSuspense(<NavMenuManager />)} />
+            <Route path="faqs" element={withSuspense(<FAQManager />)} />
+            <Route path="inquiries" element={withSuspense(<InquiryManager />)} />
+            <Route path="gnb-sections" element={withSuspense(<GnbSectionManager />)} />
             <Route path="mice-tabs" element={<Navigate to="/admin/gnb-sections" replace />} />
           </Route>
 
           {/* Admin Login - Separate Route */}
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/signup" element={<AdminSignup />} />
+          <Route path="/admin/login" element={withSuspense(<AdminLogin />)} />
+          <Route path="/admin/signup" element={withSuspense(<AdminSignup />)} />
 
           {/* Public Routes */}
           <Route
@@ -67,30 +106,33 @@ function App() {
             element={
               <div className="min-h-screen bg-white">
                 <Header />
-                <Routes>
-                  <Route path="/" element={<MainPage />} />
-                  <Route path="/products" element={<ProductListPage />} />
-                  <Route path="/products/:id" element={<ProductDetailPage />} />
-                  <Route path="/mypage" element={<MyPage />} />
-                  <Route path="/mypage/info" element={<MyInfoPage />} />
-                  <Route path="/mypage/inquiry" element={<InquiryPage />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<SignUp />} />
-                  <Route path="/cs" element={<CSCenter />} />
-                  <Route path="/p/:code" element={<RedirectToProduct />} />
-                  <Route path="/search" element={<ProductSearchResult />} />
-                  <Route path="/company" element={<CompanyIntro />} />
-                  <Route path="/notice" element={<MiceBoardPage boardType="notice" />} />
-                  <Route path="/notice/:id" element={<GnbPostDetailPage boardType="notice" />} />
-                  <Route path="/event" element={<MiceBoardPage boardType="event" />} />
-                  <Route path="/event/:id" element={<GnbPostDetailPage boardType="event" />} />
-                  <Route path="/review" element={<MiceBoardPage boardType="review" />} />
-                  <Route path="/review/:id" element={<GnbPostDetailPage boardType="review" />} />
-                  <Route path="/blank" element={<BlankPage />} />
-                  <Route path="/terms" element={<TermsOfService />} />
-                  <Route path="/privacy" element={<PrivacyPolicy />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <Suspense fallback={<RouteFallback />}>
+                  <Routes>
+                    <Route path="/" element={<MainPage />} />
+                    <Route path="/products" element={<ProductListPage />} />
+                    <Route path="/products/:id" element={<ProductDetailPage />} />
+                    <Route path="/mypage" element={<MyPage />} />
+                    <Route path="/mypage/info" element={<MyInfoPage />} />
+                    <Route path="/mypage/inquiry" element={<InquiryPage />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<SignUp />} />
+                    <Route path="/cs" element={<CSCenter />} />
+                    <Route path="/p/:code" element={<RedirectToProduct />} />
+                    <Route path="/search" element={<ProductSearchResult />} />
+                    <Route path="/quote-cart" element={<QuoteCartPage />} />
+                    <Route path="/company" element={<CompanyIntro />} />
+                    <Route path="/notice" element={<MiceBoardPage boardType="notice" />} />
+                    <Route path="/notice/:id" element={<GnbPostDetailPage boardType="notice" />} />
+                    <Route path="/event" element={<MiceBoardPage boardType="event" />} />
+                    <Route path="/event/:id" element={<GnbPostDetailPage boardType="event" />} />
+                    <Route path="/review" element={<MiceBoardPage boardType="review" />} />
+                    <Route path="/review/:id" element={<GnbPostDetailPage boardType="review" />} />
+                    <Route path="/blank" element={<BlankPage />} />
+                    <Route path="/terms" element={<TermsOfService />} />
+                    <Route path="/privacy" element={<PrivacyPolicy />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
                 <Footer />
               </div>
             }

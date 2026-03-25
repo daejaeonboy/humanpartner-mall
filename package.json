@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy:prod": "npm run build && firebase deploy --project humanpartner-mall --only hosting:humanpartner-mall",
+    "deploy:prod:functions": "firebase deploy --project humanpartner-mall --only functions:sendEmailVerification",
+    "deploy:prod:all": "npm run build && firebase deploy --project humanpartner-mall --only hosting:humanpartner-mall,functions:sendEmailVerification"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",

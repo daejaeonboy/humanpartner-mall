@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { Container } from '../components/ui/Container';
 import { getMiceTabPostById, MiceTabPost, MiceTabType } from '../src/api/cmsApi';
+import { parseGnbContent, stripGnbContentImages } from '../src/utils/gnbContent';
 
 interface GnbPostDetailPageProps {
   boardType: MiceTabType;
@@ -21,6 +22,27 @@ const formatDate = (value?: string) => {
   if (Number.isNaN(date.getTime())) return '-';
   return date.toLocaleDateString('ko-KR');
 };
+
+const URL_PATTERN = /(https?:\/\/[^\s]+)/g;
+
+const renderLinkedText = (text: string) =>
+  text.split(URL_PATTERN).map((part, index) => {
+    if (/^https?:\/\/[^\s]+$/.test(part)) {
+      return (
+        <a
+          key={`${part}-${index}`}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#001E45] underline underline-offset-4 break-all hover:text-[#02306b]"
+        >
+          {part}
+        </a>
+      );
+    }
+
+    return <React.Fragment key={`text-${index}`}>{part}</React.Fragment>;
+  });
 
 export const GnbPostDetailPage: React.FC<GnbPostDetailPageProps> = ({ boardType }) => {
   const { id } = useParams<{ id: string }>();
@@ -55,9 +77,11 @@ export const GnbPostDetailPage: React.FC<GnbPostDetailPageProps> = ({ boardType 
   }, [boardType, id]);
 
   const pageTitle = useMemo(() => {
-    if (!post) return `${meta.title} - 휴먼파트너`;
-    return `${post.title} - ${meta.title} - 휴먼파트너`;
+    if (!post) return `${meta.title} - 렌탈파트너`;
+    return `${post.title} - ${meta.title} - 렌탈파트너`;
   }, [meta.title, post]);
+  const contentBlocks = useMemo(() => parseGnbContent(post?.content), [post?.content]);
+  const plainContent = useMemo(() => stripGnbContentImages(post?.content), [post?.content]);
 
   return (
     <>
@@ -65,7 +89,7 @@ export const GnbPostDetailPage: React.FC<GnbPostDetailPageProps> = ({ boardType 
         <title>{pageTitle}</title>
         <meta
           name="description"
-          content={post?.summary || `${meta.title} 상세 페이지입니다.`}
+          content={post?.summary || plainContent || `${meta.title} 상세 페이지입니다.`}
         />
       </Helmet>
 
@@ -109,9 +133,32 @@ export const GnbPostDetailPage: React.FC<GnbPostDetailPageProps> = ({ boardType 
                 </div>
               )}
 
-              <div className="max-w-full text-[16px] leading-8 text-slate-700 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-                {post.content?.trim() || '등록된 상세 내용이 없습니다.'}
-              </div>
+              {contentBlocks.length > 0 ? (
+                <div className="max-w-full space-y-6">
+                  {contentBlocks.map((block, index) => (
+                    block.type === 'image' ? (
+                      <div key={`${block.type}-${index}`} className="rounded-xl overflow-hidden border border-slate-100 bg-slate-50">
+                        <img
+                          src={block.value}
+                          alt={`${post.title} 본문 이미지 ${index + 1}`}
+                          className="w-full h-auto object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        key={`${block.type}-${index}`}
+                        className="text-[16px] leading-8 text-slate-700 whitespace-pre-wrap break-words [overflow-wrap:anywhere]"
+                      >
+                        {renderLinkedText(block.value)}
+                      </div>
+                    )
+                  ))}
+                </div>
+              ) : (
+                <div className="max-w-full text-[16px] leading-8 text-slate-700 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                  등록된 상세 내용이 없습니다.
+                </div>
+              )}
 
               {post.link && (
                 <div className="mt-10 pt-6 border-t border-gray-100">

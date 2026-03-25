@@ -1,4 +1,10 @@
 import { supabase } from '../lib/supabase';
+import type { ProductCatalogType } from './productApi';
+
+const isMissingCatalogTypeError = (error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error ?? '');
+    return message.includes('catalog_type');
+};
 
 export interface Section {
     id?: string;
@@ -7,7 +13,6 @@ export interface Section {
     is_active: boolean;
     created_at?: string;
     categories?: { id: string; name: string; }[];
-    layout_mode?: string; // 'default' (4 cols), 'wide' (2 cols), etc.
 }
 
 export interface ProductSection {
@@ -125,33 +130,95 @@ export const setProductSections = async (productId: string, sectionIds: string[]
 };
 
 // 섹션별 상품 조회 (상품 정보 포함)
-export const getProductsBySection = async (sectionId: string): Promise<any[]> => {
-    // Note: If you have a 'display_order' column in 'product_sections', you can add .order('display_order') here.
-    // Currently removing explicit 'display_order' select/order to prevent crashes if column is missing.
-    const { data, error } = await supabase
-        .from('product_sections')
-        .select(`
-            product_id,
-            products (
-                id,
-                name,
-                category,
-                price,
-                description,
-                image_url,
-                stock,
-                discount_rate,
-                rating,
-                review_count
-            )
-        `)
-        .eq('section_id', sectionId);
+export const getProductsBySection = async (
+    sectionId: string,
+    options: { catalogType?: ProductCatalogType | 'all' } = {}
+): Promise<any[]> => {
+    const normalizeRows = (rows: any[] | null | undefined) =>
+        (rows || [])
+            .sort((a, b) => {
+                const orderA = typeof a.display_order === 'number' ? a.display_order : Number.MAX_SAFE_INTEGER;
+                const orderB = typeof b.display_order === 'number' ? b.display_order : Number.MAX_SAFE_INTEGER;
+                return orderA - orderB;
+            })
+            .map(ps => ps.products)
+            .filter(Boolean);
 
-    if (error) throw error;
+    try {
+        const query = supabase
+            .from('product_sections')
+            .select(`
+                product_id,
+                display_order,
+                products (
+                    id,
+                    name,
+                    category,
+                    price,
+                    description,
+                    image_url,
+                    stock,
+                    discount_rate,
+                    product_type,
+                    catalog_type
+                )
+            `)
+            .eq('section_id', sectionId);
 
-    // Sort in JS if needed, or if the DB returns insertion order. 
-    // Without display_order column, we can't persist custom order.
-    return data?.map(ps => ps.products).filter(Boolean) || [];
+        if (options.catalogType === 'package') {
+            query.eq('products.catalog_type', 'package');
+        } else if (options.catalogType === 'general') {
+            query.or('catalog_type.eq.general,catalog_type.is.null', { foreignTable: 'products' });
+        }
+
+        const { data, error } = await query.order('display_order', { ascending: true });
+
+        if (error) throw error;
+        return normalizeRows(data);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error ?? '');
+        const missingCatalogType = isMissingCatalogTypeError(error);
+        const missingDisplayOrder = message.includes('display_order');
+
+        if (!missingCatalogType && !missingDisplayOrder) throw error;
+
+        const legacyQuery = supabase
+            .from('product_sections')
+            .select(`
+                product_id,
+                ${missingDisplayOrder ? '' : 'display_order,'}
+                products (
+                    id,
+                    name,
+                    category,
+                    price,
+                    description,
+                    image_url,
+                    stock,
+                    discount_rate,
+                    product_type
+                    ${missingCatalogType ? '' : ', catalog_type'}
+                )
+            `)
+            .eq('section_id', sectionId);
+
+        const orderedLegacyQuery = missingDisplayOrder
+            ? legacyQuery
+            : legacyQuery.order('display_order', { ascending: true });
+
+        const { data, error: legacyError } = await orderedLegacyQuery;
+        if (legacyError) throw legacyError;
+
+        if (options.catalogType === 'package') {
+            return [];
+        }
+
+        if (options.catalogType === 'general' && missingCatalogType) {
+            return normalizeRows(data).filter(product => product.catalog_type !== 'package');
+        }
+
+        return normalizeRows(data);
+    }
 };
 
 // 섹션 내 상품 순서 변경

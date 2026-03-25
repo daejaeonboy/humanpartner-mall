@@ -73,11 +73,16 @@ export const UserManager = () => {
 
     const handleAdminToggle = async (id: string, isAdmin: boolean) => {
         try {
-            await updateUserProfile(id, { is_admin: isAdmin });
-            setUsers(users.map(u => u.id === id ? { ...u, is_admin: isAdmin } : u));
+            const updates: Partial<UserProfile> = isAdmin
+                ? { is_admin: true, is_approved: true }
+                : { is_admin: false };
+
+            const updatedUser = await updateUserProfile(id, updates);
+            setUsers(users.map(u => u.id === id ? { ...u, ...updatedUser } : u));
             if (selectedUser?.id === id) {
-                setSelectedUser({ ...selectedUser, is_admin: isAdmin });
+                setSelectedUser({ ...selectedUser, ...updatedUser });
             }
+            alert(isAdmin ? '관리자 권한과 로그인 승인이 함께 부여되었습니다.' : '관리자 권한이 해제되었습니다.');
         } catch (error) {
             console.error('Failed to update admin status:', error);
             alert('관리자 상태 변경에 실패했습니다.');

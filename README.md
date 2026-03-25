@@ -1,6 +1,6 @@
-# Humanpartner Mall
+# Rentalpartner Mall
 
-휴먼파트너 렌탈 쇼핑몰 프론트엔드/백엔드(서버, Firebase Functions) 프로젝트입니다.
+렌탈파트너 렌탈 쇼핑몰 프론트엔드/백엔드(서버, Firebase Functions) 프로젝트입니다.
 
 ## 1) 환경 변수 설정
 
@@ -60,15 +60,32 @@ npm install
 npm run dev
 ```
 
-## 3) Firebase 프로젝트 연결
+## 3) 배포
 
-`.firebaserc`의 `REPLACE_WITH_FIREBASE_PROJECT_ID`를 실제 Firebase 프로젝트 ID로 변경하세요.
-
-또는:
+운영 배포는 항상 아래 명령만 사용하세요. 이 스크립트들은 활성 Firebase 프로젝트와 무관하게
+`humanpartner-mall` 프로젝트로 고정 배포합니다.
 
 ```bash
-firebase use --add
+npm run deploy:prod
 ```
+
+- 프론트(Hosting)만 배포
+
+```bash
+npm run deploy:prod:functions
+```
+
+- 인증 메일 함수(`sendEmailVerification`)만 배포
+
+```bash
+npm run deploy:prod:all
+```
+
+- 프론트와 인증 메일 함수를 함께 배포
+
+주의:
+- `firebase deploy`를 단독으로 실행하지 마세요.
+- 반드시 위 스크립트로 배포하세요.
 
 ## 4) Supabase 초기 스키마 (필수)
 

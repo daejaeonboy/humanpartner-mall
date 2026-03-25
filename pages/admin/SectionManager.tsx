@@ -13,7 +13,7 @@ export const SectionManager: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingSection, setEditingSection] = useState<Section | null>(null);
-    const [formData, setFormData] = useState({ name: '', display_order: 0, is_active: true, layout_mode: 'grid-4' });
+    const [formData, setFormData] = useState({ name: '', display_order: 0, is_active: true });
     const [saving, setSaving] = useState(false);
 
     // Product Ordering State
@@ -41,8 +41,7 @@ export const SectionManager: React.FC = () => {
         setFormData({
             name: '',
             display_order: sections.length + 1,
-            is_active: true,
-            layout_mode: 'grid-4'
+            is_active: true
         });
         setShowModal(true);
     };
@@ -52,8 +51,7 @@ export const SectionManager: React.FC = () => {
         setFormData({
             name: section.name,
             display_order: section.display_order,
-            is_active: section.is_active,
-            layout_mode: section.layout_mode || 'grid-4'
+            is_active: section.is_active
         });
         setShowModal(true);
     };
@@ -62,7 +60,7 @@ export const SectionManager: React.FC = () => {
         setOrderingSection(section);
         setLoadingProducts(true);
         try {
-            const products = await getProductsBySection(section.id!);
+            const products = await getProductsBySection(section.id!, { catalogType: 'all' });
             setSectionProducts(products);
         } catch (error) {
             console.error(error);
@@ -276,24 +274,6 @@ export const SectionManager: React.FC = () => {
                                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#001E45]"
                                 />
                             </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    레이아웃 설정 (한 줄 당 상품 수)
-                                </label>
-                                <select
-                                    value={formData.layout_mode || 'grid-4'}
-                                    onChange={(e) => setFormData({ ...formData, layout_mode: e.target.value })}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#001E45]"
-                                >
-                                    <option value="grid-4">4개 (기본)</option>
-                                    <option value="grid-2">2개 (크게 - 강조형)</option>
-                                    <option value="grid-3">3개 (보통)</option>
-                                    <option value="grid-5">5개 (작게)</option>
-                                </select>
-                            </div>
-
-
 
                             <div className="flex items-center gap-2">
                                 <input

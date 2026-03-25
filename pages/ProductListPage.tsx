@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container } from '../components/ui/Container';
-import { Star, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { getProducts, Product } from '../src/api/productApi';
 import { getProductsBySection } from '../src/api/sectionApi';
@@ -198,12 +198,6 @@ export const ProductListPage: React.FC = () => {
                                         <span className="font-bold text-lg">
                                             {product.price?.toLocaleString()}원/일
                                         </span>
-                                    </div>
-
-                                    <div className="flex items-center gap-1 text-sm text-gray-500">
-                                        <Star size={14} className="fill-yellow-400 text-yellow-400" />
-                                        <span className="font-bold text-black">{product.rating || 0}</span>
-                                        <span>({product.review_count?.toLocaleString() || 0})</span>
                                     </div>
 
                                     {product.stock !== undefined && product.stock > 0 && product.stock <= 3 && (

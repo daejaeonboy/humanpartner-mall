@@ -8,7 +8,7 @@ export const NotFound: React.FC = () => {
     return (
         <div className="min-h-[70vh] flex items-center justify-center py-20 px-4">
             <Helmet>
-                <title>페이지를 찾을 수 없습니다 - 휴먼파트너</title>
+                <title>페이지를 찾을 수 없습니다 - 렌탈파트너</title>
             </Helmet>
             
             <Container>

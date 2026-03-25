@@ -6,7 +6,7 @@ export const EventPage: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>EVENT - 휴먼파트너</title>
+        <title>EVENT - 렌탈파트너</title>
         <meta name="description" content="진행 중인 이벤트 목록입니다." />
       </Helmet>
       <div className="pt-24 pb-16 bg-gray-50 min-h-screen">
