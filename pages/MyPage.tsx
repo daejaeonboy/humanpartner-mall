@@ -4,10 +4,13 @@ import { Calendar, User, Clock, Loader2, CheckCircle, XCircle, AlertCircle, Pack
 import { getUserBookings, Booking, updateBookingStatus } from '../src/api/bookingApi';
 import { getProducts } from '../src/api/productApi';
 import { useAuth } from '../src/context/AuthContext';
+import { usePriceDisplay } from '../src/context/PriceDisplayContext';
+import { getPublicPriceClassName, getPublicPriceText, INQUIRY_PRICE_TEXT_CLASS } from '../src/utils/priceDisplay';
 import { Link } from 'react-router-dom';
 
 export const MyPage: React.FC = () => {
     const { user, userProfile } = useAuth();
+    const { mode: priceDisplayMode, loading: priceDisplayLoading, isInquiryMode } = usePriceDisplay();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
     const [imageMap, setImageMap] = useState<Record<string, string>>({});
@@ -155,18 +158,31 @@ export const MyPage: React.FC = () => {
             const pdf = new JsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            const documentFileLabel = isInquiryMode ? '견적요청서' : '견적서';
 
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`견적서_${booking.products?.name || '상품'}_${booking.id.slice(0, 8)}.pdf`);
+            pdf.save(`${documentFileLabel}_${booking.products?.name || '상품'}_${booking.id.slice(0, 8)}.pdf`);
         } catch (error) {
             console.error('Failed to download quote PDF:', error);
-            alert('견적서 다운로드에 실패했습니다. 잠시 후 다시 시도해주세요.');
+            alert(`${isInquiryMode ? '견적 요청서' : '견적서'} 다운로드에 실패했습니다. 잠시 후 다시 시도해주세요.`);
         } finally {
             setDownloadingId(null);
         }
     };
 
     const visibleBookings = bookings.filter((booking) => booking.status !== 'cancelled');
+    const formatCustomerPrice = (
+        amount: number,
+        options?: { suffix?: string; zeroAsHidden?: boolean },
+    ) => getPublicPriceText({
+        amount,
+        mode: priceDisplayMode,
+        loading: priceDisplayLoading,
+        suffix: options?.suffix ?? '원',
+        zeroAsHidden: options?.zeroAsHidden ?? false,
+    });
+    const documentTitle = isInquiryMode ? '견 적 요 청 서' : '견 적 서';
+    const documentButtonText = isInquiryMode ? '견적 요청서 다운로드' : '견적서 다운로드';
 
     if (!user) {
         return (
@@ -259,7 +275,17 @@ export const MyPage: React.FC = () => {
                                                         <span className="font-medium">{formatDate(booking.start_date)} ~ {formatDate(booking.end_date)}</span>
                                                     </div>
                                                     <div className="flex items-center justify-between text-xs text-gray-500 mb-6">
-                                                        <span>예상 금액 {booking.total_price.toLocaleString()}원</span>
+                                                        <span>
+                                                            예상 금액{' '}
+                                                            <span className={getPublicPriceClassName({
+                                                                mode: priceDisplayMode,
+                                                                loading: priceDisplayLoading,
+                                                                visibleClass: 'text-gray-500',
+                                                                hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+                                                            })}>
+                                                                {formatCustomerPrice(booking.total_price)}
+                                                            </span>
+                                                        </span>
                                                         <span>옵션 {optionCount}건</span>
                                                     </div>
                                                     <button
@@ -317,7 +343,17 @@ export const MyPage: React.FC = () => {
                                                             <span>{formatDate(booking.start_date)} ~ {formatDate(booking.end_date)}</span>
                                                         </div>
                                                         <div className="flex flex-wrap gap-4 text-sm text-gray-500 font-medium">
-                                                            <span>예상 금액 {booking.total_price.toLocaleString()}원</span>
+                                                            <span>
+                                                                예상 금액{' '}
+                                                                <span className={getPublicPriceClassName({
+                                                                    mode: priceDisplayMode,
+                                                                    loading: priceDisplayLoading,
+                                                                    visibleClass: 'text-gray-500',
+                                                                    hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+                                                                })}>
+                                                                    {formatCustomerPrice(booking.total_price)}
+                                                                </span>
+                                                            </span>
                                                             <span>기본 구성 {basicCount}건</span>
                                                             <span>추가 옵션 {optionCount}건</span>
                                                         </div>
@@ -381,7 +417,12 @@ export const MyPage: React.FC = () => {
                                                             </div>
                                                             <div className="flex justify-between items-center py-1">
                                                                 <span className="text-sm text-slate-500 font-medium">예상 금액</span>
-                                                                <span className="text-base font-bold text-[#001E45]">{booking.total_price.toLocaleString()}원</span>
+                                                                <span className={getPublicPriceClassName({
+                                                                    mode: priceDisplayMode,
+                                                                    loading: priceDisplayLoading,
+                                                                    visibleClass: 'text-base font-bold text-[#001E45]',
+                                                                    hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+                                                                })}>{formatCustomerPrice(booking.total_price)}</span>
                                                             </div>
                                                             <div className="flex justify-between items-center py-1">
                                                                 <span className="text-sm text-slate-500 font-medium">구성 현황</span>
@@ -396,7 +437,7 @@ export const MyPage: React.FC = () => {
                                                                 className="inline-flex items-center justify-center gap-2 px-6 h-[48px] rounded-xl bg-[#001E45] text-white text-base font-bold hover:bg-[#002D66] transition-all disabled:bg-slate-300 shadow-md"
                                                             >
                                                                 {downloadingId === booking.id ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
-                                                                견적서 다운로드
+                                                                {documentButtonText}
                                                             </button>
                                                         </div>
                                                     </div>
@@ -507,7 +548,7 @@ export const MyPage: React.FC = () => {
                                                                 <div className="p-8 bg-white" style={{ fontFamily: 'Malgun Gothic, sans-serif' }}>
                                                                     <div className="text-center mb-8">
                                                                         <h1 className="text-3xl font-bold tracking-widest text-gray-900 border-b-4 border-double border-gray-900 pb-4 inline-block px-8">
-                                                                            견 적 서
+                                                                            {documentTitle}
                                                                         </h1>
                                                                     </div>
                                                                     <table className="w-full border-collapse mb-6" style={{ fontSize: '12px' }}>
@@ -596,8 +637,18 @@ export const MyPage: React.FC = () => {
                                                                                 <td className="border border-gray-400 px-3 py-2 text-center">1</td>
                                                                                 <td className="border border-gray-400 px-3 py-2 font-medium">{booking.products?.name || '상품'}</td>
                                                                                 <td className="border border-gray-400 px-3 py-2 text-center">{rentalDays}일</td>
-                                                                                <td className="border border-gray-400 px-3 py-2 text-right">{baseAmount.toLocaleString()}</td>
-                                                                                <td className="border border-gray-400 px-3 py-2 text-right font-medium">{baseAmount.toLocaleString()}</td>
+                                                                                <td className={`border border-gray-400 px-3 py-2 text-right ${getPublicPriceClassName({
+                                                                                    mode: priceDisplayMode,
+                                                                                    loading: priceDisplayLoading,
+                                                                                    visibleClass: '',
+                                                                                    hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+                                                                                })}`}>{formatCustomerPrice(baseAmount, { suffix: '' })}</td>
+                                                                                <td className={`border border-gray-400 px-3 py-2 text-right font-medium ${getPublicPriceClassName({
+                                                                                    mode: priceDisplayMode,
+                                                                                    loading: priceDisplayLoading,
+                                                                                    visibleClass: '',
+                                                                                    hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+                                                                                })}`}>{formatCustomerPrice(baseAmount, { suffix: '' })}</td>
                                                                                 <td className="border border-gray-400 px-3 py-2 text-center text-gray-500">기본</td>
                                                                             </tr>
                                                                             {(booking.basic_components || []).map((item, idx) => (
@@ -618,8 +669,18 @@ export const MyPage: React.FC = () => {
                                                                                     <td className="border border-gray-400 px-3 py-2 text-center">{basicCount + idx + 2}</td>
                                                                                     <td className="border border-gray-400 px-3 py-2">{option.name}</td>
                                                                                     <td className="border border-gray-400 px-3 py-2 text-center">{option.quantity}</td>
-                                                                                    <td className="border border-gray-400 px-3 py-2 text-right">{option.price.toLocaleString()}</td>
-                                                                                    <td className="border border-gray-400 px-3 py-2 text-right">{(option.price * option.quantity).toLocaleString()}</td>
+                                                                                    <td className={`border border-gray-400 px-3 py-2 text-right ${getPublicPriceClassName({
+                                                                                        mode: priceDisplayMode,
+                                                                                        loading: priceDisplayLoading,
+                                                                                        visibleClass: '',
+                                                                                        hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+                                                                                    })}`}>{formatCustomerPrice(option.price, { suffix: '' })}</td>
+                                                                                    <td className={`border border-gray-400 px-3 py-2 text-right ${getPublicPriceClassName({
+                                                                                        mode: priceDisplayMode,
+                                                                                        loading: priceDisplayLoading,
+                                                                                        visibleClass: '',
+                                                                                        hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+                                                                                    })}`}>{formatCustomerPrice(option.price * option.quantity, { suffix: '' })}</td>
                                                                                     <td className="border border-gray-400 px-3 py-2 text-center text-gray-500">추가</td>
                                                                                 </tr>
                                                                             ))}
@@ -634,11 +695,26 @@ export const MyPage: React.FC = () => {
                                                                         <tbody>
                                                                             <tr>
                                                                                 <td className="border-2 border-gray-800 bg-gray-100 px-4 py-3 font-bold text-center w-24 whitespace-nowrap">공급가액</td>
-                                                                                <td className="border-2 border-gray-800 px-4 py-3 text-right font-medium whitespace-nowrap">{Math.round(booking.total_price / 1.1).toLocaleString()}원</td>
+                                                                                <td className={`border-2 border-gray-800 px-4 py-3 text-right font-medium whitespace-nowrap ${getPublicPriceClassName({
+                                                                                    mode: priceDisplayMode,
+                                                                                    loading: priceDisplayLoading,
+                                                                                    visibleClass: '',
+                                                                                    hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+                                                                                })}`}>{formatCustomerPrice(Math.round(booking.total_price / 1.1))}</td>
                                                                                 <td className="border-2 border-gray-800 bg-gray-100 px-4 py-3 font-bold text-center w-20 whitespace-nowrap">부가세</td>
-                                                                                <td className="border-2 border-gray-800 px-4 py-3 text-right font-medium whitespace-nowrap">{Math.round(booking.total_price - booking.total_price / 1.1).toLocaleString()}원</td>
+                                                                                <td className={`border-2 border-gray-800 px-4 py-3 text-right font-medium whitespace-nowrap ${getPublicPriceClassName({
+                                                                                    mode: priceDisplayMode,
+                                                                                    loading: priceDisplayLoading,
+                                                                                    visibleClass: '',
+                                                                                    hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+                                                                                })}`}>{formatCustomerPrice(Math.round(booking.total_price - booking.total_price / 1.1))}</td>
                                                                                 <td className="border-2 border-gray-800 bg-gray-800 text-white px-4 py-3 font-bold text-center w-24 whitespace-nowrap">합계금액</td>
-                                                                                <td className="border-2 border-gray-800 px-4 py-3 text-right font-bold text-lg text-[#001E45] whitespace-nowrap">{booking.total_price.toLocaleString()}원</td>
+                                                                                <td className={`border-2 border-gray-800 px-4 py-3 text-right whitespace-nowrap ${getPublicPriceClassName({
+                                                                                    mode: priceDisplayMode,
+                                                                                    loading: priceDisplayLoading,
+                                                                                    visibleClass: 'font-bold text-lg text-[#001E45]',
+                                                                                    hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+                                                                                })}`}>{formatCustomerPrice(booking.total_price)}</td>
                                                                             </tr>
                                                                         </tbody>
                                                                     </table>
@@ -646,8 +722,8 @@ export const MyPage: React.FC = () => {
                                                                         <p className="font-bold text-sm mb-2">■ 유의사항</p>
                                                                         <div className="border border-gray-400 p-3" style={{ fontSize: '11px', lineHeight: '1.7' }}>
                                                                             <ul className="list-disc pl-4 space-y-1.5 text-gray-700">
-                                                                                <li>본 견적서의 유효기간은 발행일로부터 30일입니다.</li>
-                                                                                <li>상기 금액은 부가가치세(VAT 10%)가 포함된 금액입니다.</li>
+                                                                                <li>본 {isInquiryMode ? '견적 요청서' : '견적서'}의 유효기간은 발행일로부터 30일입니다.</li>
+                                                                                <li>{isInquiryMode ? '상세 금액은 별도 견적 상담 후 확정됩니다.' : '상기 금액은 부가가치세(VAT 10%)가 포함된 금액입니다.'}</li>
                                                                                 <li>대여 일정 및 장소에 따라 운송비가 별도로 청구될 수 있습니다.</li>
                                                                                 <li>현장 설치 및 철거가 필요한 경우 별도 협의가 필요합니다.</li>
                                                                                 <li>대여 물품의 파손 또는 분실 시 수리비 또는 원가를 청구할 수 있습니다.</li>
@@ -655,7 +731,7 @@ export const MyPage: React.FC = () => {
                                                                         </div>
                                                                     </div>
                                                                     <div className="text-center pt-4 border-t border-gray-300" style={{ fontSize: '11px' }}>
-                                                                        <p className="text-gray-500">본 견적서는 정식 계약서가 아니며, 최종 계약 시 세부 사항이 변경될 수 있습니다.</p>
+                                                                        <p className="text-gray-500">본 {isInquiryMode ? '견적 요청서' : '견적서'}는 정식 계약서가 아니며, 최종 계약 시 세부 사항이 변경될 수 있습니다.</p>
                                                                         <p className="text-gray-600 mt-2 font-medium">렌탈어때 | 사업자등록번호: 314-07-32520 | 대전 유성구 지족로 282번길 17</p>
                                                                         <p className="text-gray-500 mt-1">Tel. 010-4074-6967 | Email. micepartner@micepartner.co.kr</p>
                                                                     </div>

@@ -7,6 +7,9 @@ export interface SiteSetting {
 }
 
 const TABLE_NAME = "site_settings";
+export const PRODUCT_PRICE_DISPLAY_MODE_SETTING_KEY = "product_price_display_mode";
+export type ProductPriceDisplayMode = "visible" | "inquiry";
+export const DEFAULT_PRODUCT_PRICE_DISPLAY_MODE: ProductPriceDisplayMode = "visible";
 
 export const CS_CENTER_SETTING_KEYS = {
   phone: "cs_center_phone",
@@ -62,6 +65,25 @@ export const upsertSiteSettings = async (
     .upsert(payload, { onConflict: "setting_key" });
 
   if (error) throw error;
+};
+
+export const normalizeProductPriceDisplayMode = (
+  value?: string | null,
+): ProductPriceDisplayMode => (value === "inquiry" ? "inquiry" : "visible");
+
+export const getProductPriceDisplayMode = async (): Promise<ProductPriceDisplayMode> => {
+  const settings = await getSiteSettings([PRODUCT_PRICE_DISPLAY_MODE_SETTING_KEY]);
+  return normalizeProductPriceDisplayMode(
+    settings[PRODUCT_PRICE_DISPLAY_MODE_SETTING_KEY],
+  );
+};
+
+export const upsertProductPriceDisplayMode = async (
+  mode: ProductPriceDisplayMode,
+): Promise<void> => {
+  await upsertSiteSettings({
+    [PRODUCT_PRICE_DISPLAY_MODE_SETTING_KEY]: mode,
+  });
 };
 
 export const getCSCenterSettings = async (): Promise<CSCenterSettings> => {

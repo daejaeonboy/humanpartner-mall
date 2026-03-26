@@ -6,8 +6,11 @@ import { Helmet } from 'react-helmet-async';
 import { getProducts, Product } from '../src/api/productApi';
 import { getProductsBySection } from '../src/api/sectionApi';
 import { getAllNavMenuItems } from '../src/api/cmsApi';
+import { usePriceDisplay } from '../src/context/PriceDisplayContext';
+import { getPublicPriceClassName, getPublicPriceText, INQUIRY_PRICE_TEXT_CLASS, isInquiryPriceMode, isVisiblePriceMode } from '../src/utils/priceDisplay';
 
 export const ProductListPage: React.FC = () => {
+    const { mode: priceDisplayMode, loading: priceDisplayLoading } = usePriceDisplay();
     const [searchParams] = useSearchParams();
     const urlCategory = searchParams.get('category');
     const sectionId = searchParams.get('sectionId');
@@ -199,13 +202,24 @@ export const ProductListPage: React.FC = () => {
                                     <h3 className="font-bold text-gray-900 line-clamp-1">{product.name}</h3>
 
                                     <div className="flex flex-col">
-                                        {product.discount_rate && product.discount_rate > 0 && (
+                                        {!priceDisplayLoading && !isInquiryPriceMode(priceDisplayMode) && product.discount_rate && product.discount_rate > 0 && (
                                             <span className="text-red-600 font-bold text-sm block">
                                                 {product.discount_rate}%
                                             </span>
                                         )}
-                                        <span className="font-bold text-lg">
-                                            {product.price?.toLocaleString()}원/일
+                                        <span className={getPublicPriceClassName({
+                                            mode: priceDisplayMode,
+                                            loading: priceDisplayLoading,
+                                            visibleClass: 'font-bold text-lg text-gray-900',
+                                            hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+                                        })}>
+                                            {getPublicPriceText({
+                                                amount: product.price,
+                                                mode: priceDisplayMode,
+                                                loading: priceDisplayLoading,
+                                                suffix: isVisiblePriceMode(priceDisplayMode) ? '원/일' : '원',
+                                                zeroAsHidden: true,
+                                            })}
                                         </span>
                                     </div>
 

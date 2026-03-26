@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Pencil, Trash2, X, Save, Loader2, Upload, Image as ImageIcon, Grid3X3, Bold, Italic, Underline } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Save, Loader2, Upload, Image as ImageIcon, Grid3X3, Bold, Italic, Underline, Eye, EyeOff } from 'lucide-react';
 import { getProducts, addProduct, updateProduct, deleteProduct, Product, ProductCatalogType } from '../../src/api/productApi';
 import { getSections, getProductSections, setProductSections, Section } from '../../src/api/sectionApi';
 import { getAllNavMenuItems, NavMenuItem } from '../../src/api/cmsApi';
 import { uploadImage } from '../../src/api/storageApi';
+import { usePriceDisplay } from '../../src/context/PriceDisplayContext';
+import type { ProductPriceDisplayMode } from '../../src/api/siteSettingsApi';
 
 // 간단한 에디터 컴포넌트
 const SimpleEditor = ({ initialValue, onChange }: { initialValue: string, onChange: (val: string) => void }) => {
@@ -64,7 +66,29 @@ const SimpleEditor = ({ initialValue, onChange }: { initialValue: string, onChan
     );
 };
 
+const createEmptyFormData = (
+    catalogType: ProductCatalogType,
+    productType: NonNullable<Product['product_type']> = 'basic',
+) => ({
+    name: '',
+    category: '',
+    price: 0,
+    description: '',
+    short_description: '',
+    image_url: '',
+    stock: 99999,
+    discount_rate: 0,
+    catalog_type: catalogType,
+    product_type: productType,
+    basic_components: [] as any[],
+    additional_components: [] as any[],
+    cooperative_components: [] as any[],
+    place_components: [] as any[],
+    food_components: [] as any[],
+});
+
 export const ProductManager = () => {
+    const { mode: priceDisplayMode, loading: priceDisplayLoading, updatePriceDisplayMode } = usePriceDisplay();
     const [products, setProducts] = useState<Product[]>([]);
     const [sections, setSections] = useState<Section[]>([]);
     const [menuItems, setMenuItems] = useState<NavMenuItem[]>([]);
@@ -76,24 +100,13 @@ export const ProductManager = () => {
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const [formData, setFormData] = useState({
-        name: '', category: '', price: 0, description: '', short_description: '', image_url: '', stock: 99999, discount_rate: 0,
-        catalog_type: 'general' as ProductCatalogType,
-        product_type: 'basic' as any,
-        basic_components: [] as any[], additional_components: [] as any[],
-        cooperative_components: [] as any[], place_components: [] as any[], food_components: [] as any[],
-    });
+    const [formData, setFormData] = useState(() => createEmptyFormData('general', 'basic'));
 
     const [viewMode, setViewMode] = useState<'general' | 'package' | 'options'>('general');
-    const [viewTab, setViewTab] = useState<'essential' | 'cooperative' | 'additional' | 'place' | 'food'>('additional');
     const [selectedParentCategoryFilter, setSelectedParentCategoryFilter] = useState<string | null>(null);
     const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
 
-    // UI 토글 상태
-    const [useCooperative, setUseCooperative] = useState(false);
-    const [useAdditional, setUseAdditional] = useState(false);
-    const [usePlace, setUsePlace] = useState(false);
-    const [useFood, setUseFood] = useState(false);
+    const [priceDisplaySaving, setPriceDisplaySaving] = useState(false);
 
     useEffect(() => { loadData(); }, []);
 
@@ -107,28 +120,40 @@ export const ProductManager = () => {
 
     const resetForm = () => {
         const defaultCatalogType: ProductCatalogType = viewMode === 'package' ? 'package' : 'general';
-        setFormData({
-            name: '', category: '', price: 0, description: '', short_description: '', image_url: '', stock: 99999, discount_rate: 0,
-            catalog_type: defaultCatalogType,
-            product_type: 'basic',
-            basic_components: [], additional_components: [], cooperative_components: [], place_components: [], food_components: [],
-        });
+        setFormData(createEmptyFormData(defaultCatalogType, 'basic'));
         setEditingProduct(null); setSelectedSections([]);
-        setUseCooperative(false); setUseAdditional(false); setUsePlace(false); setUseFood(false);
         setSelectedParentCategory('');
         setShowForm(false);
     };
 
     const [selectedParentCategory, setSelectedParentCategory] = useState('');
 
+    const openCreateModal = () => {
+        const productType = (viewMode === 'options' ? 'cooperative' : 'basic') as NonNullable<Product['product_type']>;
+        const catalogType: ProductCatalogType = viewMode === 'package' ? 'package' : 'general';
+
+        setEditingProduct(null);
+        setSelectedSections([]);
+        setSelectedParentCategory('');
+        setFormData(createEmptyFormData(catalogType, productType));
+        setShowForm(true);
+    };
+
     const handleEdit = async (product: Product) => {
         setEditingProduct(product);
         setFormData({
-            ...formData,
-            name: product.name, category: product.category, price: product.price,
-            description: product.description || '', short_description: product.short_description || '',
+            ...createEmptyFormData(
+                product.catalog_type || 'general',
+                (product.product_type || 'basic') as NonNullable<Product['product_type']>,
+            ),
+            name: product.name,
+            category: product.category || '',
+            price: product.price,
+            description: product.description || '',
+            short_description: product.short_description || '',
             image_url: product.image_url || '',
-            stock: product.stock, discount_rate: product.discount_rate || 0,
+            stock: product.stock,
+            discount_rate: product.discount_rate || 0,
             catalog_type: product.catalog_type || 'general',
             product_type: product.product_type || 'basic',
             basic_components: product.basic_components || [],
@@ -137,10 +162,6 @@ export const ProductManager = () => {
             place_components: product.place_components || [],
             food_components: product.food_components || [],
         });
-        setUseCooperative((product.cooperative_components || []).length > 0);
-        setUseAdditional((product.additional_components || []).length > 0);
-        setUsePlace((product.place_components || []).length > 0);
-        setUseFood((product.food_components || []).length > 0);
 
         // Derive Parent Category from the product's category (which is a Child Name)
         // Find the menu item that matches key=product.category
@@ -221,32 +242,126 @@ export const ProductManager = () => {
         } catch (error) { alert('업로드 실패'); } finally { setUploading(false); }
     };
 
+    const handlePriceDisplayToggle = async () => {
+        if (priceDisplayLoading || priceDisplaySaving) return;
+
+        const nextMode: ProductPriceDisplayMode =
+            priceDisplayMode === 'inquiry' ? 'visible' : 'inquiry';
+
+        setPriceDisplaySaving(true);
+        try {
+            await updatePriceDisplayMode(nextMode);
+            alert(nextMode === 'inquiry'
+                ? '고객 화면 전체 가격이 비공개로 전환되었습니다.'
+                : '고객 화면 전체 가격이 공개로 전환되었습니다.');
+        } catch (error) {
+            console.error('Failed to update product price display mode:', error);
+            alert('가격 노출 설정 저장에 실패했습니다.');
+        } finally {
+            setPriceDisplaySaving(false);
+        }
+    };
+
     if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="animate-spin text-[#001E45]" size={40} /></div>;
     const activeCatalogType: ProductCatalogType = viewMode === 'package' ? 'package' : 'general';
-    const generalProductCount = products.filter(p => (p.catalog_type || 'general') === 'general' && (p.product_type === 'basic' || !p.product_type)).length;
-    const packageProductCount = products.filter(p => (p.catalog_type || 'general') === 'package' && (p.product_type === 'basic' || !p.product_type)).length;
+    const currentProductType = formData.product_type || 'basic';
+    const isBasicProductEditor = currentProductType === 'basic';
+    const isAdditionalOptionEditor = currentProductType === 'essential' || currentProductType === 'additional';
+    const isServiceEditor = currentProductType === 'cooperative';
+    const isOptionEditor = !isBasicProductEditor;
+    const listTitle = viewMode === 'general' ? '일반상품 목록' : viewMode === 'package' ? '패키지 목록' : '부가서비스 목록';
+    const createButtonLabel = viewMode === 'general'
+        ? '새 일반상품 추가'
+        : viewMode === 'package'
+            ? '새 패키지 추가'
+            : '새 부가서비스 추가';
+    const editorTypeLabel = isServiceEditor
+        ? '부가서비스'
+        : isAdditionalOptionEditor
+            ? '추가 구성 상품'
+            : (formData.catalog_type || 'general') === 'package'
+                ? '패키지 상품'
+                : '일반 상품';
+    const editorModalTitle = editingProduct ? `${editorTypeLabel} 수정` : `새 ${editorTypeLabel} 등록`;
+    const editorBadgeLabel = isServiceEditor
+        ? '부가서비스'
+        : isAdditionalOptionEditor
+            ? '추가 구성'
+            : (formData.catalog_type || 'general') === 'package'
+                ? '패키지 기본상품'
+                : '일반 기본상품';
+    const shortDescriptionPlaceholder = isServiceEditor
+        ? '예: 케이터링, 촬영, 설치 지원 등 현장 운영을 돕는 서비스를 간단히 소개해주세요.'
+        : isAdditionalOptionEditor
+            ? '예: 본품과 함께 사용하는 보조 장비나 추가 구성을 한 줄로 설명해주세요.'
+            : '예: 전시회와 박람회에 필요한 모든 것을 한번에!';
 
     return (
         <div className="p-6 max-w-7xl mx-auto">
-            {/* 상단 탭: 일반상품 / 패키지 / 공통 옵션 */}
+            {/* 상단 탭: 일반상품 / 패키지 / 부가서비스 */}
             <div className="flex border-b mb-6">
                 <button onClick={() => { setViewMode('general'); setSelectedParentCategoryFilter(null); setSelectedCategoryFilter(null); }} className={`px-6 py-3 font-bold transition-all ${viewMode === 'general' ? 'border-b-2 border-[#001E45] text-[#001E45]' : 'text-slate-400'}`}>일반 상품 관리</button>
                 <button onClick={() => { setViewMode('package'); setSelectedParentCategoryFilter(null); setSelectedCategoryFilter(null); }} className={`px-6 py-3 font-bold transition-all ${viewMode === 'package' ? 'border-b-2 border-[#001E45] text-[#001E45]' : 'text-slate-400'}`}>패키지 상품 관리</button>
-                <button onClick={() => { setViewMode('options'); setSelectedCategoryFilter(null); }} className={`px-6 py-3 font-bold transition-all ${viewMode === 'options' ? 'border-b-2 border-[#001E45] text-[#001E45]' : 'text-slate-400'}`}>공통 옵션 관리</button>
+                <button onClick={() => { setViewMode('options'); setSelectedCategoryFilter(null); }} className={`px-6 py-3 font-bold transition-all ${viewMode === 'options' ? 'border-b-2 border-[#001E45] text-[#001E45]' : 'text-slate-400'}`}>부가서비스 관리</button>
+            </div>
+
+            <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <p className="text-sm font-bold text-slate-900">사이트 전체 가격 노출 설정</p>
+                        <p className="mt-1 text-sm text-slate-500">
+                            비공개로 전환하면 고객 화면 전체에서 숫자 가격 대신 <span className="font-semibold text-slate-700">가격문의</span>로 표시됩니다.
+                        </p>
+                    </div>
+                    <div className="flex flex-col items-start gap-2 sm:items-end">
+                        <button
+                            type="button"
+                            onClick={handlePriceDisplayToggle}
+                            disabled={priceDisplayLoading || priceDisplaySaving}
+                            aria-pressed={priceDisplayMode === 'inquiry'}
+                            className={`inline-flex min-w-[260px] items-center gap-4 rounded-2xl border px-4 py-3 text-left transition-all disabled:cursor-not-allowed disabled:opacity-60 ${priceDisplayMode === 'inquiry'
+                                ? 'border-amber-200 bg-gradient-to-r from-amber-50 to-white text-amber-800 hover:border-amber-300 hover:bg-amber-50'
+                                : 'border-emerald-200 bg-gradient-to-r from-emerald-50 to-white text-emerald-800 hover:border-emerald-300 hover:bg-emerald-50'
+                                }`}
+                        >
+                            <span className={`flex h-10 w-10 items-center justify-center rounded-2xl ${priceDisplayMode === 'inquiry'
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-emerald-100 text-emerald-700'
+                                }`}>
+                                {priceDisplayLoading || priceDisplaySaving ? (
+                                    <Loader2 size={16} className="animate-spin" />
+                                ) : priceDisplayMode === 'inquiry' ? (
+                                    <EyeOff size={16} />
+                                ) : (
+                                    <Eye size={16} />
+                                )}
+                            </span>
+                            <span className="flex min-w-0 flex-1 flex-col">
+                                <span className={`text-[11px] font-black uppercase tracking-[0.14em] ${priceDisplayMode === 'inquiry' ? 'text-amber-500' : 'text-emerald-500'}`}>
+                                    {priceDisplayMode === 'inquiry' ? 'Inquiry Mode' : 'Visible Mode'}
+                                </span>
+                                <span className="mt-0.5 text-sm font-bold text-slate-900">
+                                    {priceDisplayMode === 'inquiry' ? '가격 비공개 적용 중' : '가격 공개 적용 중'}
+                                </span>
+                            </span>
+                            <span className={`relative inline-flex h-8 w-14 flex-shrink-0 rounded-full transition-colors ${priceDisplayMode === 'inquiry' ? 'bg-amber-400' : 'bg-emerald-400'}`}>
+                                <span className={`absolute inset-y-1 left-1 w-6 rounded-full bg-white shadow-[0_2px_8px_rgba(15,23,42,0.18)] transition-transform duration-200 ${priceDisplayMode === 'inquiry' ? 'translate-x-6' : 'translate-x-0'}`} />
+                            </span>
+                        </button>
+                        <p className="text-xs text-slate-400">
+                            현재 상태: {priceDisplayMode === 'inquiry' ? '고객 가격 비공개' : '고객 가격 공개'}
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">{viewMode === 'general' ? '일반상품 목록' : viewMode === 'package' ? '패키지 목록' : '품목 목록'}</h2>
+                <h2 className="text-xl font-bold">{listTitle}</h2>
                 <button
-                    onClick={() => {
-                        const type = viewMode === 'options' ? viewTab : 'basic';
-                        const catalogType = viewMode === 'package' ? 'package' : 'general';
-                        setFormData({ ...formData, product_type: type, catalog_type: catalogType });
-                        setShowForm(true);
-                    }}
+                    onClick={openCreateModal}
                     className="flex items-center gap-2 bg-[#001E45] text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-all font-medium"
                 >
-                    <Plus size={20} /> {viewMode === 'general' ? '새 일반상품 추가' : viewMode === 'package' ? '새 패키지 추가' : '새 옵션 품목 추가'}
+                    <Plus size={20} /> {createButtonLabel}
                 </button>
             </div>
 
@@ -352,28 +467,9 @@ export const ProductManager = () => {
 
             {viewMode === 'options' && (
                 <div className="space-y-4 mb-6">
-                    {/* 상품 타입 탭 */}
-                    <div className="flex gap-2 bg-slate-100 p-1 rounded-lg w-fit">
-                        {['cooperative', 'additional'].map(t => (
-                            <button
-                                key={t}
-                                onClick={() => {
-                                    setViewTab(t as any);
-                                    setSelectedCategoryFilter(null);
-                                }}
-                                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${viewTab === t ? 'bg-white text-[#001E45] shadow-sm' : 'text-slate-500'}`}
-                            >
-                                {t === 'cooperative' ? '협력 업체' : t === 'additional' ? '기본/추가 상품' : ''}
-                            </button>
-                        ))}
-                    </div>
-
                     {/* 카테고리 필터 탭 */}
                     {(() => {
-                        const filteredProducts = products.filter(p => {
-                            if (viewTab === 'additional') return p.product_type === 'essential' || p.product_type === 'additional';
-                            return p.product_type === viewTab;
-                        });
+                        const filteredProducts = products.filter(p => p.product_type === 'cooperative');
                         const categories = Array.from(new Set(filteredProducts.map(p => p.category).filter(Boolean) as string[])).sort();
 
                         if (categories.length === 0) return null;
@@ -415,7 +511,14 @@ export const ProductManager = () => {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-[1000px] max-h-[90vh] flex flex-col">
                         <div className="flex justify-between p-4 border-b bg-slate-50 rounded-t-xl">
-                            <h3 className="font-bold text-lg">{editingProduct ? '상품 수정' : '새 상품 등록'} <span className="text-sm font-normal text-slate-400">({formData.catalog_type}/{formData.product_type})</span></h3>
+                            <div>
+                                <h3 className="font-bold text-lg text-slate-900">{editorModalTitle}</h3>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    <span className="inline-flex items-center rounded-full bg-slate-200 px-2.5 py-1 text-xs font-bold text-slate-700">
+                                        {editorBadgeLabel}
+                                    </span>
+                                </p>
+                            </div>
                             <button onClick={resetForm} className="text-slate-400 hover:text-red-500"><X size={24} /></button>
                         </div>
 
@@ -424,7 +527,7 @@ export const ProductManager = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-4">
                                     <div><label className="block text-sm font-bold text-slate-700 mb-1">상품명 *</label><input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45] outline-none" /></div>
-                                    <div><label className="block text-sm font-bold text-slate-700 mb-1">간단 소개 <span className="text-slate-400 font-normal text-xs">(상품명 아래 표시)</span></label><textarea value={formData.short_description} onChange={(e) => setFormData({ ...formData, short_description: e.target.value })} placeholder="예: 전시회와 박람회에 필요한 모든 것을 한번에!" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45] outline-none resize-none h-16" /></div>
+                                    <div><label className="block text-sm font-bold text-slate-700 mb-1">간단 소개 <span className="text-slate-400 font-normal text-xs">{isOptionEditor ? '(목록 카드에 먼저 노출)' : '(상품명 아래 표시)'}</span></label><textarea value={formData.short_description} onChange={(e) => setFormData({ ...formData, short_description: e.target.value })} placeholder={shortDescriptionPlaceholder} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45] outline-none resize-none h-16" /></div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-bold text-slate-700 mb-1">1차 메뉴 (대분류)</label>
@@ -464,9 +567,11 @@ export const ProductManager = () => {
                                             </select>
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className={`grid gap-4 ${isBasicProductEditor ? 'grid-cols-2' : 'grid-cols-1'}`}>
                                         <div><label className="block text-sm font-bold text-slate-700 mb-1">가격 (원) *</label><input type="number" required value={formData.price} onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })} className="w-full px-4 py-2 border rounded-lg outline-none" /></div>
-                                        <div><label className="block text-sm font-bold text-slate-700 mb-1">할인율 (%)</label><input type="number" value={formData.discount_rate} onChange={(e) => setFormData({ ...formData, discount_rate: Number(e.target.value) })} className="w-full px-4 py-2 border rounded-lg outline-none" /></div>
+                                        {isBasicProductEditor && (
+                                            <div><label className="block text-sm font-bold text-slate-700 mb-1">할인율 (%)</label><input type="number" value={formData.discount_rate} onChange={(e) => setFormData({ ...formData, discount_rate: Number(e.target.value) })} className="w-full px-4 py-2 border rounded-lg outline-none" /></div>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="space-y-4">
@@ -481,14 +586,49 @@ export const ProductManager = () => {
                             </div>
 
                             {/* 노출 섹션 */}
-                            <div><label className="block text-sm font-bold text-slate-700 mb-2">노출 섹션 (메인페이지)</label>
-                                <div className="flex flex-wrap gap-2">
-                                    {sections.map(s => <button key={s.id} type="button" onClick={() => toggleSection(s.id!)} className={`px-4 py-1.5 rounded-full border text-sm font-medium transition-all ${selectedSections.includes(s.id!) ? 'bg-[#001E45] text-white border-[#001E45]' : 'bg-white text-slate-500 hover:border-slate-400'}`}>{s.name}</button>)}
+                            {isBasicProductEditor && (
+                                <div><label className="block text-sm font-bold text-slate-700 mb-2">노출 섹션 (메인페이지)</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {sections.map(s => <button key={s.id} type="button" onClick={() => toggleSection(s.id!)} className={`px-4 py-1.5 rounded-full border text-sm font-medium transition-all ${selectedSections.includes(s.id!) ? 'bg-[#001E45] text-white border-[#001E45]' : 'bg-white text-slate-500 hover:border-slate-400'}`}>{s.name}</button>)}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/* 상세 설명 */}
-                            <div><label className="block text-sm font-bold text-slate-700 mb-2">상세 설명</label><SimpleEditor initialValue={formData.description} onChange={(v) => setFormData({ ...formData, description: v })} /></div>
+                            {isBasicProductEditor ? (
+                                <div><label className="block text-sm font-bold text-slate-700 mb-2">상세 설명</label><SimpleEditor initialValue={formData.description} onChange={(v) => setFormData({ ...formData, description: v })} /></div>
+                            ) : (
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">상세 설명 (선택)</label>
+                                    <textarea
+                                        value={formData.description}
+                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                        placeholder={isServiceEditor ? '예: 현장 운영 인력이 세팅부터 종료까지 지원합니다.' : '예: 행사 현장에서 본품과 함께 사용하기 좋은 추가 장비입니다.'}
+                                        rows={5}
+                                        className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 focus:ring-4 focus:ring-[#001E45]/10 focus:border-[#001E45] outline-none transition-all font-medium resize-none"
+                                    />
+                                    <p className="mt-2 text-xs text-slate-500">
+                                        비워두면 간단 소개를 우선 사용하고, 필요할 때만 보충 설명을 넣으면 됩니다.
+                                    </p>
+                                </div>
+                            )}
+
+                            {isBasicProductEditor && (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 space-y-2">
+                    <h4 className="font-bold text-slate-900">상세페이지 추가 구성 노출 안내</h4>
+                    <p className="text-sm leading-6 text-slate-600">
+                        <span className="font-semibold text-slate-800">추가 구성</span>은 일반 상품 관리에 등록된 일반상품이 전역으로 자동 노출됩니다.
+                    </p>
+                    <p className="text-sm leading-6 text-slate-600">
+                        <span className="font-semibold text-slate-800">부가서비스</span>는 부가서비스 관리에서 등록한 항목이 전역으로 노출됩니다.
+                    </p>
+                    {(formData.catalog_type || 'general') === 'general' && (
+                        <p className="text-sm leading-6 text-slate-600">
+                                            이 일반 상품은 저장 후 다른 상세페이지의 <span className="font-semibold text-slate-800">추가 구성</span> 후보에 자동 포함됩니다.
+                                        </p>
+                                    )}
+                                </div>
+                            )}
 
                             {/* 패키지 상품 구성 설정 */}
                             {formData.catalog_type === 'package' && formData.product_type === 'basic' && (
@@ -521,37 +661,15 @@ export const ProductManager = () => {
                                             ))}
                                         </div>
                                     </div>
-
-                                    {/* 추가 옵션 (옵션 활성화 여부만 선택) */}
-                                    {[
-                                        { id: 'cooperative', label: '협력 업체 옵션 활성화', state: useCooperative, setState: setUseCooperative, key: 'cooperative_components', desc: '고객이 공통 협력 업체 목록에서 선택할 수 있도록 합니다.' },
-                                        { id: 'additional', label: '추가 물품 옵션 활성화', state: useAdditional, setState: setUseAdditional, key: 'additional_components', desc: '고객이 공통 추가 물품 목록에서 선택할 수 있도록 합니다.' }
-                                    ].map(opt => (
-                                        <div key={opt.id} className="bg-slate-50 p-5 rounded-xl border border-slate-200">
-                                            <div className="flex flex-col gap-2">
-                                                <div className="flex items-center gap-3">
-                                                    <input
-                                                        type="checkbox"
-                                                        id={`toggle-${opt.id}`}
-                                                        checked={opt.state}
-                                                        onChange={(e) => {
-                                                            opt.setState(e.target.checked);
-                                                            if (e.target.checked) {
-                                                                // Enable: Add a dummy item to signify enabled state
-                                                                setFormData({ ...formData, [opt.key]: [{ name: '__ALL__', price: 0 }] });
-                                                            } else {
-                                                                // Disable: Empty array
-                                                                setFormData({ ...formData, [opt.key]: [] });
-                                                            }
-                                                        }}
-                                                        className="w-5 h-5 accent-[#001E45] cursor-pointer"
-                                                    />
-                                                    <label htmlFor={`toggle-${opt.id}`} className="font-bold text-slate-800 cursor-pointer text-lg">{opt.label}</label>
-                                                </div>
-                                                <p className="text-sm text-slate-500 pl-8">{opt.desc}</p>
-                                            </div>
-                                        </div>
-                                    ))}
+                                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                                        <h5 className="font-bold text-slate-900 mb-2">전역 옵션 노출 방식</h5>
+                                        <p className="text-sm leading-6 text-slate-600">
+                                            패키지 상세의 <span className="font-semibold text-slate-800">추가 구성</span>은 모든 일반 상품 전역 풀에서 자동 노출됩니다.
+                                        </p>
+                                        <p className="text-sm leading-6 text-slate-600">
+                                            <span className="font-semibold text-slate-800">부가서비스</span>는 부가서비스 전역 풀에서 자동 노출되며, 개별 패키지별 토글은 더 이상 사용하지 않습니다.
+                                        </p>
+                                    </div>
                                 </div>
                             )}
                         </form>
@@ -560,7 +678,7 @@ export const ProductManager = () => {
                             <button type="button" onClick={resetForm} className="flex-1 py-3 border border-slate-300 rounded-xl bg-white hover:bg-slate-100 font-bold transition-all">취소</button>
                             <button type="submit" onClick={(e) => { e.preventDefault(); handleSubmit(e); }} disabled={saving} className="flex-1 py-3 bg-[#001E45] text-white rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 disabled:bg-slate-300 shadow-lg font-bold transition-all">
                                 {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-                                <span>{editingProduct ? '수정사항 저장' : '등록하기'}</span>
+                                <span>{editingProduct ? `${editorTypeLabel} 저장` : `${editorTypeLabel} 등록`}</span>
                             </button>
                         </div>
                     </div>
@@ -587,12 +705,8 @@ export const ProductManager = () => {
                                     typeMatch =
                                         (p.product_type === 'basic' || !p.product_type) &&
                                         (p.catalog_type || 'general') === activeCatalogType;
-                                } else if (viewTab === 'additional') {
-                                    typeMatch = p.product_type === 'essential' || p.product_type === 'additional';
-                                } else if (viewTab === 'cooperative') {
+                                } else if (viewMode === 'options') {
                                     typeMatch = p.product_type === 'cooperative';
-                                } else {
-                                    typeMatch = p.product_type === viewTab;
                                 }
 
                                 if (!typeMatch) return false;
@@ -612,7 +726,7 @@ export const ProductManager = () => {
                                     return true;
                                 }
 
-                                // 공통 옵션 관리: 중분류 필터
+                                // 부가서비스 관리: 중분류 필터
                                 if (viewMode === 'options' && selectedCategoryFilter) {
                                     return p.category === selectedCategoryFilter;
                                 }

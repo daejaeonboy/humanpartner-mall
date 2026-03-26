@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Container } from './ui/Container';
 import { ProductItem } from '../types';
+import { usePriceDisplay } from '../src/context/PriceDisplayContext';
+import { getPublicPriceClassName, getPublicPriceText, INQUIRY_PRICE_TEXT_CLASS, isInquiryPriceMode } from '../src/utils/priceDisplay';
 
 interface ProductSectionProps {
   title: string;
@@ -21,6 +23,7 @@ export const ProductSection: React.FC<ProductSectionProps> = ({
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activeCategory, setActiveCategory] = useState(categories[0]);
+  const { mode: priceDisplayMode, loading: priceDisplayLoading } = usePriceDisplay();
 
   useEffect(() => {
     if (categories.length > 0) {
@@ -149,11 +152,21 @@ export const ProductSection: React.FC<ProductSectionProps> = ({
                   <h3 className="font-bold text-[15px] text-slate-800 truncate group-hover/card:text-[#001E45] transition-colors">{product.title}</h3>
 
                   <div className="flex items-center gap-1 mt-1">
-                    {product.discountRate && (
+                    {!priceDisplayLoading && !isInquiryPriceMode(priceDisplayMode) && product.discountRate && (
                       <span className="text-rose-500 font-bold text-[18px]">{product.discountRate}%</span>
                     )}
-                    <span className="font-medium text-[18px] text-slate-900">
-                      {product.price?.toLocaleString()}<span className="text-sm font-medium ml-0.5">원</span>
+                    <span className={getPublicPriceClassName({
+                      mode: priceDisplayMode,
+                      loading: priceDisplayLoading,
+                      visibleClass: 'font-medium text-[18px] text-slate-900',
+                      hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+                    })}>
+                      {getPublicPriceText({
+                        amount: product.price,
+                        mode: priceDisplayMode,
+                        loading: priceDisplayLoading,
+                        zeroAsHidden: true,
+                      })}
                     </span>
                   </div>
 

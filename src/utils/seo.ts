@@ -98,6 +98,7 @@ export const buildProductJsonLd = (input: {
   sku?: string;
   price?: number;
   stock?: number;
+  includeOffers?: boolean;
 }) => ({
   '@type': 'Product',
   name: input.name,
@@ -110,6 +111,7 @@ export const buildProductJsonLd = (input: {
     name: SITE_NAME,
   },
   offers:
+    input.includeOffers !== false &&
     typeof input.price === 'number' && input.price > 0
       ? {
           '@type': 'Offer',

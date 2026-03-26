@@ -11,8 +11,6 @@ import {
   ChevronRight,
   Package,
   Users,
-  MapPin,
-  UtensilsCrossed,
   ShoppingBag,
   ShoppingCart,
   Check,
@@ -20,12 +18,19 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
-import { getProductById, getProductsByType, Product } from "../src/api/productApi";
+import {
+  getAdditionalOptionProducts,
+  getProductById,
+  getProductsByType,
+  Product,
+} from "../src/api/productApi";
 import { createBooking, checkAvailability } from "../src/api/bookingApi";
 import { getAllNavMenuItems, NavMenuItem } from "../src/api/cmsApi";
 import { createNotification } from "../src/api/notificationApi";
 import { useAuth } from "../src/context/AuthContext";
+import { usePriceDisplay } from "../src/context/PriceDisplayContext";
 import { addQuoteCartItem, getQuoteCartCount } from "../src/utils/quoteCart";
+import type { ProductPriceDisplayMode } from "../src/api/siteSettingsApi";
 import { registerLocale } from "react-datepicker";
 import { ko } from "date-fns/locale/ko";
 
@@ -41,6 +46,7 @@ import {
   toAbsoluteUrl,
   toJsonLd,
 } from "../src/utils/seo";
+import { getPublicPriceClassName, getPublicPriceText, INQUIRY_PRICE_TEXT_CLASS, isVisiblePriceMode } from "../src/utils/priceDisplay";
 
 // Helper to get image for basic components
 const getComponentComponentImage = (name: string) => {
@@ -57,12 +63,33 @@ interface SelectedOptionSummary {
   name: string;
   qty: number;
   subtotal: number;
+  quantityLabel: string;
 }
 
 interface SummaryRow {
   label: string;
   value: React.ReactNode;
 }
+
+type OptionTabId = "additional" | "cooperative";
+
+interface SelectedProductOption {
+  product: Product;
+  quantity: number;
+}
+
+const getSelectedProductOptions = (
+  selectedQty: Record<string, number>,
+  items: Product[],
+): SelectedProductOption[] =>
+  Object.entries(selectedQty).reduce<SelectedProductOption[]>((acc, [key, qty]) => {
+    const quantity = qty as number;
+    const item = items.find((product) => product.id === key);
+    if (item && quantity > 0) {
+      acc.push({ product: item, quantity });
+    }
+    return acc;
+  }, []);
 
 const SummaryRows = ({ rows }: { rows: SummaryRow[] }) => (
   <div className="space-y-3 text-sm">
@@ -77,25 +104,38 @@ const SummaryRows = ({ rows }: { rows: SummaryRow[] }) => (
 
 const SelectedOptionsSection = ({
   items,
-  scrollable = false,
+  priceDisplayMode,
+  priceDisplayLoading,
 }: {
   items: SelectedOptionSummary[];
-  scrollable?: boolean;
+  priceDisplayMode: ProductPriceDisplayMode;
+  priceDisplayLoading: boolean;
 }) => (
   <div className="mt-4 pt-4 border-t border-gray-100">
     <p className="text-xs font-semibold text-gray-500 mb-2">선택한 옵션</p>
-    <div className={`${scrollable ? "max-h-40 overflow-y-auto " : ""}space-y-2 text-sm`}>
+    <div className="space-y-2 text-sm">
       {items.map((opt, idx) => (
         <div key={`${opt.name}-${idx}`} className="flex justify-between text-gray-700">
-          <span className="truncate flex-1">
-            {opt.name} x{opt.qty}
-          </span>
-          <span className="font-medium ml-2">{opt.subtotal.toLocaleString()}원</span>
+          <span className="truncate flex-1">{opt.name}</span>
+          {!priceDisplayLoading && !isVisiblePriceMode(priceDisplayMode) ? (
+            <span className="ml-2 font-medium text-gray-900">{opt.quantityLabel}</span>
+          ) : (
+            <span className="font-medium ml-2 text-gray-700">
+              {getPublicPriceText({
+                amount: opt.subtotal,
+                mode: priceDisplayMode,
+                loading: priceDisplayLoading,
+              })}
+            </span>
+          )}
         </div>
       ))}
     </div>
   </div>
 );
+
+const getQuantityUnit = (productType?: Product["product_type"]) =>
+  productType === "cooperative" ? "건" : "대";
 
 // Sub-component for individual option items to handle local state and focus
 const OptionItem = ({
@@ -104,12 +144,16 @@ const OptionItem = ({
   imageUrl,
   onUpdate,
   selectionMode = 'quantity',
+  priceDisplayMode,
+  priceDisplayLoading,
 }: {
   item: Product;
   initialQty: number;
   imageUrl?: string;
   onUpdate: (qty: number) => void;
   selectionMode?: 'quantity' | 'checkbox';
+  priceDisplayMode: ProductPriceDisplayMode;
+  priceDisplayLoading: boolean;
 }) => {
   const [localQty, setLocalQty] = useState(initialQty);
 
@@ -133,6 +177,11 @@ const OptionItem = ({
 
   const isInCart = initialQty > 0;
   const isChanged = localQty !== initialQty;
+  const shouldShowOptionPrice =
+    priceDisplayLoading ||
+    (isVisiblePriceMode(priceDisplayMode) &&
+      typeof item.price === "number" &&
+      item.price > 0);
 
   return (
     <div className="flex items-center gap-3 sm:gap-4 p-4 hover:bg-gray-50 rounded-xl transition-colors border-b border-gray-50 last:border-0 relative">
@@ -153,9 +202,21 @@ const OptionItem = ({
         <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5 line-clamp-2 sm:line-clamp-1">
           {item.short_description || item.description || item.model_name || "상세 설명 없음"}
         </p>
-        <p className="text-sm font-bold text-[#001E45] mt-0.5">
-          {item.price ? `${item.price.toLocaleString()}원` : "가격문의"}
-        </p>
+        {shouldShowOptionPrice && (
+          <p className={getPublicPriceClassName({
+            mode: priceDisplayMode,
+            loading: priceDisplayLoading,
+            visibleClass: 'mt-0.5 text-sm font-bold text-[#001E45]',
+            hiddenClass: `mt-0.5 ${INQUIRY_PRICE_TEXT_CLASS}`,
+          })}>
+            {getPublicPriceText({
+              amount: item.price,
+              mode: priceDisplayMode,
+              loading: priceDisplayLoading,
+              zeroAsHidden: true,
+            })}
+          </p>
+        )}
       </div>
 
       {/* Desktop (PC) UI: Original Framed Style */}
@@ -312,6 +373,8 @@ const OptionListTypeA = ({
   menuItems,
   tabType,
   selectionMode = 'quantity',
+  priceDisplayMode,
+  priceDisplayLoading,
 }: {
   items: Product[];
   selectedQty: { [key: string]: number };
@@ -320,6 +383,8 @@ const OptionListTypeA = ({
   menuItems: NavMenuItem[];
   tabType?: string;
   selectionMode?: 'quantity' | 'checkbox';
+  priceDisplayMode: ProductPriceDisplayMode;
+  priceDisplayLoading: boolean;
 }) => {
   // Use useMemo here to prevent recalculation
   const optionGroups = React.useMemo(() => getCategorizedGroups(items, menuItems, tabType), [items, menuItems, tabType]);
@@ -418,6 +483,8 @@ const OptionListTypeA = ({
                   imageUrl={imageUrl}
                   onUpdate={(newQty) => setQty(prev => ({ ...prev, [item.id!]: newQty }))}
                   selectionMode={selectionMode}
+                  priceDisplayMode={priceDisplayMode}
+                  priceDisplayLoading={priceDisplayLoading}
                 />
               );
             })}
@@ -436,6 +503,11 @@ export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, userProfile } = useAuth();
+  const {
+    mode: priceDisplayMode,
+    loading: priceDisplayLoading,
+    isInquiryMode,
+  } = usePriceDisplay();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -452,9 +524,7 @@ export const ProductDetailPage: React.FC = () => {
 
 
   // Option Tab State (for the new tab UI)
-  const [activeOptionTab, setActiveOptionTab] = useState<
-    "cooperative" | "additional" | "place" | "food"
-  >("cooperative");
+  const [activeOptionTab, setActiveOptionTab] = useState<OptionTabId>("cooperative");
 
   // Booking Result Modal State
   const [bookingModal, setBookingModal] = useState<{
@@ -476,8 +546,6 @@ export const ProductDetailPage: React.FC = () => {
   // Global Options State
   const [globalCooperative, setGlobalCooperative] = useState<Product[]>([]);
   const [globalAdditional, setGlobalAdditional] = useState<Product[]>([]);
-  const [globalPlaces, setGlobalPlaces] = useState<Product[]>([]);
-  const [globalFoods, setGlobalFoods] = useState<Product[]>([]);
 
   // Component Products Lookup (for images)
   const [componentProducts, setComponentProducts] = useState<Product[]>([]);
@@ -509,12 +577,6 @@ export const ProductDetailPage: React.FC = () => {
   const [selectedAdditional, setSelectedAdditional] = useState<{
     [key: string]: number;
   }>({});
-  const [selectedPlaces, setSelectedPlaces] = useState<{
-    [key: string]: number;
-  }>({});
-  const [selectedFoods, setSelectedFoods] = useState<{ [key: string]: number }>(
-    {},
-  );
 
 
 
@@ -538,27 +600,27 @@ export const ProductDetailPage: React.FC = () => {
   useEffect(() => {
     const fetchProductAndOptions = async () => {
       if (!id) return;
+      setLoading(true);
+      setSelectedAdditional({});
+      setSelectedCooperative({});
+      setActiveOptionTab("cooperative");
       try {
         const [
           productData,
           cooperativeData,
           additionalData,
-          placeData,
-          foodData,
           menuItemsData,
         ] = await Promise.all([
           getProductById(id),
           getProductsByType("cooperative"),
-          getProductsByType("additional"),
-          getProductsByType("place"),
-          getProductsByType("food"),
+          getAdditionalOptionProducts(),
           getAllNavMenuItems(),
         ]);
         setProduct(productData);
         setGlobalCooperative(cooperativeData);
-        setGlobalAdditional(additionalData);
-        setGlobalPlaces(placeData);
-        setGlobalFoods(foodData);
+        setGlobalAdditional(
+          additionalData.filter((item) => item.id && item.id !== id),
+        );
         setMenuItems(menuItemsData);
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -584,121 +646,91 @@ export const ProductDetailPage: React.FC = () => {
     return Math.max(2, diffDays);
   }, [startDate, endDate]);
 
-  const selectedSummary = React.useMemo<SelectedOptionSummary[]>(() => {
-    const summary: SelectedOptionSummary[] = [];
+  const selectedAdditionalItems = React.useMemo(
+    () => getSelectedProductOptions(selectedAdditional, globalAdditional),
+    [selectedAdditional, globalAdditional],
+  );
+  const selectedCooperativeItems = React.useMemo(
+    () => getSelectedProductOptions(selectedCooperative, globalCooperative),
+    [selectedCooperative, globalCooperative],
+  );
 
-    Object.entries(selectedCooperative).forEach(([key, qty]) => {
-      const quantity = qty as number;
-      const item = globalCooperative.find((p) => p.id === key);
-      if (item && quantity > 0) {
-        summary.push({ name: item.name, qty: quantity, subtotal: item.price * quantity });
-      }
-    });
-
-    Object.entries(selectedAdditional).forEach(([key, qty]) => {
-      const quantity = qty as number;
-      const item = globalAdditional.find((p) => p.id === key);
-      if (item && quantity > 0) {
-        summary.push({ name: item.name, qty: quantity, subtotal: item.price * quantity });
-      }
-    });
-
-    Object.entries(selectedPlaces).forEach(([key, qty]) => {
-      const quantity = qty as number;
-      const item = globalPlaces.find((p) => p.id === key);
-      if (item && quantity > 0) {
-        summary.push({ name: item.name, qty: quantity, subtotal: item.price * quantity });
-      }
-    });
-
-    Object.entries(selectedFoods).forEach(([key, qty]) => {
-      const quantity = qty as number;
-      const item = globalFoods.find((p) => p.id === key);
-      if (item && quantity > 0) {
-        summary.push({ name: item.name, qty: quantity, subtotal: item.price * quantity });
-      }
-    });
-
-    return summary;
-  }, [
-    selectedCooperative,
-    globalCooperative,
-    selectedAdditional,
-    globalAdditional,
-    selectedPlaces,
-    globalPlaces,
-    selectedFoods,
-    globalFoods,
-  ]);
+  const selectedSummary = React.useMemo<SelectedOptionSummary[]>(
+    () =>
+      [...selectedAdditionalItems, ...selectedCooperativeItems].map(
+        ({ product: item, quantity }) => ({
+          name: item.name,
+          qty: quantity,
+          subtotal: item.price * quantity,
+          quantityLabel: `${quantity}${getQuantityUnit(item.product_type)}`,
+        }),
+      ),
+    [selectedAdditionalItems, selectedCooperativeItems],
+  );
 
   const totalPrice = React.useMemo(() => {
     const basePrice = product?.price || 0;
     return selectedSummary.reduce((total, item) => total + item.subtotal, basePrice);
   }, [product, selectedSummary]);
+  const requestedQuantity = React.useMemo(() => {
+    if (typeof expectedPeople === "string") {
+      return parseInt(expectedPeople || "0", 10) || 1;
+    }
+    return Math.max(expectedPeople || 1, 1);
+  }, [expectedPeople]);
+
+  const mainPriceText = getPublicPriceText({
+    amount: product?.price,
+    mode: priceDisplayMode,
+    loading: priceDisplayLoading,
+    suffix: "원",
+    zeroAsHidden: true,
+  });
+  const totalPriceText = getPublicPriceText({
+    amount: totalPrice,
+    mode: priceDisplayMode,
+    loading: priceDisplayLoading,
+  });
+  const showDailySuffix =
+    !priceDisplayLoading &&
+    isVisiblePriceMode(priceDisplayMode) &&
+    typeof product?.price === "number" &&
+    product.price > 0;
+  const guideDescription = isInquiryMode
+    ? "사이트에서는 상품 구성과 일정 조건을 확인한 뒤 견적을 요청하실 수 있습니다. 상세 금액과 진행 조건은 담당자 검토 후 별도로 안내드립니다."
+    : "사이트에서는 상품 구성과 예상 금액을 확인한 뒤 견적을 요청하실 수 있습니다. 최종 금액과 진행 조건은 담당자 검토 후 별도로 안내드립니다.";
+  const summaryDescription = isInquiryMode
+    ? "상세 금액은 견적 상담 후 안내되며,\n수량 및 대여 일정에 따라 조건이 조정될 수 있습니다."
+    : "상기 금액은 기본 운영 기준 구성에 대한 최소 금액이며,\n수량 및 대여 일정에 따라 조정될 수 있습니다.";
 
   const summaryRows: SummaryRow[] = [
     { label: "희망 사용 기간", value: `${days}일` },
-    { label: "예상 수량", value: `${expectedPeople || 0}대` },
-    { label: product?.name || "상품", value: `${(product?.price || 0).toLocaleString()}원` },
+    {
+      label: product?.name || "상품",
+      value:
+        !priceDisplayLoading && !isVisiblePriceMode(priceDisplayMode) ? (
+          <span className="text-gray-900">{requestedQuantity}대</span>
+        ) : (
+          <span className={getPublicPriceClassName({
+            mode: priceDisplayMode,
+            loading: priceDisplayLoading,
+            visibleClass: 'text-gray-900',
+            hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+          })}>
+            {mainPriceText}
+          </span>
+        ),
+    },
   ];
 
-  const buildSelectedOptions = () => {
-    const selectedOptions: {
-      name: string;
-      quantity: number;
-      price: number;
-    }[] = [];
-
-    Object.keys(selectedCooperative).forEach((key) => {
-      const qty = selectedCooperative[key];
-      const item = globalCooperative.find((p) => p.id === key);
-      if (item && qty > 0) {
-        selectedOptions.push({
-          name: item.name,
-          quantity: qty,
-          price: item.price || 0,
-        });
-      }
-    });
-
-    Object.keys(selectedAdditional).forEach((key) => {
-      const qty = selectedAdditional[key];
-      const item = globalAdditional.find((p) => p.id === key);
-      if (item && qty > 0) {
-        selectedOptions.push({
-          name: item.name,
-          quantity: qty,
-          price: item.price || 0,
-        });
-      }
-    });
-
-    Object.keys(selectedPlaces).forEach((key) => {
-      const qty = selectedPlaces[key];
-      const item = globalPlaces.find((p) => p.id === key);
-      if (item && qty > 0) {
-        selectedOptions.push({
-          name: item.name,
-          quantity: qty,
-          price: item.price || 0,
-        });
-      }
-    });
-
-    Object.keys(selectedFoods).forEach((key) => {
-      const qty = selectedFoods[key];
-      const item = globalFoods.find((p) => p.id === key);
-      if (item && qty > 0) {
-        selectedOptions.push({
-          name: item.name,
-          quantity: qty,
-          price: item.price || 0,
-        });
-      }
-    });
-
-    return selectedOptions;
-  };
+  const buildSelectedOptions = () =>
+    [...selectedAdditionalItems, ...selectedCooperativeItems].map(
+      ({ product: item, quantity }) => ({
+        name: item.name,
+        quantity,
+        price: item.price || 0,
+      }),
+    );
 
   const buildBasicComponents = () =>
     product?.basic_components?.map((comp) => ({
@@ -813,6 +845,40 @@ export const ProductDetailPage: React.FC = () => {
     }
   };
 
+  const optionTabs = React.useMemo(
+    () =>
+      [
+        {
+          id: "cooperative" as const,
+          label: "부가서비스",
+          icon: Users,
+          show: globalCooperative.length > 0,
+          count: Object.values(selectedCooperative).filter(
+            (qty) => (qty as number) > 0,
+          ).length,
+        },
+        {
+          id: "additional" as const,
+          label: "추가 구성",
+          icon: Package,
+          show: globalAdditional.length > 0,
+          count: Object.values(selectedAdditional).filter(
+            (qty) => (qty as number) > 0,
+          ).length,
+        },
+      ].filter((tab) => tab.show),
+    [globalAdditional, globalCooperative, selectedAdditional, selectedCooperative],
+  );
+
+  useEffect(() => {
+    if (optionTabs.length === 0) return;
+    if (!optionTabs.some((tab) => tab.id === activeOptionTab)) {
+      setActiveOptionTab(optionTabs[0].id);
+    }
+  }, [activeOptionTab, optionTabs]);
+
+  const hasAnyOptions = optionTabs.length > 0;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -835,41 +901,6 @@ export const ProductDetailPage: React.FC = () => {
       </>
     );
   }
-
-  const optionTabs = [
-    {
-      id: "cooperative" as const,
-      label: "부가 서비스",
-      icon: Users,
-      show:
-        product?.cooperative_components &&
-        product.cooperative_components.length > 0 &&
-        globalCooperative.length > 0,
-      count: Object.values(selectedCooperative).filter(qty => (qty as number) > 0).length,
-    },
-    {
-      id: "additional" as const,
-      label: "추가 구성",
-      icon: Package,
-      show: true, // Always show
-      count: Object.values(selectedAdditional).filter(qty => (qty as number) > 0).length,
-    },
-    {
-      id: "place" as const,
-      label: "장소 상품",
-      icon: MapPin,
-      show: false, // Hidden
-      count: Object.values(selectedPlaces).filter(qty => (qty as number) > 0).length,
-    },
-    {
-      id: "food" as const,
-      label: "음식 상품",
-      icon: UtensilsCrossed,
-      show: false, // Hidden
-      count: Object.values(selectedFoods).filter(qty => (qty as number) > 0).length,
-    },
-  ].filter((tab) => tab.show);
-  const hasAnyOptions = optionTabs.length > 0;
   const canonicalUrl = `${SITE_URL}/products/${product.id || id || ""}`;
   const seoTitle = `${product.name} | 렌탈어때`;
   const seoDescription =
@@ -893,6 +924,7 @@ export const ProductDetailPage: React.FC = () => {
         sku: product.id,
         price: product.price,
         stock: product.stock,
+        includeOffers: !priceDisplayLoading && isVisiblePriceMode(priceDisplayMode),
       }),
     ],
   });
@@ -1002,15 +1034,20 @@ export const ProductDetailPage: React.FC = () => {
                   </p>
                 )}
                 <div className="mt-4 flex items-baseline gap-2">
-                  {product.discount_rate && product.discount_rate > 0 && (
+                  {!priceDisplayLoading && !isInquiryMode && product.discount_rate && product.discount_rate > 0 && (
                     <span className="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-bold">
                       {product.discount_rate}% OFF
                     </span>
                   )}
-                  <span className="text-2xl font-semibold text-gray-900">
-                    {product.price?.toLocaleString()}원
+                  <span className={getPublicPriceClassName({
+                    mode: priceDisplayMode,
+                    loading: priceDisplayLoading,
+                    visibleClass: 'text-2xl font-semibold text-gray-900',
+                    hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+                  })}>
+                    {mainPriceText}
                   </span>
-                  <span className="text-sm text-gray-400">/ 1일</span>
+                  {showDailySuffix && <span className="text-sm text-gray-400">/ 1일</span>}
                 </div>
               </div>
 
@@ -1228,13 +1265,9 @@ export const ProductDetailPage: React.FC = () => {
                   {/* Chip Filter & List Content */}
                   <div className="bg-white rounded-b-xl border border-gray-100 shadow-sm overflow-hidden">
                     {activeOptionTab === "cooperative" &&
-                      <OptionListTypeA items={globalCooperative} selectedQty={selectedCooperative} setQty={setSelectedCooperative} componentProducts={componentProducts} menuItems={menuItems} tabType="cooperative" selectionMode="checkbox" />}
+                      <OptionListTypeA items={globalCooperative} selectedQty={selectedCooperative} setQty={setSelectedCooperative} componentProducts={componentProducts} menuItems={menuItems} tabType="cooperative" selectionMode="checkbox" priceDisplayMode={priceDisplayMode} priceDisplayLoading={priceDisplayLoading} />}
                     {activeOptionTab === "additional" &&
-                      <OptionListTypeA items={globalAdditional} selectedQty={selectedAdditional} setQty={setSelectedAdditional} componentProducts={componentProducts} menuItems={menuItems} tabType="additional" />}
-                    {activeOptionTab === "place" &&
-                      <OptionListTypeA items={globalPlaces} selectedQty={selectedPlaces} setQty={setSelectedPlaces} componentProducts={componentProducts} menuItems={menuItems} tabType="place" />}
-                    {activeOptionTab === "food" &&
-                      <OptionListTypeA items={globalFoods} selectedQty={selectedFoods} setQty={setSelectedFoods} componentProducts={componentProducts} menuItems={menuItems} tabType="food" />}
+                      <OptionListTypeA items={globalAdditional} selectedQty={selectedAdditional} setQty={setSelectedAdditional} componentProducts={componentProducts} menuItems={menuItems} tabType="additional" priceDisplayMode={priceDisplayMode} priceDisplayLoading={priceDisplayLoading} />}
                   </div>
                 </div>
               )}
@@ -1274,66 +1307,60 @@ export const ProductDetailPage: React.FC = () => {
                       </p>
                     ))}
                   {activeTab === "guide" && (
-                    <div className="space-y-8 text-gray-600">
-                      <div className="rounded-2xl border border-[#001E45]/10 bg-[#001E45]/[0.03] p-5 md:p-6">
-                        <p className="text-xs font-semibold tracking-[0.12em] text-[#001E45] uppercase mb-2">
+                    <article className="mx-auto max-w-4xl space-y-8 px-1 text-[15px] leading-8 text-slate-600">
+                      <section className="space-y-3">
+                        <p className="text-xs font-semibold tracking-[0.12em] text-[#001E45] uppercase">
                           대여 안내
                         </p>
-                        <h4 className="text-lg font-bold text-slate-900 mb-2">
+                        <h4 className="text-xl font-bold leading-8 text-slate-900">
                           온라인에서는 견적 요청만 접수합니다.
                         </h4>
-                        <p className="text-sm md:text-base leading-7">
-                          사이트에서는 상품 구성과 예상 금액을 확인한 뒤 견적을 요청하실 수 있습니다.
-                          최종 금액과 진행 조건은 담당자 검토 후 별도로 안내드립니다.
+                        <p>{guideDescription}</p>
+                      </section>
+
+                      <section className="border-t border-slate-100 pt-8">
+                        <h5 className="text-base font-bold text-slate-900">진행 절차</h5>
+                        <ol className="mt-4 space-y-4">
+                          <li>
+                            <span className="font-semibold text-slate-900">1. 견적 요청 접수</span>
+                            <p className="mt-1">상품과 일정, 옵션을 선택해 요청을 남기면 접수가 완료됩니다.</p>
+                          </li>
+                          <li>
+                            <span className="font-semibold text-slate-900">2. 담당자 검토</span>
+                            <p className="mt-1">재고, 일정, 설치 조건과 현장 상황을 확인한 뒤 진행 가능 여부를 검토합니다.</p>
+                          </li>
+                          <li>
+                            <span className="font-semibold text-slate-900">3. 견적 안내</span>
+                            <p className="mt-1">최종 금액과 진행 조건, 필요한 안내 사항을 담당자가 별도로 회신드립니다.</p>
+                          </li>
+                          <li>
+                            <span className="font-semibold text-slate-900">4. 확정 및 설치</span>
+                            <p className="mt-1">일정 확정 후 납품과 설치를 진행하고, 사용 종료 후 회수를 진행합니다.</p>
+                          </li>
+                        </ol>
+                      </section>
+
+                      <section className="border-t border-slate-100 pt-8 space-y-3">
+                        <h5 className="text-base font-bold text-slate-900">운영 안내</h5>
+                        <p>
+                          납품은 수도권 당일 대응을 기본으로 하며, 전국 단위 일정은 협력망을 통해 운영하고 있습니다.
+                          평균 1차 회신은 영업일 기준 1일 이내를 기준으로 안내드립니다.
                         </p>
-                      </div>
+                        <p>
+                          실제 납품과 회수는 설치 일정이 확정된 뒤 진행되며, 견적서와 계약 조건, 세금계산서 등
+                          필요한 서류는 상담 단계에서 함께 안내드립니다.
+                        </p>
+                      </section>
 
-                      <div>
-                        <h5 className="text-sm font-bold text-slate-900 mb-4">진행 절차</h5>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                          {[
-                            { step: "01", title: "견적 요청 접수", desc: "상품과 일정, 옵션을 선택해 요청을 남깁니다." },
-                            { step: "02", title: "담당자 검토", desc: "재고, 일정, 설치 조건을 확인합니다." },
-                            { step: "03", title: "견적 안내", desc: "최종 금액과 진행 조건을 회신드립니다." },
-                            { step: "04", title: "확정 및 설치", desc: "일정 확정 후 납품, 설치, 회수를 진행합니다." },
-                          ].map((item) => (
-                            <div key={item.step} className="rounded-xl border border-slate-200 bg-white p-4">
-                              <p className="text-xs font-bold text-[#001E45] mb-2">{item.step}</p>
-                              <p className="font-semibold text-slate-900 mb-2">{item.title}</p>
-                              <p className="text-sm leading-6 text-slate-600">{item.desc}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
-                          <p className="text-xs text-slate-500">납품 가능 지역</p>
-                          <p className="font-bold text-slate-900 mt-1">수도권 당일 대응, 전국 협력망 운영</p>
-                        </div>
-                        <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
-                          <p className="text-xs text-slate-500">평균 응답 시간</p>
-                          <p className="font-bold text-slate-900 mt-1">영업일 기준 1일 이내 1차 회신</p>
-                        </div>
-                        <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
-                          <p className="text-xs text-slate-500">운영 기준</p>
-                          <p className="font-bold text-slate-900 mt-1">설치 일정 확정 후 납품 및 회수 진행</p>
-                        </div>
-                        <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
-                          <p className="text-xs text-slate-500">안내 항목</p>
-                          <p className="font-bold text-slate-900 mt-1">견적서, 계약 조건, 세금계산서 등 별도 안내</p>
-                        </div>
-                      </div>
-
-                      <div className="rounded-xl border border-slate-200 p-5">
-                        <p className="text-sm font-bold text-slate-900 mb-3">견적 요청 전 확인하면 좋은 정보</p>
-                        <ul className="space-y-2 text-sm text-slate-600 leading-6">
+                      <section className="border-t border-slate-100 pt-8">
+                        <h5 className="text-base font-bold text-slate-900">견적 요청 전 확인하면 좋은 정보</h5>
+                        <ul className="mt-4 space-y-2 text-slate-600">
                           <li>설치 지역, 희망 일정, 사용 기간</li>
                           <li>수량, 추가 옵션, 현장 반입 조건</li>
                           <li>엘리베이터, 주차, 설치 가능 시간 여부</li>
                         </ul>
-                      </div>
-                    </div>
+                      </section>
+                    </article>
                   )}
                 </div>
               </div>
@@ -1347,25 +1374,29 @@ export const ProductDetailPage: React.FC = () => {
                     <ShoppingBag size={20} className="text-[#001E45]" />
                     견적 요청 요약
                   </h3>
-                  <p className="text-[14px] text-gray-500 leading-[1.4] mb-6">
-                    상기 금액은 기본 운영 기준 구성에 대한 최소 금액이며,<br />
-                    수량 및 대여 일정에 따라 조정될 수 있습니다.
+                  <p className="whitespace-pre-line text-[14px] text-gray-500 leading-[1.4] mb-6">
+                    {summaryDescription}
                   </p>
 
                   {/* Selected Dates */}
                   <SummaryRows rows={summaryRows} />
 
                   {/* Selected Options Summary */}
-                  {selectedSummary.length > 0 && <SelectedOptionsSection items={selectedSummary} scrollable />}
+                  {selectedSummary.length > 0 && <SelectedOptionsSection items={selectedSummary} priceDisplayMode={priceDisplayMode} priceDisplayLoading={priceDisplayLoading} />}
 
                   {/* Total Price */}
-                  <div className="mt-6 pt-4 border-t-2 border-gray-900">
+                  <div className="mt-6 pt-4 border-t border-gray-200">
                     <div className="flex justify-between items-center">
                       <span className="font-bold text-gray-900">
                         예상 견적 비용
                       </span>
-                      <span className="text-2xl font-bold text-[#001E45]">
-                        {totalPrice.toLocaleString()}원
+                      <span className={getPublicPriceClassName({
+                        mode: priceDisplayMode,
+                        loading: priceDisplayLoading,
+                        visibleClass: 'text-2xl font-bold text-[#001E45]',
+                        hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+                      })}>
+                        {totalPriceText}
                       </span>
                     </div>
                   </div>
@@ -1485,14 +1516,13 @@ export const ProductDetailPage: React.FC = () => {
               <ShoppingBag size={20} className="text-[#001E45]" />
               견적 요청 요약
             </h3>
-            <p className="text-[14px] text-gray-500 leading-[1.4] mb-6">
-              상기 금액은 기본 운영 기준 구성에 대한 최소 금액이며,<br />
-              수량 및 대여 일정에 따라 조정될 수 있습니다.
+            <p className="whitespace-pre-line text-[14px] text-gray-500 leading-[1.4] mb-6">
+              {summaryDescription}
             </p>
 
             <SummaryRows rows={summaryRows} />
 
-            {selectedSummary.length > 0 && <SelectedOptionsSection items={selectedSummary} />}
+            {selectedSummary.length > 0 && <SelectedOptionsSection items={selectedSummary} priceDisplayMode={priceDisplayMode} priceDisplayLoading={priceDisplayLoading} />}
 
             <button
               onClick={() => openActionConfirm('cart')}
@@ -1508,8 +1538,13 @@ export const ProductDetailPage: React.FC = () => {
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs text-gray-500">예상 견적 비용</p>
-              <p className="text-xl font-bold text-[#001E45]">
-                {totalPrice.toLocaleString()}원
+              <p className={getPublicPriceClassName({
+                mode: priceDisplayMode,
+                loading: priceDisplayLoading,
+                visibleClass: 'text-xl font-bold text-[#001E45]',
+                hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+              })}>
+                {totalPriceText}
               </p>
             </div>
             <button
@@ -1551,11 +1586,16 @@ export const ProductDetailPage: React.FC = () => {
                 </p>
                 <SummaryRows rows={summaryRows} />
                 {selectedSummary.length > 0 && (
-                  <SelectedOptionsSection items={selectedSummary} />
+                  <SelectedOptionsSection items={selectedSummary} priceDisplayMode={priceDisplayMode} priceDisplayLoading={priceDisplayLoading} />
                 )}
                 <div className="mt-4 pt-4 border-t border-slate-200 flex items-center justify-between">
                   <span className="text-sm font-semibold text-slate-900">예상 견적 비용</span>
-                  <span className="text-xl font-bold text-[#001E45]">{totalPrice.toLocaleString()}원</span>
+                  <span className={getPublicPriceClassName({
+                    mode: priceDisplayMode,
+                    loading: priceDisplayLoading,
+                    visibleClass: 'text-xl font-bold text-[#001E45]',
+                    hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+                  })}>{totalPriceText}</span>
                 </div>
               </div>
               <p className="text-xs text-slate-500 leading-relaxed">

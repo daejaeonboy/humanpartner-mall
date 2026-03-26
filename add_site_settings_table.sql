@@ -37,5 +37,6 @@ values
     ('cs_center_phone', '1800-1985'),
     ('cs_center_business_hours_text', '고객행복센터(전화): 오전 9시 ~ 오후 6시 운영'),
     ('cs_center_chat_url', 'https://pf.kakao.com/_iRxghX/chat'),
-    ('cs_center_chat_hours_text', '채팅 상담 문의: 24시간 운영')
+    ('cs_center_chat_hours_text', '채팅 상담 문의: 24시간 운영'),
+    ('product_price_display_mode', 'visible')
 on conflict (setting_key) do nothing;

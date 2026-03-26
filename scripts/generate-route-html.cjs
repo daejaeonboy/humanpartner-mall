@@ -4,6 +4,8 @@ const path = require('path');
 const SITE_NAME = '렌탈어때';
 const SITE_URL = 'https://rentalpartner.kr';
 const DEFAULT_IMAGE = `${SITE_URL}/logocard.jpg`;
+const DEFAULT_PRICE_DISPLAY_MODE = 'visible';
+const PRICE_INQUIRY_TEXT = '가격문의';
 const BUILD_DATE = new Date().toISOString();
 const ROOT_MARKER = '<!-- PAGE_PRERENDER -->';
 const STRUCTURED_DATA_MARKER = '<!-- PAGE_STRUCTURED_DATA -->';
@@ -131,8 +133,14 @@ function setRobots(html, robots) {
 const renderStructuredData = (schemas = []) =>
   schemas.map((schema) => `    <script type="application/ld+json">${jsonLd(schema)}</script>`).join('\n');
 
-const priceText = (price) =>
-  typeof price === 'number' && price > 0 ? `${new Intl.NumberFormat('ko-KR').format(price)}원/일` : '가격 문의';
+const normalizePriceDisplayMode = (value) => value === 'inquiry' ? 'inquiry' : DEFAULT_PRICE_DISPLAY_MODE;
+
+const priceText = (price, priceDisplayMode = DEFAULT_PRICE_DISPLAY_MODE) =>
+  normalizePriceDisplayMode(priceDisplayMode) === 'inquiry'
+    ? PRICE_INQUIRY_TEXT
+    : typeof price === 'number' && price > 0
+      ? `${new Intl.NumberFormat('ko-KR').format(price)}원/일`
+      : PRICE_INQUIRY_TEXT;
 
 const displayDate = (value) => {
   const date = new Date(value || '');
@@ -218,7 +226,7 @@ const grid = (items) =>
     ? '<p class="mt-6 text-sm text-slate-500">표시할 항목이 아직 없습니다.</p>'
     : `<div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">${items.join('')}</div>`;
 
-function homeBody(products, postsByBoard) {
+function homeBody(products, postsByBoard, priceDisplayMode) {
   const productCards = products.slice(0, 8).map((product) => `
       <a href="/products/${escapeHtml(product.id)}" class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
         <div class="aspect-square overflow-hidden bg-slate-100"><img src="${escapeHtml(absUrl(product.image_url))}" alt="${escapeHtml(product.name)}" class="h-full w-full object-cover" /></div>
@@ -226,7 +234,7 @@ function homeBody(products, postsByBoard) {
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">${escapeHtml(product.category || '사무기기')}</p>
           <h2 class="text-lg font-bold text-slate-900">${escapeHtml(product.name)}</h2>
           <p class="text-sm text-slate-500">${escapeHtml(productSeoDescription(product))}</p>
-          <p class="text-base font-bold text-[#001E45]">${escapeHtml(priceText(product.price))}</p>
+          <p class="text-base font-bold text-[#001E45]">${escapeHtml(priceText(product.price, priceDisplayMode))}</p>
         </div>
       </a>
     `);
@@ -281,7 +289,7 @@ function homeBody(products, postsByBoard) {
     `;
 }
 
-function productListBody(products) {
+function productListBody(products, priceDisplayMode) {
   const cards = products.slice(0, 24).map((product) => `
       <a href="/products/${escapeHtml(product.id)}" class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
         <div class="aspect-square overflow-hidden bg-slate-100"><img src="${escapeHtml(absUrl(product.image_url))}" alt="${escapeHtml(product.name)}" class="h-full w-full object-cover" /></div>
@@ -289,7 +297,7 @@ function productListBody(products) {
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">${escapeHtml(product.category || '사무기기')}</p>
           <h2 class="text-lg font-bold text-slate-900">${escapeHtml(product.name)}</h2>
           <p class="text-sm text-slate-500">${escapeHtml(productSeoDescription(product))}</p>
-          <p class="text-base font-bold text-[#001E45]">${escapeHtml(priceText(product.price))}</p>
+          <p class="text-base font-bold text-[#001E45]">${escapeHtml(priceText(product.price, priceDisplayMode))}</p>
         </div>
       </a>
     `);
@@ -333,7 +341,7 @@ function boardListBody(boardType, posts) {
     `;
 }
 
-function productBody(product) {
+function productBody(product, priceDisplayMode) {
   return `
       <main class="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-14">
         <nav class="mb-6 text-sm text-slate-500"><a href="/">홈</a><span class="mx-2">/</span><a href="/products">상품목록</a><span class="mx-2">/</span><span>${escapeHtml(product.name)}</span></nav>
@@ -344,8 +352,8 @@ function productBody(product) {
             <h1 class="mt-3 text-3xl font-black text-slate-900 md:text-4xl">${escapeHtml(product.name)}</h1>
             <p class="mt-5 text-base leading-7 text-slate-600">${escapeHtml(productSeoDescription(product))}</p>
             <div class="mt-6 rounded-2xl bg-slate-50 p-5">
-              <p class="text-sm text-slate-500">렌탈 안내</p>
-              <p class="mt-2 text-2xl font-black text-[#001E45]">${escapeHtml(priceText(product.price))}</p>
+            <p class="text-sm text-slate-500">렌탈 안내</p>
+              <p class="mt-2 text-2xl font-black text-[#001E45]">${escapeHtml(priceText(product.price, priceDisplayMode))}</p>
               <p class="mt-3 text-sm leading-6 text-slate-500">상세 옵션과 설치 일정은 견적 상담을 통해 확인하실 수 있습니다. 렌탈어때가 기업 환경에 맞는 구성을 제안해드립니다.</p>
             </div>
           </div>
@@ -405,6 +413,16 @@ async function fetchPosts() {
   return fetchRows('mice_tab_posts?select=id,board_type,title,summary,content,image_url,mobile_image_url,created_at,updated_at,is_active&is_active=eq.true&order=display_order.asc&order=created_at.desc');
 }
 
+async function fetchPriceDisplayMode() {
+  try {
+    const rows = await fetchRows('site_settings?select=setting_key,setting_value&setting_key=eq.product_price_display_mode');
+    return normalizePriceDisplayMode(rows[0]?.setting_value);
+  } catch (error) {
+    console.warn(`Price display mode fallback: ${error instanceof Error ? error.message : String(error)}`);
+    return DEFAULT_PRICE_DISPLAY_MODE;
+  }
+}
+
 function buildHtml(page) {
   const pageCanonical = canonical(page.route);
   const pageImage = absUrl(page.image || DEFAULT_IMAGE);
@@ -456,13 +474,13 @@ function writeSitemap(pages) {
   fs.writeFileSync(path.join(distDir, 'sitemap.xml'), xml, 'utf8');
 }
 
-function buildStaticPages(products, postsByBoard) {
+function buildStaticPages(products, postsByBoard, priceDisplayMode) {
   return STATIC_ROUTES.map(([route, title, description, changefreq, priority, robots]) => {
     let bodyHtml = genericBody(title, description);
     let structuredData = [];
 
     if (route === '/') {
-      bodyHtml = homeBody(products, postsByBoard);
+      bodyHtml = homeBody(products, postsByBoard, priceDisplayMode);
       structuredData = [
         itemListSchema('렌탈어때 주요 상품', canonical('/products'), products.slice(0, 8).map((product) => ({
           name: product.name,
@@ -470,7 +488,7 @@ function buildStaticPages(products, postsByBoard) {
         }))),
       ];
     } else if (route === '/products') {
-      bodyHtml = productListBody(products);
+      bodyHtml = productListBody(products, priceDisplayMode);
       structuredData = [
         itemListSchema('렌탈어때 상품목록', canonical('/products'), products.slice(0, 24).map((product) => ({
           name: product.name,
@@ -507,7 +525,7 @@ function buildStaticPages(products, postsByBoard) {
   });
 }
 
-function buildProductPages(products) {
+function buildProductPages(products, priceDisplayMode) {
   return products.map((product) => {
     const route = `/products/${product.id}`;
     const description = productSeoDescription(product);
@@ -520,7 +538,7 @@ function buildProductPages(products) {
       image,
       imageAlt: product.name,
       ogType: 'product',
-      bodyHtml: productBody(product),
+      bodyHtml: productBody(product, priceDisplayMode),
       structuredData: [
         breadcrumbSchema([
           { name: '홈', url: canonical('/') },
@@ -536,7 +554,7 @@ function buildProductPages(products) {
           category: product.category || undefined,
           sku: product.id,
           brand: { '@type': 'Brand', name: SITE_NAME },
-          offers: typeof product.price === 'number' && product.price > 0 ? {
+          offers: normalizePriceDisplayMode(priceDisplayMode) !== 'inquiry' && typeof product.price === 'number' && product.price > 0 ? {
             '@type': 'Offer',
             priceCurrency: 'KRW',
             price: product.price,
@@ -598,9 +616,14 @@ function buildPostPages(posts) {
 async function main() {
   let products = [];
   let posts = [];
+  let priceDisplayMode = DEFAULT_PRICE_DISPLAY_MODE;
 
   try {
-    [products, posts] = await Promise.all([fetchProducts(), fetchPosts()]);
+    [products, posts, priceDisplayMode] = await Promise.all([
+      fetchProducts(),
+      fetchPosts(),
+      fetchPriceDisplayMode(),
+    ]);
   } catch (error) {
     console.warn(`SEO asset generation fallback: ${error instanceof Error ? error.message : String(error)}`);
   }
@@ -611,7 +634,11 @@ async function main() {
     return acc;
   }, {});
 
-  const pages = [...buildStaticPages(products, postsByBoard), ...buildProductPages(products), ...buildPostPages(posts)];
+  const pages = [
+    ...buildStaticPages(products, postsByBoard, priceDisplayMode),
+    ...buildProductPages(products, priceDisplayMode),
+    ...buildPostPages(posts),
+  ];
 
   for (const page of pages) {
     writeRoute(page.route, buildHtml(page));

@@ -31,6 +31,15 @@ interface ProductQueryOptions {
     catalogType?: ProductCatalogType | 'all';
 }
 
+export const isBasicProduct = (product: Product) =>
+    product.product_type === 'basic' || !product.product_type;
+
+export const isGeneralBasicProduct = (product: Product) =>
+    (product.catalog_type || 'general') === 'general' && isBasicProduct(product);
+
+export const isAdditionalOptionPoolProduct = (product: Product) =>
+    isGeneralBasicProduct(product);
+
 const isMissingCatalogTypeError = (error: unknown) => {
     const message = error instanceof Error ? error.message : String(error ?? '');
     return message.includes('catalog_type');
@@ -134,6 +143,11 @@ export const getProductsByType = async (type: string, options: ProductQueryOptio
         if (fallbackError) throw fallbackError;
         return options.catalogType === 'package' ? [] : (data || []);
     }
+};
+
+export const getAdditionalOptionProducts = async (): Promise<Product[]> => {
+    const products = await getProducts({ catalogType: 'all' });
+    return products.filter(isAdditionalOptionPoolProduct);
 };
 
 // 상품 검색 API

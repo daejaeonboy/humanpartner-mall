@@ -13,10 +13,13 @@ import {
   removeQuoteCartItem,
   setQuoteCartItems,
 } from "../src/utils/quoteCart";
+import { usePriceDisplay } from "../src/context/PriceDisplayContext";
+import { getPublicPriceClassName, getPublicPriceText, INQUIRY_PRICE_TEXT_CLASS } from "../src/utils/priceDisplay";
 
 export const QuoteCartPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, userProfile } = useAuth();
+  const { mode: priceDisplayMode, loading: priceDisplayLoading } = usePriceDisplay();
   const [items, setItems] = useState<QuoteCartItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resultMessage, setResultMessage] = useState<string>("");
@@ -227,8 +230,17 @@ export const QuoteCartPage: React.FC = () => {
                     <div className="md:w-48 pt-4 md:pt-0 mt-2 md:mt-0 border-t md:border-t-0 border-slate-100 flex flex-col justify-between shrink-0 gap-4 md:gap-2">
                       <div className="flex justify-between md:flex-col md:items-end w-full">
                         <p className="text-sm text-slate-400 md:mb-1">예상 견적 금액</p>
-                        <p className="text-2xl font-black text-[#001E45]">
-                          {item.total_price.toLocaleString()}원
+                        <p className={getPublicPriceClassName({
+                          mode: priceDisplayMode,
+                          loading: priceDisplayLoading,
+                          visibleClass: 'text-2xl font-black text-[#001E45]',
+                          hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+                        })}>
+                          {getPublicPriceText({
+                            amount: item.total_price,
+                            mode: priceDisplayMode,
+                            loading: priceDisplayLoading,
+                          })}
                         </p>
                       </div>
                       <div className="flex justify-end w-full md:mt-auto">
@@ -249,8 +261,17 @@ export const QuoteCartPage: React.FC = () => {
                     <p className="text-sm text-slate-500">
                       총 {items.length}건 예상 합계
                     </p>
-                    <p className="text-xl font-black text-[#001E45]">
-                      {totalPrice.toLocaleString()}원
+                    <p className={getPublicPriceClassName({
+                      mode: priceDisplayMode,
+                      loading: priceDisplayLoading,
+                      visibleClass: 'text-xl font-black text-[#001E45]',
+                      hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+                    })}>
+                      {getPublicPriceText({
+                        amount: totalPrice,
+                        mode: priceDisplayMode,
+                        loading: priceDisplayLoading,
+                      })}
                     </p>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3">

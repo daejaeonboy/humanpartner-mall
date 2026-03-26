@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { Header } from './components/Layout/Header';
 import { Footer } from './components/Layout/Footer';
 import { AuthProvider } from './src/context/AuthContext';
+import { PriceDisplayProvider } from './src/context/PriceDisplayContext';
 import { AdminRoute } from './src/components/AdminRoute';
 
 const lazyPage = <T extends Record<string, unknown>>(
@@ -70,75 +71,77 @@ const ScrollToTop = () => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <ScrollToTop />
-        <Routes>
-          {/* Admin Routes - Protected */}
-          <Route
-            path="/admin"
-            element={withSuspense(
-              <AdminRoute>
-                <AdminDashboard />
-              </AdminRoute>,
-            )}
-          >
-            <Route path="cms" element={withSuspense(<CMSManager />)} />
-            <Route path="sections" element={withSuspense(<SectionManager />)} />
-            <Route path="categories" element={withSuspense(<CategoryManager />)} />
-            <Route path="products" element={withSuspense(<ProductManager />)} />
-            <Route path="rental-requests" element={withSuspense(<BookingList />)} />
-            <Route path="bookings" element={<Navigate to="/admin/rental-requests" replace />} />
-            <Route path="users" element={withSuspense(<UserManager />)} />
-            <Route path="menus" element={withSuspense(<NavMenuManager />)} />
-            <Route path="faqs" element={withSuspense(<FAQManager />)} />
-            <Route path="inquiries" element={withSuspense(<InquiryManager />)} />
-            <Route path="gnb-sections" element={withSuspense(<GnbSectionManager />)} />
-            <Route path="mice-tabs" element={<Navigate to="/admin/gnb-sections" replace />} />
-          </Route>
+      <PriceDisplayProvider>
+        <Router>
+          <ScrollToTop />
+          <Routes>
+            {/* Admin Routes - Protected */}
+            <Route
+              path="/admin"
+              element={withSuspense(
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>,
+              )}
+            >
+              <Route path="cms" element={withSuspense(<CMSManager />)} />
+              <Route path="sections" element={withSuspense(<SectionManager />)} />
+              <Route path="categories" element={withSuspense(<CategoryManager />)} />
+              <Route path="products" element={withSuspense(<ProductManager />)} />
+              <Route path="rental-requests" element={withSuspense(<BookingList />)} />
+              <Route path="bookings" element={<Navigate to="/admin/rental-requests" replace />} />
+              <Route path="users" element={withSuspense(<UserManager />)} />
+              <Route path="menus" element={withSuspense(<NavMenuManager />)} />
+              <Route path="faqs" element={withSuspense(<FAQManager />)} />
+              <Route path="inquiries" element={withSuspense(<InquiryManager />)} />
+              <Route path="gnb-sections" element={withSuspense(<GnbSectionManager />)} />
+              <Route path="mice-tabs" element={<Navigate to="/admin/gnb-sections" replace />} />
+            </Route>
 
-          {/* Admin Login - Separate Route */}
-          <Route path="/admin/login" element={withSuspense(<AdminLogin />)} />
-          <Route path="/admin/signup" element={withSuspense(<AdminSignup />)} />
+            {/* Admin Login - Separate Route */}
+            <Route path="/admin/login" element={withSuspense(<AdminLogin />)} />
+            <Route path="/admin/signup" element={withSuspense(<AdminSignup />)} />
 
-          {/* Public Routes */}
-          <Route
-            path="/*"
-            element={
-              <div className="min-h-screen bg-white">
-                <Header />
-                <Suspense fallback={<RouteFallback />}>
-                  <Routes>
-                    <Route path="/" element={<MainPage />} />
-                    <Route path="/products" element={<ProductListPage />} />
-                    <Route path="/products/:id" element={<ProductDetailPage />} />
-                    <Route path="/mypage" element={<MyPage />} />
-                    <Route path="/mypage/info" element={<MyInfoPage />} />
-                    <Route path="/mypage/inquiry" element={<InquiryPage />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/signup" element={<SignUp />} />
-                    <Route path="/cs" element={<CSCenter />} />
-                    <Route path="/p/:code" element={<RedirectToProduct />} />
-                    <Route path="/search" element={<ProductSearchResult />} />
-                    <Route path="/quote-cart" element={<QuoteCartPage />} />
-                    <Route path="/company" element={<CompanyIntro />} />
-                    <Route path="/notice" element={<MiceBoardPage boardType="notice" />} />
-                    <Route path="/notice/:id" element={<GnbPostDetailPage boardType="notice" />} />
-                    <Route path="/event" element={<MiceBoardPage boardType="event" />} />
-                    <Route path="/event/:id" element={<GnbPostDetailPage boardType="event" />} />
-                    <Route path="/review" element={<MiceBoardPage boardType="review" />} />
-                    <Route path="/review/:id" element={<GnbPostDetailPage boardType="review" />} />
-                    <Route path="/blank" element={<BlankPage />} />
-                    <Route path="/terms" element={<TermsOfService />} />
-                    <Route path="/privacy" element={<PrivacyPolicy />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
-                <Footer />
-              </div>
-            }
-          />
-        </Routes>
-      </Router>
+            {/* Public Routes */}
+            <Route
+              path="/*"
+              element={
+                <div className="min-h-screen bg-white">
+                  <Header />
+                  <Suspense fallback={<RouteFallback />}>
+                    <Routes>
+                      <Route path="/" element={<MainPage />} />
+                      <Route path="/products" element={<ProductListPage />} />
+                      <Route path="/products/:id" element={<ProductDetailPage />} />
+                      <Route path="/mypage" element={<MyPage />} />
+                      <Route path="/mypage/info" element={<MyInfoPage />} />
+                      <Route path="/mypage/inquiry" element={<InquiryPage />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/signup" element={<SignUp />} />
+                      <Route path="/cs" element={<CSCenter />} />
+                      <Route path="/p/:code" element={<RedirectToProduct />} />
+                      <Route path="/search" element={<ProductSearchResult />} />
+                      <Route path="/quote-cart" element={<QuoteCartPage />} />
+                      <Route path="/company" element={<CompanyIntro />} />
+                      <Route path="/notice" element={<MiceBoardPage boardType="notice" />} />
+                      <Route path="/notice/:id" element={<GnbPostDetailPage boardType="notice" />} />
+                      <Route path="/event" element={<MiceBoardPage boardType="event" />} />
+                      <Route path="/event/:id" element={<GnbPostDetailPage boardType="event" />} />
+                      <Route path="/review" element={<MiceBoardPage boardType="review" />} />
+                      <Route path="/review/:id" element={<GnbPostDetailPage boardType="review" />} />
+                      <Route path="/blank" element={<BlankPage />} />
+                      <Route path="/terms" element={<TermsOfService />} />
+                      <Route path="/privacy" element={<PrivacyPolicy />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
+                  <Footer />
+                </div>
+              }
+            />
+          </Routes>
+        </Router>
+      </PriceDisplayProvider>
     </AuthProvider>
   );
 }

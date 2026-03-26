@@ -4,8 +4,11 @@ import { searchProducts, Product } from '../src/api/productApi';
 import { Container } from '../components/ui/Container';
 import { Loader2, Search } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+import { usePriceDisplay } from '../src/context/PriceDisplayContext';
+import { getPublicPriceClassName, getPublicPriceText, INQUIRY_PRICE_TEXT_CLASS } from '../src/utils/priceDisplay';
 
 export const ProductSearchResult: React.FC = () => {
+    const { mode: priceDisplayMode, loading: priceDisplayLoading } = usePriceDisplay();
     const [searchParams] = useSearchParams();
     const query = searchParams.get('q') || '';
 
@@ -107,8 +110,18 @@ export const ProductSearchResult: React.FC = () => {
                                         {product.short_description || ''}
                                     </p>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-lg font-extrabold text-[#001E45]">
-                                            {product.price?.toLocaleString()}<span className="text-xs font-medium ml-0.5">원</span>
+                                        <span className={getPublicPriceClassName({
+                                            mode: priceDisplayMode,
+                                            loading: priceDisplayLoading,
+                                            visibleClass: 'text-lg font-extrabold text-[#001E45]',
+                                            hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
+                                        })}>
+                                            {getPublicPriceText({
+                                                amount: product.price,
+                                                mode: priceDisplayMode,
+                                                loading: priceDisplayLoading,
+                                                zeroAsHidden: true,
+                                            })}
                                         </span>
                                     </div>
                                 </div>
