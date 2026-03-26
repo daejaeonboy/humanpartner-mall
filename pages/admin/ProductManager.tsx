@@ -1,8 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Pencil, Trash2, X, Save, Loader2, Upload, Image as ImageIcon, Grid3X3, Bold, Italic, Underline, Eye, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Save, Loader2, Upload, Image as ImageIcon, Grid3X3, Bold, Italic, Underline, Eye, EyeOff, Tag } from 'lucide-react';
 import { getProducts, addProduct, updateProduct, deleteProduct, Product, ProductCatalogType } from '../../src/api/productApi';
 import { getSections, getProductSections, setProductSections, Section } from '../../src/api/sectionApi';
 import { getAllNavMenuItems, NavMenuItem } from '../../src/api/cmsApi';
+import {
+    addServiceOptionCategory,
+    deleteServiceOptionCategory,
+    getServiceOptionCategories,
+    isMissingServiceOptionCategoryTableError,
+    normalizeServiceOptionCategoryName,
+    ServiceOptionCategory,
+    syncServiceOptionCategories,
+    updateServiceOptionCategory,
+} from '../../src/api/serviceOptionCategoryApi';
 import { uploadImage } from '../../src/api/storageApi';
 import { usePriceDisplay } from '../../src/context/PriceDisplayContext';
 import type { ProductPriceDisplayMode } from '../../src/api/siteSettingsApi';
@@ -87,11 +97,20 @@ const createEmptyFormData = (
     food_components: [] as any[],
 });
 
+const UNASSIGNED_SERVICE_CATEGORY_FILTER = '__UNASSIGNED__';
+
+const getNormalizedCategoryName = (value?: string | null) =>
+    normalizeServiceOptionCategoryName(value);
+
+const getCategoryLabel = (value?: string | null) =>
+    getNormalizedCategoryName(value) || '미분류';
+
 export const ProductManager = () => {
     const { mode: priceDisplayMode, loading: priceDisplayLoading, updatePriceDisplayMode } = usePriceDisplay();
     const [products, setProducts] = useState<Product[]>([]);
     const [sections, setSections] = useState<Section[]>([]);
     const [menuItems, setMenuItems] = useState<NavMenuItem[]>([]);
+    const [serviceOptionCategories, setServiceOptionCategories] = useState<ServiceOptionCategory[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -107,6 +126,14 @@ export const ProductManager = () => {
     const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
 
     const [priceDisplaySaving, setPriceDisplaySaving] = useState(false);
+    const [showServiceCategoryModal, setShowServiceCategoryModal] = useState(false);
+    const [newServiceCategoryName, setNewServiceCategoryName] = useState('');
+    const [newServiceCategoryDisplayOrder, setNewServiceCategoryDisplayOrder] = useState(0);
+    const [editingServiceCategoryId, setEditingServiceCategoryId] = useState<string | null>(null);
+    const [editingServiceCategoryName, setEditingServiceCategoryName] = useState('');
+    const [editingServiceCategoryDisplayOrder, setEditingServiceCategoryDisplayOrder] = useState(0);
+    const [serviceCategorySaving, setServiceCategorySaving] = useState(false);
+    const [serviceCategoryTableMissing, setServiceCategoryTableMissing] = useState(false);
 
     useEffect(() => { loadData(); }, []);
 
@@ -114,14 +141,42 @@ export const ProductManager = () => {
         try {
             setLoading(true);
             const [p, s, m] = await Promise.all([getProducts({ catalogType: 'all' }), getSections(), getAllNavMenuItems()]);
-            setProducts(p); setSections(s); setMenuItems(m);
-        } catch (error) { console.error(error); } finally { setLoading(false); }
+            setProducts(p);
+            setSections(s);
+            setMenuItems(m);
+
+            try {
+                const cooperativeCategoryNames = Array.from(new Set(
+                    p
+                        .filter((product) => product.product_type === 'cooperative')
+                        .map((product) => getNormalizedCategoryName(product.category))
+                        .filter(Boolean),
+                ));
+
+                await syncServiceOptionCategories(cooperativeCategoryNames);
+                const categories = await getServiceOptionCategories();
+                setServiceOptionCategories(categories);
+                setServiceCategoryTableMissing(false);
+            } catch (error) {
+                if (isMissingServiceOptionCategoryTableError(error)) {
+                    setServiceOptionCategories([]);
+                    setServiceCategoryTableMissing(true);
+                } else {
+                    throw error;
+                }
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const resetForm = () => {
         const defaultCatalogType: ProductCatalogType = viewMode === 'package' ? 'package' : 'general';
         setFormData(createEmptyFormData(defaultCatalogType, 'basic'));
-        setEditingProduct(null); setSelectedSections([]);
+        setEditingProduct(null);
+        setSelectedSections([]);
         setSelectedParentCategory('');
         setShowForm(false);
     };
@@ -139,6 +194,19 @@ export const ProductManager = () => {
         setShowForm(true);
     };
 
+    const openServiceCategoryModal = () => {
+        const nextDisplayOrder = serviceOptionCategories.length > 0
+            ? Math.max(...serviceOptionCategories.map((category) => category.display_order || 0)) + 1
+            : 1;
+
+        setNewServiceCategoryName('');
+        setNewServiceCategoryDisplayOrder(nextDisplayOrder);
+        setEditingServiceCategoryId(null);
+        setEditingServiceCategoryName('');
+        setEditingServiceCategoryDisplayOrder(0);
+        setShowServiceCategoryModal(true);
+    };
+
     const handleEdit = async (product: Product) => {
         setEditingProduct(product);
         setFormData({
@@ -147,7 +215,7 @@ export const ProductManager = () => {
                 (product.product_type || 'basic') as NonNullable<Product['product_type']>,
             ),
             name: product.name,
-            category: product.category || '',
+            category: getNormalizedCategoryName(product.category),
             price: product.price,
             description: product.description || '',
             short_description: product.short_description || '',
@@ -163,18 +231,15 @@ export const ProductManager = () => {
             food_components: product.food_components || [],
         });
 
-        // Derive Parent Category from the product's category (which is a Child Name)
-        // Find the menu item that matches key=product.category
-        // It should have a 'category' field pointing to its parent.
-        // Since 'menuItems' might not be fully loaded if we came straight here, ensuring we look it up.
-        // We can assume menuItems is updated since we loadData on mount.
-
-        const childItem = menuItems.find(i => i.name === product.category);
-        if (childItem && childItem.category) {
-            setSelectedParentCategory(childItem.category);
-        } else {
-            // Fallback or Top Level Item
+        if (product.product_type === 'cooperative') {
             setSelectedParentCategory('');
+        } else {
+            const childItem = menuItems.find(i => i.name === product.category);
+            if (childItem && childItem.category) {
+                setSelectedParentCategory(childItem.category);
+            } else {
+                setSelectedParentCategory('');
+            }
         }
 
         const s = await getProductSections(product.id!);
@@ -190,6 +255,7 @@ export const ProductManager = () => {
             const isPackageProduct = formData.catalog_type === 'package' && formData.product_type === 'basic';
             const data = {
                 ...formData,
+                category: getNormalizedCategoryName(formData.category),
                 basic_components: isPackageProduct ? clean(formData.basic_components) : [],
                 cooperative_components: isPackageProduct ? clean(formData.cooperative_components) : [],
                 additional_components: isPackageProduct ? clean(formData.additional_components) : [],
@@ -221,6 +287,129 @@ export const ProductManager = () => {
         } catch (error) {
             console.error('Failed to delete product:', error);
             alert('삭제에 실패했습니다.');
+        }
+    };
+
+    const handleAddServiceCategory = async () => {
+        const categoryName = getNormalizedCategoryName(newServiceCategoryName);
+        if (!categoryName) return;
+
+        setServiceCategorySaving(true);
+        try {
+            await addServiceOptionCategory({
+                name: categoryName,
+                display_order: newServiceCategoryDisplayOrder || serviceOptionCategories.length + 1,
+            });
+            setNewServiceCategoryName('');
+            await loadData();
+        } catch (error) {
+            console.error('Failed to add service option category:', error);
+            alert(serviceCategoryTableMissing
+                ? '부가서비스 카테고리 테이블이 없습니다. add_service_option_categories_table.sql 을 먼저 실행해주세요.'
+                : '카테고리 추가에 실패했습니다. 같은 이름이 이미 있는지 확인해주세요.');
+        } finally {
+            setServiceCategorySaving(false);
+        }
+    };
+
+    const startEditingServiceCategory = (category: ServiceOptionCategory) => {
+        setEditingServiceCategoryId(category.id!);
+        setEditingServiceCategoryName(category.name);
+        setEditingServiceCategoryDisplayOrder(category.display_order || 0);
+    };
+
+    const resetEditingServiceCategory = () => {
+        setEditingServiceCategoryId(null);
+        setEditingServiceCategoryName('');
+        setEditingServiceCategoryDisplayOrder(0);
+    };
+
+    const handleUpdateServiceCategory = async (id: string) => {
+        const nextName = getNormalizedCategoryName(editingServiceCategoryName);
+        if (!nextName) return;
+
+        const targetCategory = serviceOptionCategories.find((category) => category.id === id);
+        if (!targetCategory) return;
+
+        setServiceCategorySaving(true);
+        try {
+            await updateServiceOptionCategory(id, {
+                name: nextName,
+                display_order: editingServiceCategoryDisplayOrder || targetCategory.display_order || 0,
+            });
+
+            const previousName = getNormalizedCategoryName(targetCategory.name);
+            const renamed = previousName && previousName !== nextName;
+
+            if (renamed) {
+                const affectedProducts = products.filter((product) =>
+                    product.product_type === 'cooperative'
+                    && getNormalizedCategoryName(product.category) === previousName,
+                );
+
+                await Promise.all(
+                    affectedProducts.map((product) =>
+                        updateProduct(product.id!, { category: nextName }),
+                    ),
+                );
+
+                if (selectedCategoryFilter === previousName) {
+                    setSelectedCategoryFilter(nextName);
+                }
+            }
+
+            resetEditingServiceCategory();
+            await loadData();
+        } catch (error) {
+            console.error('Failed to update service option category:', error);
+            alert('카테고리 수정에 실패했습니다.');
+        } finally {
+            setServiceCategorySaving(false);
+        }
+    };
+
+    const handleDeleteServiceCategory = async (id: string) => {
+        const targetCategory = serviceOptionCategories.find((category) => category.id === id);
+        if (!targetCategory) return;
+
+        const categoryName = getNormalizedCategoryName(targetCategory.name);
+        const linkedProducts = products.filter((product) =>
+            product.product_type === 'cooperative'
+            && getNormalizedCategoryName(product.category) === categoryName,
+        );
+
+        const confirmMessage = linkedProducts.length > 0
+            ? `'${targetCategory.name}' 카테고리를 삭제하시겠습니까?\n연결된 부가서비스 ${linkedProducts.length}개는 미분류로 변경됩니다.`
+            : `'${targetCategory.name}' 카테고리를 삭제하시겠습니까?`;
+
+        if (!confirm(confirmMessage)) return;
+
+        setServiceCategorySaving(true);
+        try {
+            if (linkedProducts.length > 0) {
+                await Promise.all(
+                    linkedProducts.map((product) =>
+                        updateProduct(product.id!, { category: '' }),
+                    ),
+                );
+            }
+
+            await deleteServiceOptionCategory(id);
+
+            if (selectedCategoryFilter === categoryName) {
+                setSelectedCategoryFilter(null);
+            }
+
+            if (formData.category === categoryName) {
+                setFormData((prev) => ({ ...prev, category: '' }));
+            }
+
+            await loadData();
+        } catch (error) {
+            console.error('Failed to delete service option category:', error);
+            alert('카테고리 삭제에 실패했습니다.');
+        } finally {
+            setServiceCategorySaving(false);
         }
     };
 
@@ -263,6 +452,31 @@ export const ProductManager = () => {
     };
 
     if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="animate-spin text-[#001E45]" size={40} /></div>;
+    const serviceProducts = products.filter((product) => product.product_type === 'cooperative');
+    const registeredServiceCategoryNames = new Set(
+        serviceOptionCategories.map((category) => getNormalizedCategoryName(category.name)).filter(Boolean),
+    );
+    const orphanServiceCategories = Array.from(new Set(
+        serviceProducts
+            .map((product) => getNormalizedCategoryName(product.category))
+            .filter((name) => Boolean(name) && !registeredServiceCategoryNames.has(name)),
+    ))
+        .sort((a, b) => a.localeCompare(b, 'ko-KR'))
+        .map((name, index) => ({
+            id: `legacy-${name}`,
+            name,
+            display_order: 100000 + index,
+        }));
+    const allServiceCategoryOptions = [...serviceOptionCategories, ...orphanServiceCategories]
+        .sort((a, b) => {
+            if ((a.display_order || 0) !== (b.display_order || 0)) {
+                return (a.display_order || 0) - (b.display_order || 0);
+            }
+            return a.name.localeCompare(b.name, 'ko-KR');
+        });
+    const hasUnassignedServiceProducts = serviceProducts.some(
+        (product) => !getNormalizedCategoryName(product.category),
+    );
     const activeCatalogType: ProductCatalogType = viewMode === 'package' ? 'package' : 'general';
     const currentProductType = formData.product_type || 'basic';
     const isBasicProductEditor = currentProductType === 'basic';
@@ -357,12 +571,23 @@ export const ProductManager = () => {
 
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold">{listTitle}</h2>
-                <button
-                    onClick={openCreateModal}
-                    className="flex items-center gap-2 bg-[#001E45] text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-all font-medium"
-                >
-                    <Plus size={20} /> {createButtonLabel}
-                </button>
+                <div className="flex items-center gap-2">
+                    {viewMode === 'options' && (
+                        <button
+                            type="button"
+                            onClick={openServiceCategoryModal}
+                            className="flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 rounded-lg hover:bg-slate-50 transition-all font-medium text-slate-700"
+                        >
+                            <Tag size={18} /> 카테고리 관리
+                        </button>
+                    )}
+                    <button
+                        onClick={openCreateModal}
+                        className="flex items-center gap-2 bg-[#001E45] text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-all font-medium"
+                    >
+                        <Plus size={20} /> {createButtonLabel}
+                    </button>
+                </div>
             </div>
 
             {/* 일반/패키지 상품 관리 - 계층형 카테고리 필터 */}
@@ -467,42 +692,55 @@ export const ProductManager = () => {
 
             {viewMode === 'options' && (
                 <div className="space-y-4 mb-6">
-                    {/* 카테고리 필터 탭 */}
-                    {(() => {
-                        const filteredProducts = products.filter(p => p.product_type === 'cooperative');
-                        const categories = Array.from(new Set(filteredProducts.map(p => p.category).filter(Boolean) as string[])).sort();
+                    {serviceCategoryTableMissing && (
+                        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                            부가서비스 카테고리 전용 테이블이 아직 없습니다. `add_service_option_categories_table.sql` 을 실행하면 카테고리 CRUD가 활성화됩니다.
+                        </div>
+                    )}
 
-                        if (categories.length === 0) return null;
+                    {(allServiceCategoryOptions.length > 0 || hasUnassignedServiceProducts) && (
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                onClick={() => setSelectedCategoryFilter(null)}
+                                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${selectedCategoryFilter === null
+                                    ? 'bg-[#001E45] text-white shadow-sm'
+                                    : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
+                                    }`}
+                            >
+                                전체 ({serviceProducts.length})
+                            </button>
+                            {allServiceCategoryOptions.map((category) => {
+                                const categoryName = getNormalizedCategoryName(category.name);
+                                const count = serviceProducts.filter((product) =>
+                                    getNormalizedCategoryName(product.category) === categoryName,
+                                ).length;
 
-                        return (
-                            <div className="flex flex-wrap gap-2">
+                                return (
+                                    <button
+                                        key={category.id || category.name}
+                                        onClick={() => setSelectedCategoryFilter(categoryName)}
+                                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${selectedCategoryFilter === categoryName
+                                            ? 'bg-[#001E45] text-white shadow-sm'
+                                            : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
+                                            }`}
+                                    >
+                                        {category.name} ({count})
+                                    </button>
+                                );
+                            })}
+                            {hasUnassignedServiceProducts && (
                                 <button
-                                    onClick={() => setSelectedCategoryFilter(null)}
-                                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${selectedCategoryFilter === null
+                                    onClick={() => setSelectedCategoryFilter(UNASSIGNED_SERVICE_CATEGORY_FILTER)}
+                                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${selectedCategoryFilter === UNASSIGNED_SERVICE_CATEGORY_FILTER
                                         ? 'bg-[#001E45] text-white shadow-sm'
                                         : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
                                         }`}
                                 >
-                                    전체 ({filteredProducts.length})
+                                    미분류 ({serviceProducts.filter((product) => !getNormalizedCategoryName(product.category)).length})
                                 </button>
-                                {categories.map(cat => {
-                                    const count = filteredProducts.filter(p => p.category === cat).length;
-                                    return (
-                                        <button
-                                            key={cat}
-                                            onClick={() => setSelectedCategoryFilter(cat)}
-                                            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${selectedCategoryFilter === cat
-                                                ? 'bg-[#001E45] text-white shadow-sm'
-                                                : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
-                                                }`}
-                                        >
-                                            {cat} ({count})
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        );
-                    })()}
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -528,45 +766,77 @@ export const ProductManager = () => {
                                 <div className="space-y-4">
                                     <div><label className="block text-sm font-bold text-slate-700 mb-1">상품명 *</label><input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45] outline-none" /></div>
                                     <div><label className="block text-sm font-bold text-slate-700 mb-1">간단 소개 <span className="text-slate-400 font-normal text-xs">{isOptionEditor ? '(목록 카드에 먼저 노출)' : '(상품명 아래 표시)'}</span></label><textarea value={formData.short_description} onChange={(e) => setFormData({ ...formData, short_description: e.target.value })} placeholder={shortDescriptionPlaceholder} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45] outline-none resize-none h-16" /></div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-1">1차 메뉴 (대분류)</label>
-                                            <select
-                                                value={selectedParentCategory}
-                                                onChange={(e) => {
-                                                    setSelectedParentCategory(e.target.value);
-                                                    setFormData({ ...formData, category: '' });
-                                                }}
-                                                className="w-full px-4 py-2 border rounded-lg outline-none bg-slate-50 focus:bg-white transition-colors"
-                                            >
-                                                <option value="">대분류 선택</option>
-                                                {menuItems.filter(i => !i.category).sort((a, b) => a.display_order - b.display_order).map(parent => (
-                                                    <option key={parent.id} value={parent.name}>{parent.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-1">2차 메뉴 (중분류) *</label>
+                                    {isServiceEditor ? (
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <label className="block text-sm font-bold text-slate-700">부가서비스 카테고리 *</label>
+                                                <button
+                                                    type="button"
+                                                    onClick={openServiceCategoryModal}
+                                                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#001E45] hover:text-[#002D66]"
+                                                >
+                                                    <Tag size={14} />
+                                                    카테고리 관리
+                                                </button>
+                                            </div>
                                             <select
                                                 required
                                                 value={formData.category}
                                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                                 className="w-full px-4 py-2 border rounded-lg outline-none"
-                                                disabled={!selectedParentCategory}
                                             >
-                                                <option value="">
-                                                    {!selectedParentCategory ? '대분류를 먼저 선택하세요' : '중분류 선택'}
-                                                </option>
-                                                {selectedParentCategory && menuItems
-                                                    .filter(i => i.category === selectedParentCategory)
-                                                    .sort((a, b) => a.display_order - b.display_order)
-                                                    .map(child => (
-                                                        <option key={child.id} value={child.name}>{child.name}</option>
-                                                    ))
-                                                }
+                                                <option value="">카테고리 선택</option>
+                                                {allServiceCategoryOptions.map((category) => (
+                                                    <option key={category.id || category.name} value={category.name}>
+                                                        {category.name}
+                                                    </option>
+                                                ))}
                                             </select>
+                                            <p className="text-xs text-slate-500">
+                                                부가서비스 카테고리는 목록 필터와 상세페이지 분류에 함께 사용됩니다.
+                                            </p>
                                         </div>
-                                    </div>
+                                    ) : (
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-bold text-slate-700 mb-1">1차 메뉴 (대분류)</label>
+                                                <select
+                                                    value={selectedParentCategory}
+                                                    onChange={(e) => {
+                                                        setSelectedParentCategory(e.target.value);
+                                                        setFormData({ ...formData, category: '' });
+                                                    }}
+                                                    className="w-full px-4 py-2 border rounded-lg outline-none bg-slate-50 focus:bg-white transition-colors"
+                                                >
+                                                    <option value="">대분류 선택</option>
+                                                    {menuItems.filter(i => !i.category).sort((a, b) => a.display_order - b.display_order).map(parent => (
+                                                        <option key={parent.id} value={parent.name}>{parent.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-bold text-slate-700 mb-1">2차 메뉴 (중분류) *</label>
+                                                <select
+                                                    required
+                                                    value={formData.category}
+                                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                                    className="w-full px-4 py-2 border rounded-lg outline-none"
+                                                    disabled={!selectedParentCategory}
+                                                >
+                                                    <option value="">
+                                                        {!selectedParentCategory ? '대분류를 먼저 선택하세요' : '중분류 선택'}
+                                                    </option>
+                                                    {selectedParentCategory && menuItems
+                                                        .filter(i => i.category === selectedParentCategory)
+                                                        .sort((a, b) => a.display_order - b.display_order)
+                                                        .map(child => (
+                                                            <option key={child.id} value={child.name}>{child.name}</option>
+                                                        ))
+                                                    }
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className={`grid gap-4 ${isBasicProductEditor ? 'grid-cols-2' : 'grid-cols-1'}`}>
                                         <div><label className="block text-sm font-bold text-slate-700 mb-1">가격 (원) *</label><input type="number" required value={formData.price} onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })} className="w-full px-4 py-2 border rounded-lg outline-none" /></div>
                                         {isBasicProductEditor && (
@@ -685,6 +955,184 @@ export const ProductManager = () => {
                 </div>
             )}
 
+            {showServiceCategoryModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
+                        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-900">부가서비스 카테고리 관리</h3>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    추가, 이름 변경, 삭제 시 부가서비스 상품 분류와 함께 연동됩니다.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowServiceCategoryModal(false);
+                                    resetEditingServiceCategory();
+                                }}
+                                className="text-slate-400 hover:text-slate-600"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-5 px-5 py-5">
+                            {serviceCategoryTableMissing && (
+                                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                                    SQL 테이블 생성 전에는 카테고리 저장이 되지 않습니다. `add_service_option_categories_table.sql` 을 먼저 실행해주세요.
+                                </div>
+                            )}
+
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                <p className="mb-3 text-sm font-bold text-slate-800">새 카테고리 추가</p>
+                                <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_140px_auto]">
+                                    <input
+                                        type="text"
+                                        value={newServiceCategoryName}
+                                        onChange={(e) => setNewServiceCategoryName(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                void handleAddServiceCategory();
+                                            }
+                                        }}
+                                        placeholder="예: 설치 지원, 케이터링"
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-[#001E45] focus:ring-4 focus:ring-[#001E45]/10"
+                                    />
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={newServiceCategoryDisplayOrder}
+                                        onChange={(e) => setNewServiceCategoryDisplayOrder(parseInt(e.target.value, 10) || 0)}
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-[#001E45] focus:ring-4 focus:ring-[#001E45]/10"
+                                        placeholder="노출 순서"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleAddServiceCategory}
+                                        disabled={serviceCategorySaving || !getNormalizedCategoryName(newServiceCategoryName)}
+                                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#001E45] px-4 py-3 font-bold text-white transition-all hover:bg-[#002D66] disabled:cursor-not-allowed disabled:bg-slate-300"
+                                    >
+                                        {serviceCategorySaving ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                                        추가
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="max-h-[420px] space-y-3 overflow-y-auto pr-1">
+                                {allServiceCategoryOptions.length === 0 ? (
+                                    <div className="rounded-2xl border-2 border-dashed border-slate-200 px-6 py-12 text-center text-slate-400">
+                                        등록된 부가서비스 카테고리가 없습니다.
+                                    </div>
+                                ) : (
+                                    allServiceCategoryOptions.map((category) => {
+                                        const categoryName = getNormalizedCategoryName(category.name);
+                                        const linkedCount = serviceProducts.filter((product) =>
+                                            getNormalizedCategoryName(product.category) === categoryName,
+                                        ).length;
+                                        const isEditing = editingServiceCategoryId === category.id;
+                                        const isLegacyCategory = String(category.id).startsWith('legacy-');
+
+                                        return (
+                                            <div key={category.id || category.name} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                                {isEditing ? (
+                                                    <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_120px_auto_auto]">
+                                                        <input
+                                                            type="text"
+                                                            value={editingServiceCategoryName}
+                                                            onChange={(e) => setEditingServiceCategoryName(e.target.value)}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    e.preventDefault();
+                                                                    void handleUpdateServiceCategory(category.id!);
+                                                                }
+                                                                if (e.key === 'Escape') {
+                                                                    resetEditingServiceCategory();
+                                                                }
+                                                            }}
+                                                            className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-[#001E45] focus:ring-4 focus:ring-[#001E45]/10"
+                                                            autoFocus
+                                                        />
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={editingServiceCategoryDisplayOrder}
+                                                            onChange={(e) => setEditingServiceCategoryDisplayOrder(parseInt(e.target.value, 10) || 0)}
+                                                            className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-[#001E45] focus:ring-4 focus:ring-[#001E45]/10"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleUpdateServiceCategory(category.id!)}
+                                                            disabled={serviceCategorySaving || !getNormalizedCategoryName(editingServiceCategoryName)}
+                                                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#001E45] px-4 py-3 font-bold text-white transition-all hover:bg-[#002D66] disabled:cursor-not-allowed disabled:bg-slate-300"
+                                                        >
+                                                            {serviceCategorySaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                                            저장
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={resetEditingServiceCategory}
+                                                            className="rounded-xl border border-slate-200 px-4 py-3 font-bold text-slate-600 transition-all hover:bg-slate-50"
+                                                        >
+                                                            취소
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                                        <div className="space-y-1">
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <span className="text-base font-bold text-slate-900">{category.name}</span>
+                                                                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
+                                                                    순서 {category.display_order || 0}
+                                                                </span>
+                                                                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
+                                                                    연결 {linkedCount}개
+                                                                </span>
+                                                                {isLegacyCategory && (
+                                                                    <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700">
+                                                                        기존 데이터
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-sm text-slate-500">
+                                                                {isLegacyCategory
+                                                                    ? '기존 부가서비스 상품에서 감지된 카테고리입니다. 새로 등록해 관리 가능한 상태로 바꿔주세요.'
+                                                                    : '상세페이지 부가서비스 탭의 분류와 어드민 필터에 사용됩니다.'}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            {!isLegacyCategory && (
+                                                                <>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => startEditingServiceCategory(category)}
+                                                                        className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-600 transition-all hover:bg-slate-50"
+                                                                    >
+                                                                        수정
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleDeleteServiceCategory(category.id!)}
+                                                                        className="rounded-xl border border-red-200 px-3 py-2 text-sm font-bold text-red-500 transition-all hover:bg-red-50"
+                                                                    >
+                                                                        삭제
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* 상품 리스트 테이블 */}
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden mt-8 border border-slate-100">
                 <table className="w-full">
@@ -728,7 +1176,10 @@ export const ProductManager = () => {
 
                                 // 부가서비스 관리: 중분류 필터
                                 if (viewMode === 'options' && selectedCategoryFilter) {
-                                    return p.category === selectedCategoryFilter;
+                                    if (selectedCategoryFilter === UNASSIGNED_SERVICE_CATEGORY_FILTER) {
+                                        return !getNormalizedCategoryName(p.category);
+                                    }
+                                    return getNormalizedCategoryName(p.category) === selectedCategoryFilter;
                                 }
 
                                 return true;
@@ -741,7 +1192,7 @@ export const ProductManager = () => {
                                             <div className="font-bold text-slate-800">{p.name}</div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-slate-600 font-medium">{p.category}</td>
+                                    <td className="px-6 py-4 text-slate-600 font-medium">{getCategoryLabel(p.category)}</td>
                                     <td className="px-6 py-4 text-right font-bold text-slate-900">{p.price.toLocaleString()}원</td>
                                     <td className="px-6 py-4">
                                         <div className="flex justify-center gap-2">
