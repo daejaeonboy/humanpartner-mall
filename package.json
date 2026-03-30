@@ -8,8 +8,8 @@
     "build": "vite build && node scripts/generate-route-html.cjs",
     "preview": "vite preview",
     "deploy:prod": "npm run build && firebase deploy --project humanpartner-mall --only hosting:humanpartner-mall",
-    "deploy:prod:functions": "firebase deploy --project humanpartner-mall --only functions:sendEmailVerification",
-    "deploy:prod:all": "npm run build && firebase deploy --project humanpartner-mall --only hosting:humanpartner-mall,functions:sendEmailVerification"
+    "deploy:prod:functions": "firebase deploy --project humanpartner-mall --only functions:sendEmailVerification,functions:manageQuoteEmailSettings,functions:sendQuoteRequestNotification",
+    "deploy:prod:all": "npm run build && firebase deploy --project humanpartner-mall --only hosting:humanpartner-mall,functions:sendEmailVerification,functions:manageQuoteEmailSettings,functions:sendQuoteRequestNotification"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",

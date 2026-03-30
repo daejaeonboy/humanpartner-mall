@@ -23,6 +23,12 @@ cp .env.example .env
 선택:
 - `VITE_API_URL` (기본값: `http://localhost:4000`)
 - `VITE_EMAIL_VERIFY_FUNCTION_URL` (로컬에서 Cloud Function 직접 호출 시)
+- `VITE_QUOTE_EMAIL_SETTINGS_FUNCTION_URL` (로컬에서 견적 알림 메일 설정 저장/조회 시)
+- `VITE_QUOTE_REQUEST_NOTIFY_FUNCTION_URL` (로컬에서 견적 요청 알림 발송 시)
+
+참고:
+- `/api/*` 경로는 Firebase Hosting rewrite가 있는 운영 환경에서만 바로 동작합니다.
+- `localhost:3000`으로 개발할 때는 위 Cloud Function URL들을 `.env`에 넣어두면 관리자 설정 저장과 알림 발송 테스트가 가능합니다.
 
 ### 서버 (`server/.env`)
 
@@ -44,6 +50,8 @@ cp functions/.env.example functions/.env
 필수:
 - `EMAIL_USER`
 - `EMAIL_PASS`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY` 또는 `SUPABASE_ANON_KEY`
 
 ## 2) 로컬 실행
 
@@ -75,13 +83,13 @@ npm run deploy:prod
 npm run deploy:prod:functions
 ```
 
-- 인증 메일 함수(`sendEmailVerification`)만 배포
+- 메일 관련 Functions(`sendEmailVerification`, `manageQuoteEmailSettings`, `sendQuoteRequestNotification`)만 배포
 
 ```bash
 npm run deploy:prod:all
 ```
 
-- 프론트와 인증 메일 함수를 함께 배포
+- 프론트와 메일 관련 Functions를 함께 배포
 
 주의:
 - `firebase deploy`를 단독으로 실행하지 마세요.

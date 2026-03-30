@@ -174,8 +174,8 @@ export const GnbManager = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-bold text-slate-800 mb-1.5">이동 링크 (페이지 경로)</label>
-                                <input required type="text" value={formData.link} onChange={e => setFormData({ ...formData, link: e.target.value })} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#001E45] outline-none transition-all text-sm" placeholder="예: /company 또는 /product-list?sectionId=..." />
+                                <label className="block text-sm font-bold text-slate-800 mb-1.5">이동 링크 (페이지 경로 또는 URL)</label>
+                                <input required type="text" value={formData.link} onChange={e => setFormData({ ...formData, link: e.target.value })} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#001E45] outline-none transition-all text-sm" placeholder="예: https://humanpartner.kr/ 또는 /product-list?sectionId=..." />
                                 <p className="text-xs text-slate-400 mt-1.5">클릭 시 이동할 주소를 입력해주세요.</p>
                             </div>
 

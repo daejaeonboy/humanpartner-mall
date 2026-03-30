@@ -220,7 +220,7 @@ create table if not exists public.bookings (
     start_date date not null,
     end_date date not null,
     total_price integer not null default 0,
-    status text not null default 'pending' check (status in ('pending', 'quote_sent', 'negotiating', 'confirmed', 'completed', 'cancelled')),
+    status text not null default 'pending' check (status in ('pending', 'quote_sent', 'confirmed', 'cancelled')),
     selected_options jsonb not null default '[]'::jsonb,
     basic_components jsonb not null default '[]'::jsonb,
     created_at timestamp with time zone not null default now()

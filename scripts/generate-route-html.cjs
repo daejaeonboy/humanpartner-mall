@@ -3,6 +3,7 @@ const path = require('path');
 
 const SITE_NAME = '렌탈어때';
 const SITE_URL = 'https://rentalpartner.kr';
+const COMPANY_SITE_URL = 'https://humanpartner.kr/';
 const DEFAULT_IMAGE = `${SITE_URL}/logocard.jpg`;
 const DEFAULT_PRICE_DISPLAY_MODE = 'visible';
 const PRICE_INQUIRY_TEXT = '가격문의';
@@ -22,7 +23,6 @@ const BOARD_META = {
 const STATIC_ROUTES = [
   ['/', '렌탈어때 | 사무기기 렌탈 플랫폼', '복합기, 노트북, 데스크탑 등 사무기기를 합리적인 조건으로 렌탈하세요. 렌탈어때 렌탈 서비스.', 'daily', '1.0'],
   ['/products', '상품목록 | 렌탈어때', '복합기, 노트북, 데스크탑 등 렌탈어때의 사무기기 렌탈 상품을 확인해보세요.', 'daily', '0.8'],
-  ['/company', '회사소개 | 렌탈어때', '렌탈어때 회사소개입니다. 복합기, 노트북, 데스크탑 등 사무기기 렌탈 서비스를 제공합니다.', 'monthly', '0.7'],
   ['/cs', '고객센터 | 렌탈어때', '렌탈어때 고객센터입니다. 자주 묻는 질문부터 실시간 상담까지 도와드립니다.', 'monthly', '0.6'],
   ['/notice', '공지사항 - 렌탈어때', '렌탈어때 공지사항 페이지입니다.', 'daily', '0.7'],
   ['/event', '이벤트 - 렌탈어때', '렌탈어때 이벤트 페이지입니다.', 'daily', '0.7'],
@@ -271,7 +271,7 @@ function homeBody(products, postsByBoard, priceDisplayMode) {
           <p class="mt-5 max-w-3xl text-base leading-7 text-slate-200 md:text-lg">복합기, 노트북, 데스크탑, 프린터 등 기업 운영에 필요한 사무기기를 렌탈어때에서 합리적인 조건으로 상담하고 비교할 수 있습니다.</p>
           <div class="mt-8 flex flex-wrap gap-3">
             <a href="/products" class="rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-900">상품 보러가기</a>
-            <a href="/company" class="rounded-full border border-white/30 px-6 py-3 text-sm font-bold text-white">회사소개</a>
+            <a href="${escapeHtml(COMPANY_SITE_URL)}" class="rounded-full border border-white/30 px-6 py-3 text-sm font-bold text-white">회사소개</a>
           </div>
         </section>
         <section class="mt-12">

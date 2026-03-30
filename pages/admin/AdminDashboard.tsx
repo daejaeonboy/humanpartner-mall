@@ -1,5 +1,5 @@
 ﻿import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Package, CalendarCheck, LayoutDashboard, ArrowLeft, Layers, Tag, Settings, Users, LogOut, User, Menu, HelpCircle, MessageSquare, Megaphone } from 'lucide-react';
+import { Package, CalendarCheck, LayoutDashboard, ArrowLeft, Layers, Tag, Settings, Users, LogOut, User, Menu, HelpCircle, MessageSquare, Megaphone, Mail } from 'lucide-react';
 import { useAuth } from '../../src/context/AuthContext';
 
 export const AdminDashboard = () => {
@@ -27,6 +27,7 @@ export const AdminDashboard = () => {
         { path: '/admin/gnb-sections', label: 'GNB 섹션 관리', icon: Megaphone },
         { path: '/admin/faqs', label: 'FAQ 관리', icon: HelpCircle },
         { path: '/admin/inquiries', label: '1:1 문의 관리', icon: MessageSquare },
+        { path: '/admin/quote-email-settings', label: '견적 메일 설정', icon: Mail },
     ];
 
     const isActive = (path: string, exact?: boolean) => {
@@ -220,6 +221,21 @@ export const AdminDashboard = () => {
                                         <div>
                                             <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#001E45] transition-colors">1:1 문의 관리</h3>
                                             <p className="text-slate-500 text-sm">고객 1:1 문의 확인 및 답변</p>
+                                        </div>
+                                    </div>
+                                </Link>
+
+                                <Link
+                                    to="/admin/quote-email-settings"
+                                    className="group bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-[#001E45]/30"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-4 bg-gradient-to-br from-[#001E45]/10 to-[#001E45]/5 rounded-xl group-hover:from-[#001E45] group-hover:to-[#FF8A8E] transition-all duration-300">
+                                            <Mail className="text-[#001E45] group-hover:text-white transition-colors" size={28} />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#001E45] transition-colors">견적 메일 설정</h3>
+                                            <p className="text-slate-500 text-sm">운영 수신 이메일과 발송 여부 관리</p>
                                         </div>
                                     </div>
                                 </Link>

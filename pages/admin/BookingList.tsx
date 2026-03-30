@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, Clock, Calendar, CheckCircle, XCircle, Trash2, Phone, Building2, AlertCircle, Package } from 'lucide-react';
-import { getBookings, updateBookingStatus, deleteBooking, Booking } from '../../src/api/bookingApi';
+import { Loader2, Calendar, CheckCircle, XCircle, Trash2, Phone, Building2, FileText } from 'lucide-react';
+import {
+    getBookings,
+    updateBookingStatus,
+    deleteBooking,
+    Booking,
+    BOOKING_STATUS_OPTIONS,
+} from '../../src/api/bookingApi';
 import { createNotification } from '../../src/api/notificationApi';
-
-const STATUS_OPTIONS: Array<{ value: Booking['status']; label: string }> = [
-    { value: 'pending', label: '견적 요청 접수' },
-    { value: 'quote_sent', label: '견적서 발송' },
-    { value: 'negotiating', label: '조건 조정 중' },
-    { value: 'confirmed', label: '계약 확정' },
-    { value: 'completed', label: '진행 완료' },
-    { value: 'cancelled', label: '요청 취소' },
-];
 
 const STATUS_NOTIFICATION_MAP: Record<Booking['status'], {
     title: string;
@@ -18,28 +15,18 @@ const STATUS_NOTIFICATION_MAP: Record<Booking['status'], {
     type: 'info' | 'success' | 'warning' | 'error';
 }> = {
     pending: {
-        title: '견적 요청 접수',
+        title: '견적 요청',
         message: (name) => `${name} 견적 요청이 정상 접수되었습니다. 담당자가 순차적으로 확인합니다.`,
         type: 'info',
     },
     quote_sent: {
-        title: '견적서 발송',
-        message: (name) => `${name} 견적서가 발송되었습니다. 검토 후 조정 요청이 가능합니다.`,
-        type: 'info',
-    },
-    negotiating: {
-        title: '견적 조정 진행',
-        message: (name) => `${name} 견적 조건 조정이 진행 중입니다. 요청사항을 반영해 안내드리겠습니다.`,
+        title: '견적 확인',
+        message: (name) => `${name} 견적 내용이 확인되었습니다. 상세 조건은 마이페이지에서 확인해주세요.`,
         type: 'info',
     },
     confirmed: {
-        title: '계약 확정',
-        message: (name) => `${name} 계약이 확정되었습니다. 설치 일정을 안내드리겠습니다.`,
-        type: 'success',
-    },
-    completed: {
-        title: '진행 완료',
-        message: (name) => `${name} 건이 완료 처리되었습니다. 이용해주셔서 감사합니다.`,
+        title: '계약 완료',
+        message: (name) => `${name} 계약이 완료되었습니다. 진행 일정을 순차적으로 안내드리겠습니다.`,
         type: 'success',
     },
     cancelled: {
@@ -82,7 +69,7 @@ export const BookingList = () => {
     };
 
     const handleStatusChange = async (id: string, status: Booking['status']) => {
-        const statusLabel = STATUS_OPTIONS.find((option) => option.value === status)?.label || status;
+        const statusLabel = BOOKING_STATUS_OPTIONS.find((option) => option.value === status)?.label || status;
         if (!confirm(`이 요청 상태를 '${statusLabel}'로 변경하시겠습니까?`)) return;
 
         setUpdatingId(id);
@@ -139,27 +126,17 @@ export const BookingList = () => {
             pending: { 
                 className: 'bg-orange-100 border border-orange-300 text-orange-800', 
                 icon: Calendar, 
-                label: '견적 요청 접수' 
+                label: '견적 요청' 
             },
             quote_sent: {
                 className: 'bg-cyan-100 border border-cyan-300 text-cyan-800',
-                icon: Clock,
-                label: '견적서 발송'
-            },
-            negotiating: {
-                className: 'bg-amber-100 border border-amber-300 text-amber-800',
-                icon: AlertCircle,
-                label: '조건 조정 중'
+                icon: FileText,
+                label: '견적 확인'
             },
             confirmed: { 
-                className: 'bg-blue-100 border border-blue-300 text-blue-800', 
+                className: 'bg-emerald-100 border border-emerald-300 text-emerald-800', 
                 icon: CheckCircle, 
-                label: '계약 확정' 
-            },
-            completed: {
-                className: 'bg-emerald-100 border border-emerald-300 text-emerald-800',
-                icon: Package,
-                label: '진행 완료'
+                label: '계약 완료' 
             },
             cancelled: { 
                 className: 'bg-gray-100 border border-gray-300 text-gray-700', 
@@ -304,7 +281,7 @@ export const BookingList = () => {
                                                                 }
                                                                 className="text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-white min-w-[122px]"
                                                             >
-                                                                {STATUS_OPTIONS.map((option) => (
+                                                                {BOOKING_STATUS_OPTIONS.map((option) => (
                                                                     <option key={option.value} value={option.value}>
                                                                         {option.label}
                                                                     </option>
@@ -332,32 +309,8 @@ export const BookingList = () => {
                                         {expandedId === booking.id && (
                                             <tr className="bg-slate-50/50">
                                                 <td colSpan={8} className="px-8 py-6">
-                                                    <div className="flex flex-col lg:flex-row gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                        {/* Detail Block: Basic */}
-                                                        <div className="flex-1 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                                                            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
-                                                                <div className="w-1.5 h-4 bg-slate-300 rounded-full"></div>
-                                                                <h4 className="font-bold text-slate-800 text-sm">기본 구성 품목</h4>
-                                                            </div>
-                                                            {booking.basic_components && booking.basic_components.length > 0 ? (
-                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
-                                                                    {booking.basic_components.map((comp, i) => (
-                                                                        <div key={i} className="flex justify-between items-center text-base">
-                                                                            <div className="flex flex-col">
-                                                                                <span className="text-slate-700 font-medium">{comp.name}</span>
-                                                                                {comp.model_name && <span className="text-xs text-slate-400">{comp.model_name}</span>}
-                                                                            </div>
-                                                                            <span className="font-bold text-slate-900 bg-slate-50 px-2.5 py-1 rounded border border-slate-100">{comp.quantity}</span>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            ) : (
-                                                                <p className="text-xs text-slate-400 italic py-2">기본 구성 정보가 없습니다.</p>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Detail Block: Options */}
-                                                        <div className="flex-1 bg-white p-5 rounded-xl border border-[#001E45]/10 shadow-sm">
+                                                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                                                        <div className="bg-white p-5 rounded-xl border border-[#001E45]/10 shadow-sm">
                                                             <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
                                                                 <div className="w-1.5 h-4 bg-[#001E45] rounded-full"></div>
                                                                 <h4 className="font-bold text-slate-800 text-sm">추가 선택 옵션</h4>

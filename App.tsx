@@ -26,7 +26,6 @@ const RedirectToProduct = lazyPage(() => import('./pages/RedirectToProduct'), 'R
 const CSCenter = lazyPage(() => import('./pages/CSCenter'), 'CSCenter');
 const ProductSearchResult = lazyPage(() => import('./pages/ProductSearchResult'), 'ProductSearchResult');
 const QuoteCartPage = lazyPage(() => import('./pages/QuoteCart'), 'QuoteCartPage');
-const CompanyIntro = lazyPage(() => import('./pages/CompanyIntro'), 'CompanyIntro');
 const TermsOfService = lazyPage(() => import('./pages/TermsOfService'), 'TermsOfService');
 const PrivacyPolicy = lazyPage(() => import('./pages/PrivacyPolicy'), 'PrivacyPolicy');
 const MiceBoardPage = lazyPage(() => import('./pages/MiceBoardPage'), 'MiceBoardPage');
@@ -46,6 +45,9 @@ const NavMenuManager = lazyPage(() => import('./pages/admin/NavMenuManager'), 'N
 const FAQManager = lazyPage(() => import('./pages/admin/FAQManager'), 'FAQManager');
 const InquiryManager = lazyPage(() => import('./pages/admin/InquiryManager'), 'InquiryManager');
 const GnbSectionManager = lazyPage(() => import('./pages/admin/GnbSectionManager'), 'GnbSectionManager');
+const QuoteEmailSettingsPage = lazyPage(() => import('./pages/admin/QuoteEmailSettings'), 'QuoteEmailSettingsPage');
+
+const COMPANY_SITE_URL = 'https://humanpartner.kr/';
 
 const RouteFallback = () => (
   <div className="flex min-h-[40vh] items-center justify-center text-sm font-medium text-slate-400">
@@ -66,6 +68,21 @@ const ScrollToTop = () => {
   }, [pathname, search, hash]);
 
   return null;
+};
+
+const CompanyRedirect = () => {
+  useEffect(() => {
+    window.location.replace(COMPANY_SITE_URL);
+  }, []);
+
+  return (
+    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 px-4 text-center text-sm text-slate-500">
+      <p>운영사 소개 페이지로 이동 중입니다.</p>
+      <a href={COMPANY_SITE_URL} className="font-semibold text-[#001E45] underline">
+        자동 이동이 안 되면 여기를 눌러주세요.
+      </a>
+    </div>
+  );
 };
 
 function App() {
@@ -95,6 +112,7 @@ function App() {
               <Route path="faqs" element={withSuspense(<FAQManager />)} />
               <Route path="inquiries" element={withSuspense(<InquiryManager />)} />
               <Route path="gnb-sections" element={withSuspense(<GnbSectionManager />)} />
+              <Route path="quote-email-settings" element={withSuspense(<QuoteEmailSettingsPage />)} />
               <Route path="mice-tabs" element={<Navigate to="/admin/gnb-sections" replace />} />
             </Route>
 
@@ -122,7 +140,7 @@ function App() {
                       <Route path="/p/:code" element={<RedirectToProduct />} />
                       <Route path="/search" element={<ProductSearchResult />} />
                       <Route path="/quote-cart" element={<QuoteCartPage />} />
-                      <Route path="/company" element={<CompanyIntro />} />
+                      <Route path="/company" element={<CompanyRedirect />} />
                       <Route path="/notice" element={<MiceBoardPage boardType="notice" />} />
                       <Route path="/notice/:id" element={<GnbPostDetailPage boardType="notice" />} />
                       <Route path="/event" element={<MiceBoardPage boardType="event" />} />

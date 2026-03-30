@@ -1,7 +1,13 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import { Container } from '../components/ui/Container';
-import { Calendar, User, Clock, Loader2, CheckCircle, XCircle, AlertCircle, Package, Download, Ban, FileText } from 'lucide-react';
-import { getUserBookings, Booking, updateBookingStatus } from '../src/api/bookingApi';
+import { Calendar, User, Clock, Loader2, CheckCircle, XCircle, Package, Download, Ban, FileText } from 'lucide-react';
+import {
+    getUserBookings,
+    Booking,
+    updateBookingStatus,
+    getBookingStatusLabel,
+    isBookingCancellable,
+} from '../src/api/bookingApi';
 import { getProducts } from '../src/api/productApi';
 import { useAuth } from '../src/context/AuthContext';
 import { usePriceDisplay } from '../src/context/PriceDisplayContext';
@@ -53,27 +59,17 @@ export const MyPage: React.FC = () => {
             pending: {
                 className: 'bg-orange-50 border border-orange-200 text-orange-700',
                 icon: Calendar,
-                label: '견적 요청 접수'
+                label: '견적 요청'
             },
             quote_sent: {
                 className: 'bg-cyan-50 border border-cyan-200 text-cyan-700',
-                icon: Clock,
-                label: '견적서 발송'
-            },
-            negotiating: {
-                className: 'bg-amber-50 border border-amber-200 text-amber-700',
-                icon: AlertCircle,
-                label: '조정 중'
+                icon: FileText,
+                label: '견적 확인'
             },
             confirmed: {
-                className: 'bg-blue-50 border border-blue-200 text-blue-700',
-                icon: CheckCircle,
-                label: '계약 확정'
-            },
-            completed: {
                 className: 'bg-emerald-50 border border-emerald-200 text-emerald-700',
-                icon: Package,
-                label: '진행 완료'
+                icon: CheckCircle,
+                label: '계약 완료'
             },
             cancelled: {
                 className: 'bg-gray-50 border border-gray-200 text-gray-600',
@@ -116,9 +112,7 @@ export const MyPage: React.FC = () => {
         return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
     };
 
-    const canCancelBooking = (status: Booking['status']) => (
-        status === 'pending' || status === 'quote_sent' || status === 'negotiating'
-    );
+    const canCancelBooking = (status: Booking['status']) => isBookingCancellable(status);
 
     const handleCancelBooking = async (bookingId?: string) => {
         if (!bookingId || cancellingId) return;
@@ -616,7 +610,7 @@ export const MyPage: React.FC = () => {
                                                                                 <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-bold w-24 text-center">대여기간</td>
                                                                                 <td className="border border-gray-400 px-3 py-2">{formatDate(booking.start_date)} ~ {formatDate(booking.end_date)} ({rentalDays}일간)</td>
                                                                                 <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-bold w-24 text-center">진행 상태</td>
-                                                                                <td className="border border-gray-400 px-3 py-2 w-32">{booking.status}</td>
+                                                                                <td className="border border-gray-400 px-3 py-2 w-32">{getBookingStatusLabel(booking.status)}</td>
                                                                             </tr>
                                                                         </tbody>
                                                                     </table>

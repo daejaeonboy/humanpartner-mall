@@ -28,7 +28,7 @@ export function Footer() {
                         <span className="w-px h-3.5 bg-gray-200 hidden md:block"></span>
                         <Link to="/cs" className="hover:text-[#001E45] font-bold text-[#001E45] transition-colors whitespace-nowrap flex items-center h-full">고객센터</Link>
                         <span className="w-px h-3.5 bg-gray-200 hidden md:block"></span>
-                        <Link to="/company" className="cursor-pointer hover:text-black transition-colors whitespace-nowrap flex items-center h-full">회사소개</Link>
+                        <a href="https://humanpartner.kr/" className="cursor-pointer hover:text-black transition-colors whitespace-nowrap flex items-center h-full">회사소개</a>
                         <span className="w-px h-3.5 bg-gray-200 hidden md:block"></span>
                         <Link to="/terms" className="cursor-pointer hover:text-black transition-colors whitespace-nowrap flex items-center h-full">이용약관</Link>
                         <span className="w-px h-3.5 bg-gray-200 hidden md:block"></span>
@@ -77,7 +77,7 @@ export function Footer() {
 
                         <div className="text-[13px] md:text-[14px] leading-6 md:leading-7 text-gray-500">
                             <p>
-                                법인명(상호) : 렌탈어때 <span className="mx-2 text-gray-300">|</span> 대표자(성명) : 이기섭 <span className="mx-2 text-gray-300">|</span> 사업자 등록번호 : 305-30-85537
+                                법인명(상호) : 휴먼파트너 <span className="mx-2 text-gray-300">|</span> 대표자(성명) : 이기섭 <span className="mx-2 text-gray-300">|</span> 사업자 등록번호 : 305-30-85537
                             </p>
                             <p>
                                 통신판매업 신고 : 2025-대전대덕-0526 &nbsp; <span className="underline cursor-pointer hover:text-gray-800 transition-colors">[사업자정보확인]</span>
@@ -99,7 +99,7 @@ export function Footer() {
                 <div className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-40 flex flex-col gap-2">
                     <Link
                         to="/quote-cart"
-                        className="w-12 h-12 rounded-[4px] bg-[#001E45] text-white hover:bg-[#002D66] transition-all flex items-center justify-center relative group"
+                        className="w-12 h-12 rounded-[4px] bg-black text-white hover:bg-slate-800 transition-all flex items-center justify-center relative group"
                         aria-label="장바구니 이동"
                         title="장바구니"
                     >

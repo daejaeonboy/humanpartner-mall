@@ -1,83 +1,623 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendEmailVerification = void 0;
-const functions = require("firebase-functions/v1");
-const nodemailer = require("nodemailer");
+exports.sendQuoteRequestNotification = exports.manageQuoteEmailSettings = exports.sendEmailVerification = void 0;
+const admin = require("firebase-admin");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const corsHandler = cors({ origin: true });
+const functions = require("firebase-functions/v1");
+const https = require("https");
+const nodemailer = require("nodemailer");
 dotenv.config();
-// 이메일 발송을 위한 Transporter 생성
-// Firebase Functions (.env 사용)
+const corsHandler = cors({ origin: true });
+if (!admin.apps.length) {
+    admin.initializeApp();
+}
+const DEFAULT_APP_BASE_URL = "https://rentalpartner.kr";
+const QUOTE_EMAIL_SETTINGS_KEY = "quote_email_notifications";
+const QUOTE_EMAIL_DISPATCH_KEY_PREFIX = "quote_email_dispatch:";
 const normalizeEnvValue = (value) => {
     if (!value) {
         return "";
     }
     return value.trim().replace(/^['"]|['"]$/g, "");
 };
-exports.sendEmailVerification = functions.https.onRequest((req, res) => {
-    // CORS 처리
+const normalizeEmail = (value) => value.trim().toLowerCase();
+const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+const escapeHtml = (value) => value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+const formatPrice = (amount) => new Intl.NumberFormat("ko-KR").format(typeof amount === "number" && Number.isFinite(amount) ? amount : 0);
+const formatDate = (value) => {
+    if (!value)
+        return "-";
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+        return value;
+    }
+    return parsed.toLocaleDateString("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
+};
+const getAppBaseUrl = () => normalizeEnvValue(process.env.APP_BASE_URL) || DEFAULT_APP_BASE_URL;
+const createTransporter = () => {
+    const emailUser = normalizeEnvValue(process.env.EMAIL_USER);
+    const emailPass = normalizeEnvValue(process.env.EMAIL_PASS);
+    const emailFromName = normalizeEnvValue(process.env.EMAIL_FROM_NAME) || "렌탈어때";
+    const smtpHost = normalizeEnvValue(process.env.SMTP_HOST);
+    const smtpPort = parseInt(normalizeEnvValue(process.env.SMTP_PORT) || "587", 10);
+    const smtpSecure = normalizeEnvValue(process.env.SMTP_SECURE) === "true";
+    if (!emailUser || !emailPass) {
+        throw new Error("Missing SMTP credentials");
+    }
+    const transporter = smtpHost
+        ? nodemailer.createTransport({
+            host: smtpHost,
+            port: smtpPort,
+            secure: smtpSecure,
+            auth: {
+                user: emailUser,
+                pass: emailPass,
+            },
+        })
+        : nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: emailUser,
+                pass: emailPass,
+            },
+        });
+    return {
+        transporter,
+        emailUser,
+        emailFromName,
+    };
+};
+const sendJsonError = (res, statusCode, message) => {
+    res.status(statusCode).json({ error: message });
+};
+const withCors = (req, res, handler) => {
     corsHandler(req, res, async () => {
-        // POST 요청만 허용
+        if (req.method === "OPTIONS") {
+            res.status(204).send("");
+            return;
+        }
+        try {
+            await handler();
+        }
+        catch (error) {
+            const message = error instanceof Error ? error.message : "Unexpected error";
+            console.error("[Functions] Unhandled error:", error);
+            sendJsonError(res, 500, message);
+        }
+    });
+};
+const getBearerToken = (req) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return "";
+    }
+    return authHeader.slice("Bearer ".length).trim();
+};
+const requireAuthUser = async (req) => {
+    const token = getBearerToken(req);
+    if (!token) {
+        throw new Error("인증 토큰이 없습니다.");
+    }
+    try {
+        return await admin.auth().verifyIdToken(token);
+    }
+    catch (error) {
+        console.error("[Auth] Failed to verify Firebase ID token:", error);
+        throw new Error("인증에 실패했습니다.");
+    }
+};
+const requestJson = async (url, options, body) => new Promise((resolve, reject) => {
+    const request = https.request(url, options, (response) => {
+        let rawData = "";
+        response.on("data", (chunk) => {
+            rawData += chunk;
+        });
+        response.on("end", () => {
+            const statusCode = response.statusCode || 500;
+            const hasBody = rawData.trim().length > 0;
+            if (statusCode < 200 || statusCode >= 300) {
+                let errorMessage = rawData || `Request failed with status ${statusCode}`;
+                if (hasBody) {
+                    try {
+                        const parsed = JSON.parse(rawData);
+                        if (typeof parsed.message === "string") {
+                            errorMessage = parsed.message;
+                        }
+                        else if (typeof parsed.error === "string") {
+                            errorMessage = parsed.error;
+                        }
+                    }
+                    catch (_a) {
+                        // Ignore JSON parsing error and fall back to raw text.
+                    }
+                }
+                reject(new Error(errorMessage));
+                return;
+            }
+            if (!hasBody) {
+                resolve(undefined);
+                return;
+            }
+            try {
+                resolve(JSON.parse(rawData));
+            }
+            catch (error) {
+                reject(error);
+            }
+        });
+    });
+    request.on("error", reject);
+    if (body) {
+        request.write(body);
+    }
+    request.end();
+});
+const getSupabaseConfig = () => {
+    const supabaseUrl = normalizeEnvValue(process.env.SUPABASE_URL);
+    const supabaseApiKey = normalizeEnvValue(process.env.SUPABASE_SERVICE_ROLE_KEY) ||
+        normalizeEnvValue(process.env.SUPABASE_ANON_KEY);
+    if (!supabaseUrl || !supabaseApiKey) {
+        throw new Error("Missing Supabase API credentials");
+    }
+    return { supabaseUrl, supabaseApiKey };
+};
+const supabaseSelect = async (table, params) => {
+    const { supabaseUrl, supabaseApiKey } = getSupabaseConfig();
+    const url = new URL(`/rest/v1/${table}`, supabaseUrl);
+    Object.entries(params).forEach(([key, value]) => {
+        url.searchParams.set(key, value);
+    });
+    return requestJson(url, {
+        method: "GET",
+        headers: {
+            apikey: supabaseApiKey,
+            Authorization: `Bearer ${supabaseApiKey}`,
+            Accept: "application/json",
+        },
+    });
+};
+const supabaseUpsert = async (table, rows, onConflict) => {
+    const { supabaseUrl, supabaseApiKey } = getSupabaseConfig();
+    const url = new URL(`/rest/v1/${table}`, supabaseUrl);
+    url.searchParams.set("on_conflict", onConflict);
+    await requestJson(url, {
+        method: "POST",
+        headers: {
+            apikey: supabaseApiKey,
+            Authorization: `Bearer ${supabaseApiKey}`,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Prefer: "resolution=merge-duplicates,return=minimal",
+        },
+    }, JSON.stringify(rows));
+};
+const getUserProfileByFirebaseUid = async (firebaseUid) => {
+    const profiles = await supabaseSelect("user_profiles", {
+        select: "firebase_uid,email,name,phone,company_name,is_admin",
+        firebase_uid: `eq.${firebaseUid}`,
+        limit: "1",
+    });
+    return profiles[0] || null;
+};
+const requireAdminUser = async (req) => {
+    const decodedToken = await requireAuthUser(req);
+    const profile = await getUserProfileByFirebaseUid(decodedToken.uid);
+    if (!(profile === null || profile === void 0 ? void 0 : profile.is_admin)) {
+        throw new Error("관리자 권한이 필요합니다.");
+    }
+    return {
+        decodedToken,
+        profile,
+    };
+};
+const sanitizeRecipients = (raw) => {
+    if (!Array.isArray(raw))
+        return [];
+    const seen = new Set();
+    return raw.reduce((acc, recipient) => {
+        if (!recipient || typeof recipient !== "object") {
+            return acc;
+        }
+        const emailValue = "email" in recipient && typeof recipient.email === "string"
+            ? recipient.email
+            : "";
+        const enabledValue = "enabled" in recipient ? recipient.enabled !== false : true;
+        const email = normalizeEmail(emailValue);
+        if (!email || !isValidEmail(email) || seen.has(email)) {
+            return acc;
+        }
+        seen.add(email);
+        acc.push({
+            email,
+            enabled: enabledValue,
+        });
+        return acc;
+    }, []);
+};
+const parseJsonRecord = (value) => {
+    if (!value)
+        return {};
+    try {
+        const parsed = JSON.parse(value);
+        return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+            ? parsed
+            : {};
+    }
+    catch (_a) {
+        return {};
+    }
+};
+const getSiteSetting = async (settingKey) => {
+    const rows = await supabaseSelect("site_settings", {
+        select: "setting_key,setting_value,updated_at",
+        setting_key: `eq.${settingKey}`,
+        limit: "1",
+    });
+    return rows[0] || null;
+};
+const upsertSiteSetting = async (settingKey, settingValue) => {
+    await supabaseUpsert("site_settings", [
+        {
+            setting_key: settingKey,
+            setting_value: settingValue,
+        },
+    ], "setting_key");
+};
+const toQuoteEmailSettingsResponse = (row) => {
+    const data = parseJsonRecord(row === null || row === void 0 ? void 0 : row.setting_value);
+    return {
+        enabled: data.enabled === true,
+        recipients: sanitizeRecipients(data.recipients),
+        updatedAt: row === null || row === void 0 ? void 0 : row.updated_at,
+        updatedByUid: typeof data.updatedByUid === "string" ? data.updatedByUid : undefined,
+        updatedByEmail: typeof data.updatedByEmail === "string" ? data.updatedByEmail : undefined,
+    };
+};
+const getQuoteEmailSettings = async () => {
+    const row = await getSiteSetting(QUOTE_EMAIL_SETTINGS_KEY);
+    if (!row) {
+        return {
+            enabled: false,
+            recipients: [],
+        };
+    }
+    return toQuoteEmailSettingsResponse(row);
+};
+const buildQuoteEmailSettingsPayload = (body, updatedByUid, updatedByEmail) => {
+    const data = body && typeof body === "object" ? body : {};
+    return {
+        enabled: data.enabled === true,
+        recipients: sanitizeRecipients(data.recipients),
+        updatedByUid,
+        updatedByEmail,
+    };
+};
+const getDispatchSettingKey = (bookingId) => `${QUOTE_EMAIL_DISPATCH_KEY_PREFIX}${bookingId}`;
+const getDispatchRecord = async (bookingId) => { var _a; return parseJsonRecord((_a = (await getSiteSetting(getDispatchSettingKey(bookingId)))) === null || _a === void 0 ? void 0 : _a.setting_value); };
+const saveDispatchRecord = async (bookingId, payload) => {
+    await upsertSiteSetting(getDispatchSettingKey(bookingId), JSON.stringify(Object.assign(Object.assign({}, payload), { updatedAt: new Date().toISOString() })));
+};
+const getActiveRecipientEmails = (settings) => settings.recipients
+    .filter((recipient) => recipient.enabled)
+    .map((recipient) => recipient.email);
+const getBookingById = async (bookingId) => {
+    const bookings = await supabaseSelect("bookings", {
+        select: "id,product_id,user_id,user_email,start_date,end_date,total_price,status,selected_options,basic_components,created_at",
+        id: `eq.${bookingId}`,
+        limit: "1",
+    });
+    return bookings[0] || null;
+};
+const getProductById = async (productId) => {
+    const products = await supabaseSelect("products", {
+        select: "id,name,image_url",
+        id: `eq.${productId}`,
+        limit: "1",
+    });
+    return products[0] || null;
+};
+const renderSelectedOptionsHtml = (selectedOptions) => {
+    if (!selectedOptions || selectedOptions.length === 0) {
+        return `<p style="margin: 0; color: #64748b; font-size: 14px;">추가 선택 옵션 없음</p>`;
+    }
+    const rows = selectedOptions
+        .map((option) => {
+        const name = escapeHtml(option.name || "옵션");
+        const quantity = typeof option.quantity === "number" && Number.isFinite(option.quantity)
+            ? option.quantity
+            : 0;
+        const subtotal = typeof option.price === "number" && Number.isFinite(option.price)
+            ? option.price * quantity
+            : 0;
+        return `
+        <tr>
+          <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 14px; color: #0f172a;">${name}</td>
+          <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 14px; color: #334155;">${quantity}개</td>
+          <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-size: 14px; color: #0f172a;">${formatPrice(subtotal)}원</td>
+        </tr>
+      `;
+    })
+        .join("");
+    return `
+    <table style="width: 100%; border-collapse: collapse; margin-top: 8px;">
+      <thead>
+        <tr style="background: #f8fafc;">
+          <th style="padding: 10px 12px; text-align: left; font-size: 12px; color: #64748b;">옵션</th>
+          <th style="padding: 10px 12px; text-align: center; font-size: 12px; color: #64748b;">수량</th>
+          <th style="padding: 10px 12px; text-align: right; font-size: 12px; color: #64748b;">예상 금액</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+};
+const buildQuoteRequestEmailContent = (booking, product, userProfile) => {
+    const customerName = (userProfile === null || userProfile === void 0 ? void 0 : userProfile.name) || "고객";
+    const companyName = (userProfile === null || userProfile === void 0 ? void 0 : userProfile.company_name) || "-";
+    const phone = (userProfile === null || userProfile === void 0 ? void 0 : userProfile.phone) || "-";
+    const email = (userProfile === null || userProfile === void 0 ? void 0 : userProfile.email) || booking.user_email || "-";
+    const productName = (product === null || product === void 0 ? void 0 : product.name) || booking.product_id;
+    const adminUrl = `${getAppBaseUrl()}/admin/rental-requests`;
+    const subject = `[렌탈어때] 신규 견적 요청 - ${customerName} / ${productName}`;
+    const text = [
+        "신규 견적 요청이 접수되었습니다.",
+        `고객명: ${customerName}`,
+        `회사명: ${companyName}`,
+        `연락처: ${phone}`,
+        `이메일: ${email}`,
+        `상품명: ${productName}`,
+        `대여기간: ${formatDate(booking.start_date)} ~ ${formatDate(booking.end_date)}`,
+        `예상 금액: ${formatPrice(booking.total_price)}원`,
+        `관리자 확인: ${adminUrl}`,
+    ].join("\n");
+    const html = `
+    <div style="font-family: Arial, sans-serif; background: #f8fafc; padding: 24px;">
+      <div style="max-width: 720px; margin: 0 auto; background: #ffffff; border-radius: 20px; overflow: hidden; border: 1px solid #e2e8f0;">
+        <div style="padding: 24px 28px; background: linear-gradient(135deg, #001E45 0%, #2A8FC2 100%); color: #ffffff;">
+          <div style="font-size: 13px; opacity: 0.8; margin-bottom: 8px;">Rentalpartner Admin Notification</div>
+          <h1 style="margin: 0; font-size: 24px; line-height: 1.4;">신규 견적 요청이 접수되었습니다.</h1>
+          <p style="margin: 10px 0 0; font-size: 14px; opacity: 0.9;">
+            관리자 페이지에서 상세 내용을 확인하고 후속 안내를 진행해주세요.
+          </p>
+        </div>
+
+        <div style="padding: 28px;">
+          <div style="display: grid; gap: 16px; margin-bottom: 24px;">
+            <div style="padding: 18px; border: 1px solid #e2e8f0; border-radius: 16px;">
+              <div style="font-size: 13px; font-weight: 700; color: #64748b; margin-bottom: 12px;">고객 정보</div>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tbody>
+                  <tr>
+                    <td style="padding: 6px 0; width: 110px; font-size: 14px; color: #64748b;">고객명</td>
+                    <td style="padding: 6px 0; font-size: 14px; color: #0f172a; font-weight: 700;">${escapeHtml(customerName)}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; font-size: 14px; color: #64748b;">회사명</td>
+                    <td style="padding: 6px 0; font-size: 14px; color: #0f172a;">${escapeHtml(companyName)}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; font-size: 14px; color: #64748b;">연락처</td>
+                    <td style="padding: 6px 0; font-size: 14px; color: #0f172a;">${escapeHtml(phone)}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; font-size: 14px; color: #64748b;">이메일</td>
+                    <td style="padding: 6px 0; font-size: 14px; color: #0f172a;">${escapeHtml(email)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="padding: 18px; border: 1px solid #e2e8f0; border-radius: 16px;">
+              <div style="font-size: 13px; font-weight: 700; color: #64748b; margin-bottom: 12px;">요청 정보</div>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tbody>
+                  <tr>
+                    <td style="padding: 6px 0; width: 110px; font-size: 14px; color: #64748b;">상품명</td>
+                    <td style="padding: 6px 0; font-size: 14px; color: #0f172a; font-weight: 700;">${escapeHtml(productName)}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; font-size: 14px; color: #64748b;">대여기간</td>
+                    <td style="padding: 6px 0; font-size: 14px; color: #0f172a;">${escapeHtml(formatDate(booking.start_date))} ~ ${escapeHtml(formatDate(booking.end_date))}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; font-size: 14px; color: #64748b;">예상 금액</td>
+                    <td style="padding: 6px 0; font-size: 14px; color: #0f172a;">${formatPrice(booking.total_price)}원</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; font-size: 14px; color: #64748b;">접수 시각</td>
+                    <td style="padding: 6px 0; font-size: 14px; color: #0f172a;">${escapeHtml(formatDate(booking.created_at))}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div style="padding: 18px; border: 1px solid #e2e8f0; border-radius: 16px; margin-bottom: 24px;">
+            <div style="font-size: 13px; font-weight: 700; color: #64748b; margin-bottom: 12px;">추가 선택 옵션</div>
+            ${renderSelectedOptionsHtml(booking.selected_options)}
+          </div>
+
+          <a
+            href="${escapeHtml(adminUrl)}"
+            style="display: inline-block; padding: 14px 18px; border-radius: 12px; background: #001E45; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 14px;"
+          >
+            관리자에서 요청 확인하기
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
+    return {
+        subject,
+        html,
+        text,
+    };
+};
+exports.sendEmailVerification = functions.https.onRequest((req, res) => {
+    withCors(req, res, async () => {
         if (req.method !== "POST") {
-            res.status(405).send("Method Not Allowed");
+            sendJsonError(res, 405, "Method Not Allowed");
             return;
         }
         const { to, subject, html } = req.body;
         if (!to || !subject || !html) {
-            res.status(400).json({ error: "Missing required fields (to, subject, html)" });
+            sendJsonError(res, 400, "Missing required fields (to, subject, html)");
             return;
         }
-        // 설정 확인
-        const emailUser = normalizeEnvValue(process.env.EMAIL_USER);
-        const emailPass = normalizeEnvValue(process.env.EMAIL_PASS);
-        const emailFromName = normalizeEnvValue(process.env.EMAIL_FROM_NAME) || "렌탈어때";
-        // 커스텀 SMTP 설정 (옵션)
-        const smtpHost = normalizeEnvValue(process.env.SMTP_HOST);
-        const smtpPort = parseInt(normalizeEnvValue(process.env.SMTP_PORT) || "587", 10);
-        const smtpSecure = normalizeEnvValue(process.env.SMTP_SECURE) === "true";
-        if (!emailUser || !emailPass) {
-            console.error("Missing SMTP credentials. Check EMAIL_USER/EMAIL_PASS.");
-            res.status(500).json({ error: "Missing SMTP credentials" });
-            return;
-        }
-        let transporterConfig;
-        // SMTP 호스트가 설정되어 있으면 해당 설정 사용, 아니면 Gmail 서비스 사용
-        if (smtpHost) {
-            transporterConfig = {
-                host: smtpHost,
-                port: smtpPort,
-                secure: smtpSecure,
-                auth: {
-                    user: emailUser,
-                    pass: emailPass,
-                },
-            };
-        }
-        else {
-            transporterConfig = {
-                service: "gmail",
-                auth: {
-                    user: emailUser,
-                    pass: emailPass,
-                },
-            };
-        }
-        const transporter = nodemailer.createTransport(transporterConfig);
-        const mailOptions = {
+        const { transporter, emailUser, emailFromName } = createTransporter();
+        const info = await transporter.sendMail({
             from: `"${emailFromName}" <${emailUser}>`,
             to,
             subject,
             html,
-        };
+        });
+        console.log("Email sent successfully:", info.response);
+        res.status(200).json({ message: "Email sent successfully", info });
+    });
+});
+exports.manageQuoteEmailSettings = functions.https.onRequest((req, res) => {
+    withCors(req, res, async () => {
+        if (req.method !== "GET" && req.method !== "PUT") {
+            sendJsonError(res, 405, "Method Not Allowed");
+            return;
+        }
         try {
-            const info = await transporter.sendMail(mailOptions);
-            console.log("Email sent successfully:", info.response);
-            res.status(200).json({ message: "Email sent successfully", info });
+            const { decodedToken, profile } = await requireAdminUser(req);
+            if (req.method === "GET") {
+                const settings = await getQuoteEmailSettings();
+                res.status(200).json(settings);
+                return;
+            }
+            const payload = buildQuoteEmailSettingsPayload(req.body, decodedToken.uid, profile.email || decodedToken.email);
+            await upsertSiteSetting(QUOTE_EMAIL_SETTINGS_KEY, JSON.stringify(payload));
+            const savedSettings = await getQuoteEmailSettings();
+            res.status(200).json(savedSettings);
         }
         catch (error) {
-            console.error("Error sending email:", error);
-            res.status(500).json({ error: "Failed to send email", details: error.message });
+            const message = error instanceof Error ? error.message : "관리자 인증에 실패했습니다.";
+            const statusCode = message === "관리자 권한이 필요합니다." || message === "인증에 실패했습니다."
+                ? 403
+                : message === "인증 토큰이 없습니다."
+                    ? 401
+                    : 500;
+            console.error("[QuoteEmailSettings] Failed to handle request:", error);
+            sendJsonError(res, statusCode, message);
+        }
+    });
+});
+exports.sendQuoteRequestNotification = functions.https.onRequest((req, res) => {
+    withCors(req, res, async () => {
+        if (req.method !== "POST") {
+            sendJsonError(res, 405, "Method Not Allowed");
+            return;
+        }
+        try {
+            const decodedToken = await requireAuthUser(req);
+            const bookingId = req.body && typeof req.body.bookingId === "string"
+                ? req.body.bookingId.trim()
+                : "";
+            if (!bookingId) {
+                sendJsonError(res, 400, "bookingId is required");
+                return;
+            }
+            const existingDispatch = await getDispatchRecord(bookingId);
+            if (existingDispatch.status === "sent") {
+                res.status(200).json({
+                    success: true,
+                    skipped: true,
+                    reason: "already_sent",
+                });
+                return;
+            }
+            const settings = await getQuoteEmailSettings();
+            if (!settings.enabled) {
+                await saveDispatchRecord(bookingId, {
+                    status: "skipped",
+                    reason: "disabled",
+                    bookingId,
+                    userId: decodedToken.uid,
+                });
+                res.status(200).json({ success: true, skipped: true, reason: "disabled" });
+                return;
+            }
+            const recipients = getActiveRecipientEmails(settings);
+            if (recipients.length === 0) {
+                await saveDispatchRecord(bookingId, {
+                    status: "skipped",
+                    reason: "no_recipients",
+                    bookingId,
+                    userId: decodedToken.uid,
+                });
+                res.status(200).json({
+                    success: true,
+                    skipped: true,
+                    reason: "no_recipients",
+                });
+                return;
+            }
+            const booking = await getBookingById(bookingId);
+            if (!booking) {
+                sendJsonError(res, 404, "견적 요청 정보를 찾을 수 없습니다.");
+                return;
+            }
+            if (booking.user_id !== decodedToken.uid) {
+                sendJsonError(res, 403, "본인 요청에 대해서만 알림 메일을 보낼 수 있습니다.");
+                return;
+            }
+            const [product, userProfile] = await Promise.all([
+                getProductById(booking.product_id),
+                getUserProfileByFirebaseUid(booking.user_id),
+            ]);
+            const { transporter, emailUser, emailFromName } = createTransporter();
+            const emailContent = buildQuoteRequestEmailContent(booking, product, userProfile);
+            const info = await transporter.sendMail({
+                from: `"${emailFromName}" <${emailUser}>`,
+                to: recipients.join(", "),
+                subject: emailContent.subject,
+                html: emailContent.html,
+                text: emailContent.text,
+            });
+            console.log("Quote request admin email sent:", info.response);
+            await saveDispatchRecord(bookingId, {
+                status: "sent",
+                bookingId,
+                userId: decodedToken.uid,
+                recipients,
+                productName: (product === null || product === void 0 ? void 0 : product.name) || booking.product_id,
+                sentAt: new Date().toISOString(),
+            });
+            res.status(200).json({ success: true });
+        }
+        catch (error) {
+            console.error("[QuoteRequestNotification] Failed to send email:", error);
+            const bookingId = req.body && typeof req.body.bookingId === "string"
+                ? req.body.bookingId.trim()
+                : "";
+            if (bookingId) {
+                await saveDispatchRecord(bookingId, {
+                    status: "failed",
+                    errorMessage: error instanceof Error ? error.message : "Failed to send quote email",
+                    failedAt: new Date().toISOString(),
+                });
+            }
+            const message = error instanceof Error ? error.message : "Failed to send quote email";
+            const statusCode = message === "인증 토큰이 없습니다."
+                ? 401
+                : message === "인증에 실패했습니다." ||
+                    message === "본인 요청에 대해서만 알림 메일을 보낼 수 있습니다."
+                    ? 403
+                    : 500;
+            sendJsonError(res, statusCode, message);
         }
     });
 });

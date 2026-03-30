@@ -27,6 +27,7 @@ import {
 import { createBooking, checkAvailability } from "../src/api/bookingApi";
 import { getAllNavMenuItems, NavMenuItem } from "../src/api/cmsApi";
 import { createNotification } from "../src/api/notificationApi";
+import { sendQuoteRequestNotificationEmail } from "../src/api/quoteEmailApi";
 import { useAuth } from "../src/context/AuthContext";
 import { usePriceDisplay } from "../src/context/PriceDisplayContext";
 import { addQuoteCartItem, getQuoteCartCount } from "../src/utils/quoteCart";
@@ -524,7 +525,7 @@ export const ProductDetailPage: React.FC = () => {
 
 
   // Option Tab State (for the new tab UI)
-  const [activeOptionTab, setActiveOptionTab] = useState<OptionTabId>("cooperative");
+  const [activeOptionTab, setActiveOptionTab] = useState<OptionTabId>("additional");
 
   // Booking Result Modal State
   const [bookingModal, setBookingModal] = useState<{
@@ -603,7 +604,7 @@ export const ProductDetailPage: React.FC = () => {
       setLoading(true);
       setSelectedAdditional({});
       setSelectedCooperative({});
-      setActiveOptionTab("cooperative");
+      setActiveOptionTab("additional");
       try {
         const [
           productData,
@@ -806,7 +807,7 @@ export const ProductDetailPage: React.FC = () => {
       const selectedOptions = buildSelectedOptions();
       const basicComponents = buildBasicComponents();
 
-      await createBooking({
+      const booking = await createBooking({
         product_id: id,
         user_id: user.uid,
         user_email: user.email || undefined,
@@ -818,10 +819,18 @@ export const ProductDetailPage: React.FC = () => {
         basic_components: basicComponents,
       });
 
+      if (booking.id) {
+        try {
+          await sendQuoteRequestNotificationEmail(booking.id);
+        } catch (emailError) {
+          console.error("Failed to send quote request admin email", emailError);
+        }
+      }
+
       // Send Notification
       await createNotification(
         user.uid,
-        "견적 요청 접수",
+        "견적 요청",
         `${product.name} 견적 요청이 접수되었습니다. 담당자가 확인 후 견적서를 발송해드립니다.`,
         "info",
         "/mypage" // Link to mypage
@@ -849,20 +858,20 @@ export const ProductDetailPage: React.FC = () => {
     () =>
       [
         {
-          id: "cooperative" as const,
-          label: "부가서비스",
-          icon: Users,
-          show: globalCooperative.length > 0,
-          count: Object.values(selectedCooperative).filter(
-            (qty) => (qty as number) > 0,
-          ).length,
-        },
-        {
           id: "additional" as const,
           label: "추가 구성",
           icon: Package,
           show: globalAdditional.length > 0,
           count: Object.values(selectedAdditional).filter(
+            (qty) => (qty as number) > 0,
+          ).length,
+        },
+        {
+          id: "cooperative" as const,
+          label: "부가서비스",
+          icon: Users,
+          show: globalCooperative.length > 0,
+          count: Object.values(selectedCooperative).filter(
             (qty) => (qty as number) > 0,
           ).length,
         },

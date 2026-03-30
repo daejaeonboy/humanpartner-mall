@@ -3,10 +3,56 @@ import { supabase } from '../lib/supabase';
 export type BookingStatus =
     | 'pending'
     | 'quote_sent'
-    | 'negotiating'
     | 'confirmed'
-    | 'completed'
     | 'cancelled';
+
+type LegacyBookingStatus = BookingStatus | 'negotiating' | 'completed';
+
+export const BOOKING_STATUS_OPTIONS: Array<{ value: BookingStatus; label: string }> = [
+    { value: 'pending', label: '견적 요청' },
+    { value: 'quote_sent', label: '견적 확인' },
+    { value: 'confirmed', label: '계약 완료' },
+    { value: 'cancelled', label: '요청 취소' },
+];
+
+export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = BOOKING_STATUS_OPTIONS.reduce(
+    (acc, option) => {
+        acc[option.value] = option.label;
+        return acc;
+    },
+    {} as Record<BookingStatus, string>,
+);
+
+const LEGACY_BOOKING_STATUS_MAP: Record<LegacyBookingStatus, BookingStatus> = {
+    pending: 'pending',
+    quote_sent: 'quote_sent',
+    negotiating: 'quote_sent',
+    confirmed: 'confirmed',
+    completed: 'confirmed',
+    cancelled: 'cancelled',
+};
+
+type RawBooking = Omit<Booking, 'status'> & {
+    status: string;
+};
+
+export const normalizeBookingStatus = (status: string): BookingStatus => {
+    if (status in LEGACY_BOOKING_STATUS_MAP) {
+        return LEGACY_BOOKING_STATUS_MAP[status as LegacyBookingStatus];
+    }
+
+    return 'pending';
+};
+
+export const getBookingStatusLabel = (status: BookingStatus): string => BOOKING_STATUS_LABELS[status];
+
+export const isBookingCancellable = (status: BookingStatus): boolean =>
+    status === 'pending' || status === 'quote_sent';
+
+const normalizeBooking = (booking: RawBooking): Booking => ({
+    ...booking,
+    status: normalizeBookingStatus(booking.status),
+});
 
 export interface Booking {
     id?: string;
@@ -61,13 +107,13 @@ export const getBookings = async (): Promise<Booking[]> => {
 
         const profileMap = new Map(profiles?.map(p => [p.firebase_uid, p]) || []);
 
-        return bookings.map(b => ({
-            ...b,
-            user_profiles: profileMap.get(b.user_id) || null
+        return bookings.map((booking) => normalizeBooking({
+            ...booking,
+            user_profiles: profileMap.get(booking.user_id) || null,
         }));
     }
 
-    return bookings;
+    return bookings.map((booking) => normalizeBooking(booking));
 };
 
 // 예약 삭제
@@ -94,7 +140,7 @@ export const getUserBookings = async (userId: string): Promise<Booking[]> => {
         .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map((booking) => normalizeBooking(booking));
 };
 
 // 예약 생성
@@ -106,7 +152,7 @@ export const createBooking = async (booking: Omit<Booking, 'id' | 'created_at' |
         .single();
 
     if (error) throw error;
-    return data;
+    return normalizeBooking(data);
 };
 
 // 예약 상태 변경
@@ -119,7 +165,7 @@ export const updateBookingStatus = async (id: string, status: Booking['status'])
         .single();
 
     if (error) throw error;
-    return data;
+    return normalizeBooking(data);
 };
 
 // 특정 상품의 예약 가능 여부 확인 (날짜 중복 체크)
@@ -132,7 +178,7 @@ export const checkAvailability = async (
         .from('bookings')
         .select('id')
         .eq('product_id', productId)
-        .eq('status', 'confirmed')
+        .in('status', ['confirmed', 'completed'])
         .lte('start_date', endDate)
         .gte('end_date', startDate);
 

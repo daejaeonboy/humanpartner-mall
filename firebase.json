@@ -131,15 +131,6 @@
                 ]
             },
             {
-                "source": "/company",
-                "headers": [
-                    {
-                        "key": "Cache-Control",
-                        "value": "no-cache, no-store, must-revalidate"
-                    }
-                ]
-            },
-            {
                 "source": "/notice",
                 "headers": [
                     {
@@ -248,10 +239,25 @@
                 ]
             }
         ],
+        "redirects": [
+            {
+                "source": "/company",
+                "destination": "https://humanpartner.kr/",
+                "type": 301
+            }
+        ],
         "rewrites": [
             {
                 "source": "/api/email/verify",
                 "function": "sendEmailVerification"
+            },
+            {
+                "source": "/api/admin/quote-email-settings",
+                "function": "manageQuoteEmailSettings"
+            },
+            {
+                "source": "/api/email/quote-request-notify",
+                "function": "sendQuoteRequestNotification"
             },
             {
                 "source": "**",
