@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowRight, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Container } from './ui/Container';
 import { getHeroBanners, Banner } from '../src/api/cmsApi';
 
 export const Hero: React.FC = () => {
+  const [originalSlides, setOriginalSlides] = useState<Banner[]>([]);
   const [slides, setSlides] = useState<Banner[]>([]);
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(1);
+  const [isTransitioning, setIsTransitioning] = useState(true);
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -15,7 +16,16 @@ export const Hero: React.FC = () => {
     const loadBanners = async () => {
       try {
         const banners = await getHeroBanners();
-        setSlides(banners);
+        setOriginalSlides(banners);
+        if (banners.length > 0) {
+          // Clone slides for infinite loop: [Last, ...Original, First]
+          setSlides([
+            banners[banners.length - 1],
+            ...banners,
+            banners[0]
+          ]);
+          setCurrentIndex(1);
+        }
       } catch (error) {
         console.error('Failed to load banners:', error);
       } finally {
@@ -25,26 +35,43 @@ export const Hero: React.FC = () => {
     loadBanners();
   }, []);
 
+  const handleNext = useCallback(() => {
+    if (!isTransitioning && currentIndex >= slides.length - 1) return;
+    setCurrentIndex((prev) => prev + 1);
+    setIsTransitioning(true);
+  }, [isTransitioning, currentIndex, slides.length]);
+
+  const handlePrev = useCallback(() => {
+    if (!isTransitioning && currentIndex <= 0) return;
+    setCurrentIndex((prev) => prev - 1);
+    setIsTransitioning(true);
+  }, [isTransitioning, currentIndex]);
+
+  // Handle jump for infinite loop
+  useEffect(() => {
+    if (currentIndex === 0) {
+      const timer = setTimeout(() => {
+        setIsTransitioning(false);
+        setCurrentIndex(slides.length - 2);
+      }, 500);
+      return () => clearTimeout(timer);
+    } else if (currentIndex === slides.length - 1) {
+      const timer = setTimeout(() => {
+        setIsTransitioning(false);
+        setCurrentIndex(1);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex, slides.length]);
+
   // Auto-slide effect
   useEffect(() => {
-    if (slides.length === 0 || isPaused) return;
+    if (originalSlides.length <= 1 || isPaused) return;
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000); // Reversed from 8000ms back to 5000ms
+      handleNext();
+    }, 5000);
     return () => clearInterval(timer);
-  }, [slides.length, isPaused]);
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  };
-
-  const goToSlide = (index: number) => {
-    setCurrentSlide(index);
-  };
+  }, [originalSlides.length, isPaused, handleNext]);
 
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -60,156 +87,129 @@ export const Hero: React.FC = () => {
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
     const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
-
-    if (isLeftSwipe) {
-      nextSlide();
-    } else if (isRightSwipe) {
-      prevSlide();
-    }
-
+    if (distance > 50) handleNext();
+    else if (distance < -50) handlePrev();
     setTouchStart(null);
     setTouchEnd(null);
   };
 
   if (loading) {
     return (
-      <section className="relative w-full h-[600px] bg-slate-900 flex items-center justify-center">
-        <Loader2 className="animate-spin text-white" size={40} />
+      <section className="relative w-full h-[300px] md:h-[450px] lg:h-[550px] bg-white flex items-center justify-center">
+        <Loader2 className="animate-spin text-slate-400" size={40} />
       </section>
     );
   }
 
-  if (slides.length === 0) {
+  if (originalSlides.length === 0) {
     return (
-      <section className="relative w-full h-[600px] bg-slate-900 flex items-center justify-center">
-        <p className="text-white/50">배너가 없습니다. Admin에서 배너를 추가해주세요.</p>
+      <section className="relative w-full h-[300px] md:h-[450px] lg:h-[550px] bg-white flex items-center justify-center">
+        <p className="text-slate-400">배너가 없습니다. Admin에서 배너를 추가해주세요.</p>
       </section>
     );
   }
+
+  const activeOriginalIndex = 
+    currentIndex === 0 ? originalSlides.length - 1 :
+    currentIndex === slides.length - 1 ? 0 :
+    currentIndex - 1;
 
   return (
-    <section
-      className="relative w-full h-[600px] bg-slate-900 overflow-hidden group"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+    <section 
+      className="relative w-full bg-white overflow-hidden group [--slide-width:100vw] lg:[--slide-width:1280px]"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Slides */}
-      {slides.map((slide, index) => {
-        const linkHref = slide.target_product_code ? `/p/${slide.target_product_code}` : slide.link || '/';
-        const isExternal = linkHref.startsWith('http');
+      {/* Slider Container */}
+      <div 
+        className={`flex items-center ${isTransitioning ? 'transition-transform duration-500 ease-out' : ''}`}
+        style={{ 
+          // Center logic: 50vw - (slideWidth * (index + 0.5))
+          // For mobile (100vw), this naturally aligns perfectly.
+          transform: `translateX(calc(50vw - (var(--slide-width) * (${currentIndex} + 0.5))))`,
+          width: `calc(var(--slide-width) * ${slides.length})`,
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {slides.map((slide, index) => {
+          const linkHref = slide.target_product_code ? `/p/${slide.target_product_code}` : slide.link || '/';
+          const isExternal = linkHref.startsWith('http');
+          const isActive = index === currentIndex;
 
-        const SlideContent = (
-          <>
-            {/* Background Image */}
-            <div
-              className="absolute inset-0 w-full h-full bg-cover bg-center transition-transform duration-[7000ms] group-hover/slide:scale-105"
-              style={{ backgroundImage: `url(${slide.image_url})` }}
+          const SlideInner = (
+            <div 
+              className={`relative h-[300px] md:h-[450px] lg:h-[550px] lg:rounded-[16px] overflow-hidden transition-all duration-500 ${isActive ? 'opacity-100' : 'opacity-100'}`}
             >
-              {/* Overlay gradient - Adjusted for better background visibility */}
-              <div className="absolute inset-0 bg-black/30 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
-            </div>
+              {/* Background Image */}
+              <div
+                className="absolute inset-0 w-full h-full bg-cover bg-center"
+                style={{ backgroundImage: `url(${slide.image_url})` }}
+              >
+                <div className="absolute inset-0 bg-black/10 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+              </div>
 
-            {/* Content Area */}
-            <Container className="relative h-full flex flex-col justify-center text-white z-20">
-              <div className="max-w-4xl">
-                {/* Brand Text */}
-                <div className={`text-white text-[18px] md:text-[20px] font-medium mb-3 md:mb-4
-                  ${index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
-                `}>
-                  {slide.brand_text?.trim() && slide.brand_text?.trim().toLowerCase() !== 'premium solution'
-                    ? slide.brand_text
-                    : 'Humanpartner'}
-                </div>
-
-                {/* Main Title */}
-                <h1 className={`text-3xl md:text-5xl lg:text-6xl font-medium leading-[1.05] tracking-tighter text-white mb-4 md:mb-6 transition-all duration-1000 delay-500 transform drop-shadow-2xl
-                  ${index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
-                `}>
+              {/* Content Overlay */}
+              <div className={`absolute bottom-8 md:bottom-12 left-8 md:left-16 text-white transition-all duration-700 delay-300 ${isActive ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+                <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4 drop-shadow-md">
                   {slide.title}
-                </h1>
-
-                {/* Subtitle */}
-                <p className={`text-[20px] md:text-[24px] font-normal text-white/90 leading-relaxed break-keep max-w-2xl transition-all duration-1000 delay-700 transform drop-shadow-lg
-                  ${index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
-                `}>
+                </h2>
+                <p className="text-sm md:text-xl text-white/90 font-medium drop-shadow-md">
                   {slide.subtitle}
                 </p>
-
-                {/* Action CTA */}
-                <div className={`mt-8 md:mt-12 transition-all duration-1000 delay-1000 transform
-                  ${index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
-                `}>
-                  <div className="inline-flex items-center justify-center gap-2 w-[190px] md:w-[250px] h-[48px] md:h-[56px] rounded-lg bg-white text-[#001E45] text-sm md:text-base font-medium shadow-lg transition-all duration-300 group-hover/slide:-translate-y-0.5 group-hover/slide:bg-[#f4f7fb]">
-                    {slide.button_text?.trim() || '바로가기'}
-                  </div>
-                </div>
               </div>
-            </Container>
-          </>
-        );
+            </div>
+          );
 
-        return (
-          <div
-            key={slide.id}
-            className={`absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out
-              ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}
-            `}
-          >
-            {isExternal ? (
-              <a
-                href={linkHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full h-full relative group/slide cursor-pointer"
-              >
-                {SlideContent}
-              </a>
-            ) : (
-              <Link
-                to={linkHref}
-                className="block w-full h-full relative group/slide cursor-pointer"
-              >
-                {SlideContent}
-              </Link>
-            )}
-          </div>
-        );
-      })}
+          return (
+            <div 
+              key={`${slide.id}-${index}`} 
+              className="flex-shrink-0 lg:px-3"
+              style={{ width: `var(--slide-width)` }}
+            >
+              {isExternal ? (
+                <a href={linkHref} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                  {SlideInner}
+                </a>
+              ) : (
+                <Link to={linkHref} className="block w-full h-full">
+                  {SlideInner}
+                </Link>
+              )}
+            </div>
+          );
+        })}
+      </div>
 
-      {/* Navigation Arrows - Hidden on mobile, show on hover desktop */}
+      {/* Navigation Arrows */}
       <button
-        onClick={prevSlide}
-        className="absolute left-6 top-1/2 -translate-y-1/2 z-30 w-14 h-14 rounded-full bg-white/5 backdrop-blur-md hidden md:flex items-center justify-center text-white hover:bg-white/20 hover:scale-110 transition-all opacity-0 group-hover:opacity-100 border border-white/10"
+        onClick={handlePrev}
+        className="absolute left-4 md:left-8 top-[150px] md:top-[225px] lg:top-[275px] -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/40 transition-all opacity-0 group-hover:opacity-100"
         aria-label="Previous slide"
       >
-        <ChevronLeft size={28} />
+        <ChevronLeft size={24} />
       </button>
       <button
-        onClick={nextSlide}
-        className="absolute right-6 top-1/2 -translate-y-1/2 z-30 w-14 h-14 rounded-full bg-white/5 backdrop-blur-md hidden md:flex items-center justify-center text-white hover:bg-white/20 hover:scale-110 transition-all opacity-0 group-hover:opacity-100 border border-white/10"
+        onClick={handleNext}
+        className="absolute right-4 md:right-8 top-[150px] md:top-[225px] lg:top-[275px] -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/40 transition-all opacity-0 group-hover:opacity-100"
         aria-label="Next slide"
       >
-        <ChevronRight size={28} />
+        <ChevronRight size={24} />
       </button>
 
-      {/* Indicators - Premium Bar Style */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-3">
-        {slides.map((_, index) => (
+      {/* Indicators (Dots) */}
+      <div className="flex justify-center gap-2 mt-4 mb-2">
+        {originalSlides.map((_, index) => (
           <button
             key={index}
-            onClick={() => goToSlide(index)}
-            className="group relative py-4"
+            onClick={() => {
+              setCurrentIndex(index + 1);
+              setIsTransitioning(true);
+            }}
+            className={`h-1.5 md:h-2 rounded-full transition-all duration-300 ${index === activeOriginalIndex ? 'w-6 md:w-10 bg-[#001E45]' : 'w-1.5 md:w-2 bg-slate-300 hover:bg-slate-400'}`}
             aria-label={`Go to slide ${index + 1}`}
-          >
-            <div className={`h-1 transition-all duration-500 rounded-full
-              ${index === currentSlide ? 'w-10 bg-[#001E45]' : 'w-6 bg-white/30 group-hover:bg-white/50'}
-            `} />
-          </button>
+          />
         ))}
       </div>
     </section>

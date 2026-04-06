@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect } from "react";
-import { Search } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Search, Menu } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Container } from "../ui/Container";
 import {
@@ -22,7 +22,19 @@ const BellIcon = ({ className }: { className?: string }) => (
 );
 
 const MenuIcon = ({ className }: { className?: string }) => (
-  <img src="/menu.svg" alt="메뉴" className={className} />
+  <div
+    className={`${className} bg-current`}
+    style={{
+      maskImage: "url(/menu.svg)",
+      WebkitMaskImage: "url(/menu.svg)",
+      maskRepeat: "no-repeat",
+      WebkitMaskRepeat: "no-repeat",
+      maskPosition: "center",
+      WebkitMaskPosition: "center",
+      maskSize: "contain",
+      WebkitMaskSize: "contain",
+    }}
+  />
 );
 
 const ProfileIcon = ({ className }: { className?: string }) => (
@@ -258,9 +270,19 @@ export const Header: React.FC = () => {
     loadNavItems();
   }, []);
 
+  const handleLogoClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    setShowMobileMenu(false);
+    setShowDesktopMenu(false);
+
+    if (location.pathname === "/" && !location.search && !location.hash) {
+      event.preventDefault();
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
+  };
+
   return (
     <header className="w-full bg-white">
-      <div className="w-full bg-white border-b border-gray-200 shadow-sm">
+      <div className={`w-full bg-white ${location.pathname === '/' ? '' : 'border-b border-gray-200 shadow-sm'}`}>
         {/* Top Utility Links - Premium Subtle Style */}
         <div className="hidden md:block bg-[#F8F9FA] border-b border-gray-100 py-2">
           <Container>
@@ -339,8 +361,9 @@ export const Header: React.FC = () => {
           <Container className="h-full">
             <div className="h-full flex items-center justify-between gap-4 md:gap-8">
               {/* Logo and Subtitle */}
-              <a
-                href="/"
+              <Link
+                to="/"
+                onClick={handleLogoClick}
                 className="flex-shrink-0 flex items-center gap-1.5 md:gap-2"
               >
                 <img
@@ -348,18 +371,18 @@ export const Header: React.FC = () => {
                   alt="렌탈어때"
                   className="h-[2.5rem] md:h-[2.8rem] object-contain"
                 />
-              </a>
+              </Link>
 
               <div className="hidden md:block flex-1" />
 
               {/* Right Aligned Area: Search + Actions */}
               <div className="flex items-center gap-1 md:gap-6 justify-end">
                 {/* Search Bar (Responsive for both Mobile and Desktop) */}
-                <div className="flex flex-1 md:flex-none relative group max-w-[200px] sm:max-w-[250px] md:max-w-none md:w-[280px]">
+                <div className="flex flex-1 md:flex-none relative group max-w-[200px] sm:max-w-[250px] md:max-w-none md:w-[320px]">
                   <input
                     type="text"
                     placeholder="무엇을 도와드릴까요?"
-                    className="w-full h-[44px] md:h-auto pl-4 md:pl-5 pr-10 md:pr-12 py-0 md:py-2.5 rounded-xl bg-[#F1F5F9] border border-slate-200 focus:border-[#001E45] focus:ring-1 focus:ring-[#001E45] focus:bg-white transition-all text-[14px] md:text-sm text-slate-700 placeholder-slate-400 text-ellipsis overflow-hidden whitespace-nowrap"
+                    className="w-full h-[40px] md:h-[44px] pl-6 pr-12 rounded-full bg-[#f4f7fa] border-none focus:ring-2 focus:ring-slate-200 focus:bg-white transition-all text-[14px] md:text-sm text-slate-700 placeholder-slate-400/80 text-ellipsis overflow-hidden whitespace-nowrap"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         const target = e.target as HTMLInputElement;
@@ -369,7 +392,7 @@ export const Header: React.FC = () => {
                       }
                     }}
                   />
-                  <Search className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 md:w-5 md:h-5" />
+                  <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 md:w-5 md:h-5" />
                 </div>
 
                 {/* Actions (Both Mobile & Desktop) */}
@@ -402,7 +425,7 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Premium GNB - Centered and Generous Spacing */}
-        <div className="border-t border-b border-gray-100 relative bg-white z-40">
+        <div className={`border-t ${location.pathname === '/' ? '' : 'border-b'} border-gray-100 relative bg-white z-40`}>
           <Container>
             <div className="relative flex justify-start w-full h-[56px]">
               <nav className="flex h-full items-stretch justify-start gap-1 min-[375px]:gap-2 sm:gap-6 md:gap-2 w-max min-w-full md:w-auto overflow-x-auto md:overflow-visible no-scrollbar scroll-smooth snap-x md:-ml-4 px-0">
@@ -412,9 +435,9 @@ export const Header: React.FC = () => {
                   onMouseLeave={() => setShowDesktopMenu(false)}
                 >
                   <button
-                    className={`relative flex h-full items-center gap-2 whitespace-nowrap text-[15px] font-[550] px-4 transition-all after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 md:after:-bottom-[2px] after:h-[2px] after:transition-colors ${showDesktopMenu ? "text-[#001E45] after:bg-[#001E45]" : "text-gray-900 hover:text-[#001E45] after:bg-transparent hover:after:bg-[#001E45]"}`}
+                    className={`relative flex h-full items-center gap-2 whitespace-nowrap text-[15px] font-[550] px-4 transition-all after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 md:after:-bottom-[2px] after:h-[2px] after:transition-colors ${showDesktopMenu ? "text-[#001E45] after:bg-[#001E45]" : "text-gray-600 hover:text-[#001E45] after:bg-transparent hover:after:bg-[#001E45]"}`}
                   >
-                    <MenuIcon className="w-[18px] h-[18px]" /> 전체 메뉴
+                    <MenuIcon className="w-6 h-6" /> 전체 메뉴
                   </button>
                 </div>
 
@@ -424,7 +447,7 @@ export const Header: React.FC = () => {
                   const isActive = !isExternal && isGnbSectionActive(path);
                   const className = `relative flex h-full flex-shrink-0 items-center whitespace-nowrap text-[14px] min-[357px]:text-[15px] font-[550] transition-all px-1 min-[375px]:px-2 sm:px-4 after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 md:after:-bottom-[2px] after:h-[2px] after:transition-colors ${isActive
                     ? 'text-[#001E45] after:bg-[#001E45]'
-                    : 'text-gray-900 hover:text-[#001E45] after:bg-transparent hover:after:bg-[#001E45]'
+                    : 'text-gray-600 hover:text-[#001E45] after:bg-transparent hover:after:bg-[#001E45]'
                     }`;
 
                   if (isExternal) {
@@ -481,4 +504,3 @@ export const Header: React.FC = () => {
     </header>
   );
 };
-

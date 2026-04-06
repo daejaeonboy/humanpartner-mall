@@ -99,7 +99,7 @@ export function Footer() {
                 <div className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-40 flex flex-col gap-2">
                     <Link
                         to="/quote-cart"
-                        className="w-12 h-12 rounded-[4px] bg-black text-white hover:bg-slate-800 transition-all flex items-center justify-center relative group"
+                        className="w-12 h-12 rounded-[4px] bg-[#001E45] text-white hover:bg-[#002a5e] transition-all flex items-center justify-center relative group shadow-lg"
                         aria-label="장바구니 이동"
                         title="장바구니"
                     >
