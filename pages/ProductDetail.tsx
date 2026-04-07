@@ -1405,7 +1405,7 @@ export const ProductDetailPage: React.FC = () => {
                       </p>
                     ))}
                   {activeTab === "guide" && (
-                    <article className="mx-auto max-w-4xl space-y-8 px-1 text-[15px] leading-8 text-slate-600">
+                    <article className="mx-auto max-w-4xl space-y-8 px-1 text-[15px] leading-8 tracking-[-0.025em] text-slate-600">
                       <section className="space-y-3">
                         <p className="text-xs font-semibold text-[#001E45]">
                           대여 안내

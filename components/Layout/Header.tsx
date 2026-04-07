@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, Menu } from "lucide-react";
+import { Search } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Container } from "../ui/Container";
 import {
@@ -35,6 +35,10 @@ const MenuIcon = ({ className }: { className?: string }) => (
       WebkitMaskSize: "contain",
     }}
   />
+);
+
+const MobileMenuIcon = ({ className }: { className?: string }) => (
+  <img src="/menu.svg" alt="메뉴" className={className} />
 );
 
 const ProfileIcon = ({ className }: { className?: string }) => (
@@ -357,7 +361,7 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Main Header Area */}
-        <div className="h-[72px] bg-white/80 backdrop-blur-md border-b border-gray-100 relative z-50">
+        <div className="h-[72px] bg-white border-b border-gray-100 shadow-sm md:bg-white/80 md:shadow-none md:backdrop-blur-md relative z-50">
           <Container className="h-full">
             <div className="h-full flex items-center justify-between gap-4 md:gap-8">
               {/* Logo and Subtitle */}
@@ -416,7 +420,7 @@ export const Header: React.FC = () => {
                     className="md:hidden w-10 h-10 flex items-center justify-center text-gray-800 hover:bg-gray-100 rounded-full"
                     onClick={() => setShowMobileMenu(true)}
                   >
-                    <MenuIcon className="w-6 h-6" />
+                    <MobileMenuIcon className="w-6 h-6 object-contain" />
                   </button>
                 </div>
               </div>

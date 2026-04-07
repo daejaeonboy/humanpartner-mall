@@ -183,10 +183,10 @@ export const ProductListPage: React.FC = () => {
                         등록된 상품이 없습니다. <Link to="/admin/products" className="text-[#001E45] underline">Admin에서 상품 추가</Link>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {filteredProducts.map((product) => (
                             <Link to={`/products/${product.id}`} key={product.id} className="group cursor-pointer">
-                                <div className="relative aspect-square overflow-hidden bg-gray-50 mb-4 rounded-lg border border-gray-100">
+                                <div className="relative aspect-[4/3] sm:aspect-square overflow-hidden bg-gray-50 mb-4 rounded-lg border border-gray-100">
                                     <img
                                         src={product.image_url || 'https://picsum.photos/seed/product/400/500'}
                                         alt={product.name}

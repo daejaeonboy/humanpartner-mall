@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { X, ChevronRight, Phone, Mail } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { NavMenuItem, getAllNavMenuItems } from '../../src/api/cmsApi';
 import { Container } from '../ui/Container';
@@ -35,13 +35,6 @@ export const FullMenu: React.FC<FullMenuProps> = ({ onClose, variant = 'mobile',
         };
         loadMenu();
 
-        // Prevent body scroll only for mobile overlay
-        if (variant === 'mobile') {
-            document.body.style.overflow = 'hidden';
-            return () => {
-                document.body.style.overflow = 'unset';
-            };
-        }
     }, [variant, items]);
 
     // Grouping: Parent (items with no category or unique category names) -> Children
@@ -92,19 +85,6 @@ export const FullMenu: React.FC<FullMenuProps> = ({ onClose, variant = 'mobile',
         }));
     }, [menuItems]);
 
-    // State for Mobile Accordion
-    const [openSections, setOpenSections] = useState<Set<string>>(new Set());
-
-    const toggleSection = (name: string) => {
-        const newSet = new Set(openSections);
-        if (newSet.has(name)) {
-            newSet.delete(name);
-        } else {
-            newSet.add(name);
-        }
-        setOpenSections(newSet);
-    };
-
     const getGroupLink = (groupName: string) => {
         const parentObj = menuItems.find(i => i.name === groupName && !i.category);
         const parentLink = parentObj?.link?.trim();
@@ -122,7 +102,7 @@ export const FullMenu: React.FC<FullMenuProps> = ({ onClose, variant = 'mobile',
             {/* Backdrop for Mobile */}
             {variant === 'mobile' && (
                 <div
-                    className="absolute inset-0 bg-black/50 animate-fadeIn"
+                    className="absolute inset-0 bg-slate-900/28 backdrop-blur-[2px] animate-fadeIn"
                     onClick={onClose}
                 />
             )}
@@ -130,9 +110,9 @@ export const FullMenu: React.FC<FullMenuProps> = ({ onClose, variant = 'mobile',
             {/* Panel */}
             <div
                 className={`
-                    bg-white flex flex-col h-full
+                    bg-white flex flex-col
                     ${variant === 'mobile'
-                        ? 'absolute right-0 w-[85%] max-w-sm shadow-2xl animate-slideInRight'
+                        ? 'absolute top-0 right-0 bottom-0 w-[82vw] max-w-[360px] shadow-[0_18px_48px_rgba(15,23,42,0.18)] overflow-hidden animate-slideInRight'
                         : 'w-full border-t border-slate-200 shadow-xl max-h-[70vh]'}
                 `}
                 onMouseLeave={variant === 'desktop' ? onClose : undefined}
@@ -140,67 +120,88 @@ export const FullMenu: React.FC<FullMenuProps> = ({ onClose, variant = 'mobile',
                 {/* Header - Only for Mobile */}
                 {variant === 'mobile' && (
                     <>
-                        <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-white sticky top-0 z-10">
-                            <img src="/logo.png" alt="렌탈어때" className="h-[40px] object-contain" />
-                            <button onClick={onClose} className="p-2 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors">
-                                <X size={24} className="text-slate-800" />
+                        <div className="flex justify-between items-center px-6 py-5 border-b border-slate-100 bg-white">
+                            <img src="/logo.png" alt="렌탈어때" className="h-[36px] object-contain" />
+                            <button
+                                onClick={onClose}
+                                className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors"
+                            >
+                                <X size={22} className="text-current" />
                             </button>
-                        </div>
-
-                        {/* Login/Signup OR Profile Card */}
-                        <div className="px-5 py-6 bg-slate-50">
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center">
-                                {user ? (
-                                    <>
-                                        <div className="mb-4">
-                                            <div className="w-16 h-16 bg-[#001E45]/10 text-[#001E45] rounded-full flex items-center justify-center mx-auto mb-3 font-semibold text-xl">
-                                                {userProfile?.name?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
-                                            </div>
-                                            <h3 className="font-semibold text-lg text-slate-800 mb-1">
-                                                {userProfile?.name || '사용자'}님, 안녕하세요!
-                                            </h3>
-                                            <p className="text-xs text-slate-500">렌탈어때와 함께<br />필요한 장비를 빠르게 렌탈해보세요.</p>
-                                        </div>
-                                        <div className="flex gap-3">
-                                            <Link to="/mypage" onClick={onClose} className="flex-1 py-3 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-[#001E45]/10 hover:text-[#001E45] transition-all text-center">마이페이지</Link>
-                                            <Link to="/cs" onClick={onClose} className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-500 font-semibold text-sm hover:bg-[#001E45]/5 hover:border-[#001E45]/30 hover:text-[#001E45] transition-all text-center">고객센터</Link>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <h3 className="font-semibold text-lg text-slate-800 mb-1">환영합니다!</h3>
-                                        <p className="text-sm text-slate-500 mb-4">로그인하고 더 많은 혜택을 받아보세요.</p>
-                                        <div className="flex gap-3">
-                                            <Link to="/login" onClick={onClose} className="flex-1 py-3 rounded-xl bg-[#001E45] text-white font-semibold text-sm hover:bg-[#002D66] transition-colors text-center">로그인</Link>
-                                            <Link to="/signup" onClick={onClose} className="flex-1 py-3 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 transition-colors text-center">회원가입</Link>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
                         </div>
                     </>
                 )}
 
                 {/* Content */}
                 <div className={`flex-1 overflow-y-auto ${variant === 'mobile' ? '' : 'pt-8 px-8 pb-16'}`}>
-                    <Container className={variant === 'mobile' ? '!px-5 !w-full !max-w-none' : ''}>
-                        <div className={`${variant === 'mobile' ? 'space-y-2 pb-10' : 'grid grid-cols-1 md:grid-cols-4 gap-8'}`}>
+                    <Container className={variant === 'mobile' ? '!px-0 !w-full !max-w-none' : ''}>
+                        <div className={`${variant === 'mobile' ? 'pb-6' : 'grid grid-cols-1 md:grid-cols-4 gap-8'}`}>
+                            {variant === 'mobile' && (
+                                <div className="px-6 py-6 border-b border-slate-100 bg-white">
+                                    {user ? (
+                                        <>
+                                            <h3 className="text-[20px] leading-[1.35] font-semibold text-slate-800">
+                                                {(userProfile?.name || '고객')}님, 안녕하세요!
+                                            </h3>
+                                            <div className="mt-5 grid grid-cols-2 gap-3">
+                                                <Link
+                                                    to="/mypage"
+                                                    onClick={onClose}
+                                                    className="rounded-2xl bg-slate-100 py-3 text-center text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-200"
+                                                >
+                                                    마이페이지
+                                                </Link>
+                                                <Link
+                                                    to="/cs"
+                                                    onClick={onClose}
+                                                    className="rounded-2xl border border-slate-100 bg-white py-3 text-center text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+                                                >
+                                                    고객센터
+                                                </Link>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <h3 className="text-[20px] leading-[1.35] font-semibold text-slate-800">
+                                                환영합니다!
+                                            </h3>
+                                            <div className="mt-5 grid grid-cols-2 gap-3">
+                                                <Link
+                                                    to="/login"
+                                                    onClick={onClose}
+                                                    className="rounded-2xl bg-slate-100 py-3 text-center text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-200"
+                                                >
+                                                    로그인
+                                                </Link>
+                                                <Link
+                                                    to="/signup"
+                                                    onClick={onClose}
+                                                    className="rounded-2xl border border-slate-100 bg-white py-3 text-center text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+                                                >
+                                                    회원가입
+                                                </Link>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            )}
                             {groups.map((group, idx) => (
-                                <div key={idx} className={`${variant === 'mobile' ? 'border-b border-gray-50 last:border-0' : ''}`}>
+                                <div key={idx} className={`${variant === 'mobile' ? 'border-b border-slate-50 last:border-0' : ''}`}>
                                     {/* Group Title */}
                                     {variant === 'mobile' ? (
-                                        <button
-                                            onClick={() => toggleSection(group.name)}
-                                            className="w-full flex items-center justify-between py-4 text-left"
+                                        <Link
+                                            to={getGroupLink(group.name)}
+                                            onClick={onClose}
+                                            className="flex h-[60px] w-full items-center justify-between px-6 text-left transition-colors hover:bg-slate-50"
                                         >
-                                            <span className={`text-base font-semibold ${openSections.has(group.name) ? 'text-[#001E45]' : 'text-slate-800'}`}>
+                                            <span className="text-[16px] font-semibold text-slate-800">
                                                 {group.name}
                                             </span>
                                             <ChevronRight
-                                                size={20}
-                                                className={`text-slate-400 transition-transform duration-300 ${openSections.has(group.name) ? 'rotate-90 text-[#001E45]' : ''}`}
+                                                size={18}
+                                                className="text-slate-400"
                                             />
-                                        </button>
+                                        </Link>
                                     ) : (
                                         <h3 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">
                                             <Link
@@ -213,27 +214,18 @@ export const FullMenu: React.FC<FullMenuProps> = ({ onClose, variant = 'mobile',
                                         </h3>
                                     )}
 
-                                    {/* Items List - Collapsible on Mobile */}
-                                    <div className={`
-                                    ${variant === 'mobile'
-                                            ? `overflow-hidden transition-all duration-300 ease-in-out ${openSections.has(group.name) ? 'max-h-[500px] opacity-100 pb-4' : 'max-h-0 opacity-0'}`
-                                            : 'block'}
-                                `}>
-                                        <ul className={`${variant === 'mobile' ? 'bg-slate-50/50 rounded-xl p-3 space-y-1' : 'space-y-3'}`}>
+                                    {/* Items List - Desktop only */}
+                                    <div className={variant === 'mobile' ? 'hidden' : 'block'}>
+                                        <ul className="space-y-3">
                                             {group.items.length > 0 ? (
                                                 group.items.map(item => (
                                                     <li key={item.id}>
                                                         <Link
                                                             to={`/products?category=${encodeURIComponent(item.name)}` /*&title removed to keep URL simple*/}
                                                             onClick={onClose}
-                                                            className={`block transition-all hover:text-[#001E45]
-                                                            ${variant === 'mobile'
-                                                                    ? 'p-3 text-sm text-slate-600 font-medium hover:bg-[#001E45]/5 rounded-lg flex items-center justify-between'
-                                                                    : 'text-slate-600 flex items-center gap-1 group text-sm'}
-                                                        `}
+                                                            className="block transition-all hover:text-[#001E45] text-slate-600 flex items-center gap-1 group text-sm"
                                                         >
                                                             {item.name}
-                                                            {variant === 'mobile' && <ChevronRight size={14} className="text-slate-300" />}
                                                         </Link>
                                                     </li>
                                                 ))
@@ -253,10 +245,10 @@ export const FullMenu: React.FC<FullMenuProps> = ({ onClose, variant = 'mobile',
                                 </div>
                             ))}
                             {user && variant === 'mobile' && (
-                                <div className="mt-10 pt-4 border-t border-gray-100 flex justify-center">
+                                <div className="px-6 pt-5 border-t border-slate-100 flex justify-center">
                                     <button
                                         onClick={() => { logout(); onClose(); }}
-                                        className="py-3 px-8 rounded-xl bg-slate-50 text-slate-400 font-medium text-sm hover:bg-red-50 hover:text-red-400 transition-colors"
+                                        className="py-2.5 px-6 rounded-2xl bg-slate-50 text-slate-400 font-medium text-sm hover:bg-red-50 hover:text-red-400 transition-colors"
                                     >
                                         로그아웃
                                     </button>
