@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Container } from '../components/ui/Container';
 import { Home, ArrowLeft } from 'lucide-react';
@@ -17,14 +17,14 @@ export const NotFound: React.FC = () => {
                     {/* Error Symbol */}
                     <div className="mb-8 relative inline-block">
                         <div className="w-24 h-24 bg-sky-50 rounded-3xl flex items-center justify-center animate-pulse">
-                            <span className="text-4xl font-black text-[#001E45]">404</span>
+                            <span className="text-4xl font-semibold text-[#001E45]">404</span>
                         </div>
                         <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center border border-sky-100">
                             <div className="w-6 h-6 bg-[#001E45] rounded-full animate-bounce"></div>
                         </div>
                     </div>
 
-                    <h1 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">
+                    <h1 className="text-3xl font-semibold text-slate-900 mb-4 tracking-tight">
                         원하시는 페이지를<br />찾을 수 없습니다.
                     </h1>
                     
@@ -36,14 +36,14 @@ export const NotFound: React.FC = () => {
                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
                         <Link 
                             to="/" 
-                            className="flex items-center justify-center gap-2 px-8 py-4 bg-[#001E45] text-white font-bold rounded-2xl shadow-lg shadow-[#001E45]/20 hover:bg-[#002D66] transition-all transform hover:-translate-y-1"
+                            className="flex items-center justify-center gap-2 px-8 py-4 bg-[#001E45] text-white font-semibold rounded-2xl shadow-lg shadow-[#001E45]/20 hover:bg-[#002D66] transition-all transform hover:-translate-y-1"
                         >
                             <Home size={18} />
                             홈으로 돌아가기
                         </Link>
                         <button 
                             onClick={() => window.history.back()}
-                            className="flex items-center justify-center gap-2 px-8 py-4 bg-white text-slate-700 font-bold rounded-2xl border border-slate-200 hover:bg-slate-50 transition-all transition-all transform hover:-translate-y-1"
+                            className="flex items-center justify-center gap-2 px-8 py-4 bg-white text-slate-700 font-semibold rounded-2xl border border-slate-200 hover:bg-slate-50 transition-all transition-all transform hover:-translate-y-1"
                         >
                             <ArrowLeft size={18} />
                             이전 페이지로

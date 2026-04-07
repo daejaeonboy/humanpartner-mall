@@ -408,12 +408,13 @@ export const deleteAllianceMember = async (id: string): Promise<void> => {
     if (error) throw error;
 };
 
-// ==================== MICE Tab Posts ====================
-export type MiceTabType = 'notice' | 'event' | 'review';
+// ==================== Board Posts ====================
+export type BoardPostType = 'notice' | 'event' | 'review';
 
-export interface MiceTabPost {
+export interface BoardPost {
     id?: string;
-    board_type: MiceTabType;
+    board_type: BoardPostType;
+    category?: string;
     title: string;
     summary?: string;
     content?: string;
@@ -426,9 +427,11 @@ export interface MiceTabPost {
     updated_at?: string;
 }
 
-export const getMiceTabPosts = async (boardType?: MiceTabType): Promise<MiceTabPost[]> => {
+const BOARD_POSTS_TABLE = 'mice_tab_posts'; // Legacy table name kept for compatibility.
+
+export const getBoardPosts = async (boardType?: BoardPostType): Promise<BoardPost[]> => {
     let query = supabase
-        .from('mice_tab_posts')
+        .from(BOARD_POSTS_TABLE)
         .select('*')
         .eq('is_active', true);
 
@@ -444,9 +447,9 @@ export const getMiceTabPosts = async (boardType?: MiceTabType): Promise<MiceTabP
     return data || [];
 };
 
-export const getAllMiceTabPosts = async (): Promise<MiceTabPost[]> => {
+export const getAllBoardPosts = async (): Promise<BoardPost[]> => {
     const { data, error } = await supabase
-        .from('mice_tab_posts')
+        .from(BOARD_POSTS_TABLE)
         .select('*')
         .order('board_type', { ascending: true })
         .order('display_order', { ascending: true })
@@ -456,9 +459,9 @@ export const getAllMiceTabPosts = async (): Promise<MiceTabPost[]> => {
     return data || [];
 };
 
-export const getMiceTabPostById = async (id: string): Promise<MiceTabPost | null> => {
+export const getBoardPostById = async (id: string): Promise<BoardPost | null> => {
     const { data, error } = await supabase
-        .from('mice_tab_posts')
+        .from(BOARD_POSTS_TABLE)
         .select('*')
         .eq('id', id)
         .eq('is_active', true)
@@ -468,9 +471,9 @@ export const getMiceTabPostById = async (id: string): Promise<MiceTabPost | null
     return data || null;
 };
 
-export const addMiceTabPost = async (post: Omit<MiceTabPost, 'id' | 'created_at' | 'updated_at'>): Promise<MiceTabPost> => {
+export const addBoardPost = async (post: Omit<BoardPost, 'id' | 'created_at' | 'updated_at'>): Promise<BoardPost> => {
     const { data, error } = await supabase
-        .from('mice_tab_posts')
+        .from(BOARD_POSTS_TABLE)
         .insert([post])
         .select()
         .single();
@@ -479,9 +482,9 @@ export const addMiceTabPost = async (post: Omit<MiceTabPost, 'id' | 'created_at'
     return data;
 };
 
-export const updateMiceTabPost = async (id: string, updates: Partial<MiceTabPost>): Promise<MiceTabPost> => {
+export const updateBoardPost = async (id: string, updates: Partial<BoardPost>): Promise<BoardPost> => {
     const { data, error } = await supabase
-        .from('mice_tab_posts')
+        .from(BOARD_POSTS_TABLE)
         .update({
             ...updates,
             updated_at: new Date().toISOString()
@@ -494,9 +497,9 @@ export const updateMiceTabPost = async (id: string, updates: Partial<MiceTabPost
     return data;
 };
 
-export const deleteMiceTabPost = async (id: string): Promise<void> => {
+export const deleteBoardPost = async (id: string): Promise<void> => {
     const { error } = await supabase
-        .from('mice_tab_posts')
+        .from(BOARD_POSTS_TABLE)
         .delete()
         .eq('id', id);
 

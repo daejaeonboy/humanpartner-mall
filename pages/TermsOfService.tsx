@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Container } from '../components/ui/Container';
 
@@ -6,7 +6,7 @@ const termsSections: Array<{ title: string; items: string[] }> = [
   {
     title: '제1조 (목적)',
     items: [
-      '본 약관은 주식회사 렌탈어때(이하 "회사")가 운영하는 렌탈어때 및 관련 웹/모바일 서비스(이하 "서비스")의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.',
+      '본 약관은 휴먼파트너(이하 "회사")가 운영하는 렌탈어때 및 관련 웹/모바일 서비스(이하 "서비스")의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.',
     ],
   },
   {
@@ -30,7 +30,7 @@ const termsSections: Array<{ title: string; items: string[] }> = [
   {
     title: '제4조 (회원가입 및 계정 관리)',
     items: [
-      '회원가입은 이용자가 약관 동의 후 회사가 정한 가입 절차를 완료하고, 회사가 이를 승인함으로써 성립합니다.',
+      '회원가입은 이용자가 약관 동의 후 회사가 정한 가입 절차를 완료함으로써 성립합니다.',
       '이용자는 정확하고 최신의 정보를 제공해야 하며, 허위 정보 등록으로 발생한 불이익은 이용자 책임입니다.',
       '계정 정보의 관리 책임은 회원에게 있으며, 계정 도용 또는 무단 사용 사실을 인지한 경우 즉시 회사에 통지해야 합니다.',
       '회사는 관련 법령 또는 본 약관 위반이 확인되는 경우 회원 자격을 제한 또는 정지할 수 있습니다.',
@@ -126,12 +126,12 @@ export const TermsOfService: React.FC = () => {
       </Helmet>
 
       <Container className="max-w-4xl py-20">
-        <h1 className="mb-10 border-b pb-4 text-3xl font-bold text-gray-900">서비스 이용약관</h1>
+        <h1 className="mb-10 border-b pb-4 text-3xl font-semibold text-gray-900">서비스 이용약관</h1>
 
         <div className="space-y-10 text-gray-700">
           {termsSections.map((section) => (
             <section key={section.title} className="space-y-3">
-              <h2 className="text-xl font-bold text-gray-900">{section.title}</h2>
+              <h2 className="text-xl font-semibold text-gray-900">{section.title}</h2>
               <ol className="list-decimal space-y-2 pl-6 leading-relaxed marker:text-gray-500">
                 {section.items.map((item) => (
                   <li key={item}>{item}</li>

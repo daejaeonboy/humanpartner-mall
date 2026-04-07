@@ -37,6 +37,19 @@ interface QuoteEmailSettingsStored {
   updatedByEmail?: string;
 }
 
+interface QuoteEmailDispatchRecord {
+  bookingId: string;
+  status: string;
+  updatedAt?: string;
+  reason?: string;
+  recipients?: string[];
+  productName?: string;
+  userId?: string;
+  sentAt?: string;
+  failedAt?: string;
+  errorMessage?: string;
+}
+
 interface SupabaseSiteSettingRow {
   setting_key: string;
   setting_value: string;
@@ -484,6 +497,60 @@ const saveDispatchRecord = async (bookingId: string, payload: JsonRecord) => {
   );
 };
 
+const toQuoteEmailDispatchRecord = (
+  row: SupabaseSiteSettingRow,
+): QuoteEmailDispatchRecord | null => {
+  const data = parseJsonRecord(row.setting_value);
+  const rawBookingId =
+    typeof data.bookingId === "string"
+      ? data.bookingId
+      : row.setting_key.startsWith(QUOTE_EMAIL_DISPATCH_KEY_PREFIX)
+        ? row.setting_key.slice(QUOTE_EMAIL_DISPATCH_KEY_PREFIX.length)
+        : "";
+
+  if (!rawBookingId) {
+    return null;
+  }
+
+  return {
+    bookingId: rawBookingId,
+    status: typeof data.status === "string" ? data.status : "unknown",
+    updatedAt:
+      typeof data.updatedAt === "string" ? data.updatedAt : row.updated_at,
+    reason: typeof data.reason === "string" ? data.reason : undefined,
+    recipients: Array.isArray(data.recipients)
+      ? data.recipients.filter(
+          (recipient): recipient is string => typeof recipient === "string",
+        )
+      : undefined,
+    productName:
+      typeof data.productName === "string" ? data.productName : undefined,
+    userId: typeof data.userId === "string" ? data.userId : undefined,
+    sentAt: typeof data.sentAt === "string" ? data.sentAt : undefined,
+    failedAt: typeof data.failedAt === "string" ? data.failedAt : undefined,
+    errorMessage:
+      typeof data.errorMessage === "string" ? data.errorMessage : undefined,
+  };
+};
+
+const getRecentQuoteEmailDispatches = async (
+  limit = 20,
+): Promise<QuoteEmailDispatchRecord[]> => {
+  const rows = await supabaseSelect<SupabaseSiteSettingRow>("site_settings", {
+    select: "setting_key,setting_value,updated_at",
+    setting_key: `like.${QUOTE_EMAIL_DISPATCH_KEY_PREFIX}*`,
+    order: "updated_at.desc",
+    limit: String(limit),
+  });
+
+  return rows
+    .map((row) => toQuoteEmailDispatchRecord(row))
+    .filter(
+      (record): record is QuoteEmailDispatchRecord =>
+        Boolean(record && record.bookingId),
+    );
+};
+
 const getActiveRecipientEmails = (settings: QuoteEmailSettingsResponse) =>
   settings.recipients
     .filter((recipient) => recipient.enabled)
@@ -710,7 +777,28 @@ export const manageQuoteEmailSettings = functions.https.onRequest((req, res) => 
 
       if (req.method === "GET") {
         const settings = await getQuoteEmailSettings();
-        res.status(200).json(settings);
+        const includeDispatches =
+          typeof req.query.includeDispatches === "string" &&
+          req.query.includeDispatches === "true";
+        const rawLimit =
+          typeof req.query.dispatchLimit === "string"
+            ? parseInt(req.query.dispatchLimit, 10)
+            : 20;
+        const dispatchLimit =
+          Number.isFinite(rawLimit) && rawLimit > 0
+            ? Math.min(rawLimit, 50)
+            : 20;
+
+        if (!includeDispatches) {
+          res.status(200).json(settings);
+          return;
+        }
+
+        const dispatches = await getRecentQuoteEmailDispatches(dispatchLimit);
+        res.status(200).json({
+          ...settings,
+          dispatches,
+        });
         return;
       }
 

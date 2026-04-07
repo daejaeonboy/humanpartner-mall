@@ -4,6 +4,11 @@ import { auth } from '../firebase';
 import { getUserProfileByFirebaseUid, UserProfile } from '../api/userApi';
 import { getMissingSupabaseTableName, isMissingSupabaseTableError } from '../utils/supabaseErrors';
 
+const PROFILE_FETCH_RETRY_DELAY_MS = 500;
+const PROFILE_FETCH_MAX_ATTEMPTS = 4;
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 interface AuthContextType {
     user: User | null;
     userProfile: UserProfile | null;
@@ -29,9 +34,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const loadUserProfile = async (firebaseUid: string) => {
+        for (let attempt = 1; attempt <= PROFILE_FETCH_MAX_ATTEMPTS; attempt += 1) {
+            const profile = await getUserProfileByFirebaseUid(firebaseUid);
+            if (profile) {
+                return profile;
+            }
+
+            if (attempt < PROFILE_FETCH_MAX_ATTEMPTS) {
+                // Sign-up can authenticate before the profile row finishes writing.
+                await wait(PROFILE_FETCH_RETRY_DELAY_MS);
+            }
+        }
+
+        return null;
+    };
+
     const fetchProfile = async (firebaseUser: User) => {
         try {
-            const profile = await getUserProfileByFirebaseUid(firebaseUser.uid);
+            const profile = await loadUserProfile(firebaseUser.uid);
 
             // 프로필이 없으면 미등록 계정으로 간주하고 로그아웃 처리
             if (!profile) {

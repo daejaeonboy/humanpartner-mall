@@ -74,9 +74,9 @@ export const ProductSection: React.FC<ProductSectionProps> = ({
     <div className={`py-12 md:py-20 ${variant === 'gray' ? 'bg-slate-50' : 'bg-white'}`}>
       <Container>
         {/* Header */}
-        <div className="flex justify-between items-end mb-6">
+        <div className="flex justify-between items-end mb-8">
           <div>
-            <h2 className="text-xl md:text-[28px] font-semibold text-slate-900 tracking-tight">{title}</h2>
+            <h2 className="text-[24px] md:text-[28px] font-semibold text-slate-900 tracking-tight">{title}</h2>
           </div>
           <Link
             to={allViewPath}
@@ -124,7 +124,7 @@ export const ProductSection: React.FC<ProductSectionProps> = ({
           {/* Scrollable List */}
           <div
             ref={scrollContainerRef}
-            className="flex gap-4 overflow-x-auto no-scrollbar scrollbar-hide [&::-webkit-scrollbar]:hidden pb-4"
+            className="flex gap-2 md:gap-4 overflow-x-auto no-scrollbar scrollbar-hide [&::-webkit-scrollbar]:hidden pb-4"
             style={{ scrollSnapType: 'x mandatory', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {filteredProducts.map((product) => (
@@ -142,18 +142,18 @@ export const ProductSection: React.FC<ProductSectionProps> = ({
                   />
                   {/* Premium Hover Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 md:p-5">
-                    <button className="w-full px-5 py-2 bg-white text-slate-900 text-xs font-bold rounded-lg shadow-xl translate-y-4 group-hover/card:translate-y-0 transition-transform duration-500 text-center">
+                    <button className="w-full px-5 py-2 bg-white text-slate-900 text-xs font-semibold rounded-lg shadow-xl translate-y-4 group-hover/card:translate-y-0 transition-transform duration-500 text-center">
                       상품보기
                     </button>
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <h3 className="font-bold text-[15px] text-slate-800 truncate group-hover/card:text-[#001E45] transition-colors">{product.title}</h3>
+                  <h3 className="font-semibold text-[15px] text-slate-800 truncate group-hover/card:text-[#001E45] transition-colors">{product.title}</h3>
 
                   <div className="flex items-center gap-1 mt-1">
                     {!priceDisplayLoading && !isInquiryPriceMode(priceDisplayMode) && product.discountRate && (
-                      <span className="text-rose-500 font-bold text-[18px]">{product.discountRate}%</span>
+                      <span className="text-rose-500 font-semibold text-[18px]">{product.discountRate}%</span>
                     )}
                     <span className={getPublicPriceClassName({
                       mode: priceDisplayMode,

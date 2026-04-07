@@ -129,7 +129,7 @@ export const PopupManager: React.FC = () => {
                         </button>
                         <button
                             onClick={() => closePopup(popup.id!)}
-                            className="font-bold flex items-center gap-1 hover:text-slate-300 transition-colors"
+                            className="font-semibold flex items-center gap-1 hover:text-slate-300 transition-colors"
                         >
                             닫기 <X size={16} />
                         </button>

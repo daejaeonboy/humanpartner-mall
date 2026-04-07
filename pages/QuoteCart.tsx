@@ -20,6 +20,11 @@ import {
   getPublicPriceText,
   INQUIRY_PRICE_TEXT_CLASS,
 } from "../src/utils/priceDisplay";
+import {
+  trackOperationFailure,
+  trackQuoteRequestComplete,
+  trackQuoteRequestStart,
+} from "../src/utils/analytics";
 
 export const QuoteCartPage: React.FC = () => {
   const navigate = useNavigate();
@@ -72,6 +77,28 @@ export const QuoteCartPage: React.FC = () => {
     }));
   };
 
+  const getItemMetaSummary = (item: QuoteCartItem) => {
+    const isPackageItem =
+      item.product_catalog_type === "package" ||
+      (item.expected_people <= 0 && item.basic_components.length > 0);
+
+    if (!isPackageItem) {
+      return `예상 수량 ${item.expected_people.toLocaleString()}대 | 옵션 ${item.selected_options.length}건`;
+    }
+
+    const basicComponentCount = item.basic_components.reduce(
+      (sum, component) => sum + (component.quantity || 0),
+      0,
+    );
+
+    return [
+      basicComponentCount > 0 ? `기본 구성 ${basicComponentCount}개` : null,
+      `옵션 ${item.selected_options.length}건`,
+    ]
+      .filter(Boolean)
+      .join(" | ");
+  };
+
   const handleSubmit = async () => {
     if (items.length === 0 || isSubmitting) return;
     if (!user) {
@@ -81,6 +108,11 @@ export const QuoteCartPage: React.FC = () => {
 
     setIsSubmitting(true);
     setResultMessage("");
+    trackQuoteRequestStart({
+      source: "quote_cart",
+      itemCount: items.length,
+      value: totalPrice,
+    });
 
     const successIds: string[] = [];
     const failedNames: string[] = [];
@@ -115,24 +147,64 @@ export const QuoteCartPage: React.FC = () => {
             await sendQuoteRequestNotificationEmail(booking.id);
           } catch (emailError) {
             console.error("Failed to send quote request admin email", emailError);
+            trackOperationFailure({
+              operation: "quote_request_email_notify",
+              source: "quote_cart",
+              productId: item.product_id,
+              itemCount: 1,
+              message:
+                emailError instanceof Error
+                  ? emailError.message
+                  : "Failed to send quote request admin email",
+            });
           }
         }
 
         successIds.push(item.cart_item_id);
       } catch (error) {
         console.error("Failed to submit quote cart item", error);
+        trackOperationFailure({
+          operation: "quote_request_submit",
+          source: "quote_cart",
+          productId: item.product_id,
+          itemCount: 1,
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to submit quote cart item",
+        });
         failedNames.push(item.product_name);
       }
     }
 
     if (successIds.length > 0) {
-      await createNotification(
-        user.uid,
-        "견적 요청",
-        `${successIds.length}건의 견적 요청이 접수되었습니다. 담당자가 확인 후 순차적으로 안내드립니다.`,
-        "info",
-        "/mypage",
-      );
+      try {
+        await createNotification(
+          user.uid,
+          "견적 요청",
+          `${successIds.length}건의 견적 요청이 접수되었습니다. 담당자가 확인 후 순차적으로 안내드립니다.`,
+          "info",
+          "/mypage",
+        );
+      } catch (notificationError) {
+        console.error("Failed to create quote cart notification", notificationError);
+        trackOperationFailure({
+          operation: "quote_request_notification_create",
+          source: "quote_cart",
+          itemCount: successIds.length,
+          message:
+            notificationError instanceof Error
+              ? notificationError.message
+              : "Failed to create quote cart notification",
+        });
+      }
+
+      trackQuoteRequestComplete({
+        source: "quote_cart",
+        itemCount: items.length,
+        successCount: successIds.length,
+        value: totalPrice,
+      });
     }
 
     const remainingItems = items.filter((item) => !successIds.includes(item.cart_item_id));
@@ -170,13 +242,13 @@ export const QuoteCartPage: React.FC = () => {
               <div className="w-20 h-20 bg-[#B3C1D4] rounded-full mx-auto mb-4 flex items-center justify-center">
                 <User size={32} className="text-[#001E45]" />
               </div>
-              <h2 className="text-lg font-bold text-gray-900">{userProfile?.name || "고객"} 님</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{userProfile?.name || "고객"} 님</h2>
               <p className="text-sm text-gray-500 mb-6">{userProfile?.email || user?.email || "-"}</p>
               <div className="text-left space-y-1 border-t border-gray-100 pt-4">
                 <Link to="/mypage" className="text-sm text-gray-500 block w-full text-left py-2 px-2 rounded hover:bg-gray-50 hover:text-black">
                   대여 신청 내역
                 </Link>
-                <Link to="/quote-cart" className="text-sm font-bold text-[#001E45] block w-full text-left py-2 px-2 rounded hover:bg-[#001E45]/5">
+                <Link to="/quote-cart" className="text-sm font-semibold text-[#001E45] block w-full text-left py-2 px-2 rounded hover:bg-[#001E45]/5">
                   장바구니
                 </Link>
                 <Link to="/mypage/info" className="text-sm text-gray-500 block w-full text-left py-2 px-2 rounded hover:bg-gray-50 hover:text-black">
@@ -191,7 +263,7 @@ export const QuoteCartPage: React.FC = () => {
 
           <div className="md:w-3/4">
             <div className="mb-8">
-              <h1 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+              <h1 className="text-2xl font-semibold text-slate-900 mb-6 flex items-center gap-2">
                 <Clock size={24} /> 장바구니
               </h1>
             </div>
@@ -202,7 +274,7 @@ export const QuoteCartPage: React.FC = () => {
                 <p className="text-slate-500 mb-4">장바구니에 담긴 항목이 없습니다.</p>
                 <Link
                   to="/products"
-                  className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-[#001E45] text-white text-sm font-bold hover:bg-[#03295b] transition-colors"
+                  className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-[#001E45] text-white text-sm font-semibold hover:bg-[#03295b] transition-colors"
                 >
                   상품 보러가기
                 </Link>
@@ -258,7 +330,7 @@ export const QuoteCartPage: React.FC = () => {
                           </div>
 
                           <div className="flex-1 min-w-0 pr-8 md:pr-0 flex flex-col justify-center">
-                            <h2 className="text-xl md:text-2xl font-bold text-slate-900 truncate mb-2">
+                            <h2 className="text-xl md:text-2xl font-semibold text-slate-900 truncate mb-2">
                               {item.product_name}
                             </h2>
                             <div className="flex items-center gap-2 text-base text-slate-500 mb-2">
@@ -268,7 +340,7 @@ export const QuoteCartPage: React.FC = () => {
                               </span>
                             </div>
                             <p className="text-sm text-slate-500">
-                              예상 수량 {item.expected_people.toLocaleString()}대 | 옵션 {item.selected_options.length}건
+                              {getItemMetaSummary(item)}
                             </p>
                             <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#001E45]">
                               <span>{isExpanded ? "옵션 접기" : "옵션 보기"}</span>
@@ -286,7 +358,7 @@ export const QuoteCartPage: React.FC = () => {
                                 className={getPublicPriceClassName({
                                   mode: priceDisplayMode,
                                   loading: priceDisplayLoading,
-                                  visibleClass: "text-2xl font-black text-[#001E45]",
+                                  visibleClass: "text-2xl font-semibold text-[#001E45]",
                                   hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
                                 })}
                               >
@@ -318,7 +390,7 @@ export const QuoteCartPage: React.FC = () => {
                         <div className="pt-6">
                           <div className="rounded-2xl border border-[#001E45]/10 bg-[#001E45]/[0.03] p-5">
                             <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
-                              <h3 className="text-sm font-bold text-slate-800">추가 선택 옵션</h3>
+                              <h3 className="text-sm font-semibold text-slate-800">추가 선택 옵션</h3>
                               <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-500 border border-slate-200">
                                   {item.selected_options.length}건
                                 </span>
@@ -348,7 +420,7 @@ export const QuoteCartPage: React.FC = () => {
                                           className={getPublicPriceClassName({
                                             mode: priceDisplayMode,
                                             loading: priceDisplayLoading,
-                                            visibleClass: "shrink-0 text-sm font-black text-[#001E45]",
+                                            visibleClass: "shrink-0 text-sm font-semibold text-[#001E45]",
                                             hiddenClass: "shrink-0 text-sm font-semibold text-rose-600",
                                           })}
                                         >
@@ -382,7 +454,7 @@ export const QuoteCartPage: React.FC = () => {
                       className={getPublicPriceClassName({
                         mode: priceDisplayMode,
                         loading: priceDisplayLoading,
-                        visibleClass: "text-xl font-black text-[#001E45]",
+                        visibleClass: "text-xl font-semibold text-[#001E45]",
                         hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
                       })}
                     >
@@ -397,7 +469,7 @@ export const QuoteCartPage: React.FC = () => {
                     <button
                       onClick={handleSubmit}
                       disabled={isSubmitting}
-                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#001E45] text-white font-bold hover:bg-[#03295b] disabled:bg-slate-400 transition-colors"
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#001E45] text-white font-semibold hover:bg-[#03295b] disabled:bg-slate-400 transition-colors"
                     >
                       {isSubmitting ? (
                         <>

@@ -1,13 +1,14 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Container } from '../components/ui/Container';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getMiceTabPosts, MiceTabPost, MiceTabType } from '../src/api/cmsApi';
+import { getBoardPosts, BoardPost, BoardPostType } from '../src/api/cmsApi';
+import { getBoardCategories, type BoardCategoryBoardType } from '../src/api/siteSettingsApi';
 import { stripGnbContentImages } from '../src/utils/gnbContent';
 
-interface MiceBoardPageProps {
-  boardType: MiceTabType;
+interface BoardPageProps {
+  boardType: BoardPostType;
 }
 
 interface BoardMeta {
@@ -18,7 +19,7 @@ interface BoardMeta {
   metaDescription: string;
 }
 
-const BOARD_META: Record<MiceTabType, BoardMeta> = {
+const BOARD_META: Record<BoardPostType, BoardMeta> = {
   notice: {
     title: '공지사항',
     description: '렌탈어때 서비스 최신 공지사항을 확인하실 수 있습니다.',
@@ -49,15 +50,17 @@ const formatDate = (value?: string) => {
   return date.toLocaleDateString('ko-KR');
 };
 
-const BOARD_PATH: Record<MiceTabType, string> = {
+const BOARD_PATH: Record<BoardPostType, string> = {
   notice: '/notice',
   event: '/event',
   review: '/review',
 };
 
-export const MiceBoardPage: React.FC<MiceBoardPageProps> = ({ boardType }) => {
+export const BoardPage: React.FC<BoardPageProps> = ({ boardType }) => {
   const meta = BOARD_META[boardType];
-  const [posts, setPosts] = useState<MiceTabPost[]>([]);
+  const [posts, setPosts] = useState<BoardPost[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [activeCategory, setActiveCategory] = useState('전체');
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -67,11 +70,37 @@ export const MiceBoardPage: React.FC<MiceBoardPageProps> = ({ boardType }) => {
     const fetchPosts = async () => {
       setLoading(true);
       try {
-        const data = await getMiceTabPosts(boardType);
+        const [data, managedCategories] = await Promise.all([
+          getBoardPosts(boardType),
+          boardType === 'event'
+            ? Promise.resolve<string[]>([])
+            : getBoardCategories(boardType as BoardCategoryBoardType)
+        ]);
+
+        const inferredCategories = Array.from(
+          new Set(
+            data
+              .map((post) => (post.category || '').trim())
+              .filter(Boolean)
+          )
+        );
+
+        const mergedCategories = managedCategories.length > 0
+          ? [...managedCategories, ...inferredCategories.filter((category) => !managedCategories.includes(category))]
+          : inferredCategories;
+
         setPosts(data);
+        setCategories(mergedCategories);
+        setActiveCategory((current) => (
+          current !== '전체' && mergedCategories.includes(current)
+            ? current
+            : '전체'
+        ));
       } catch (error) {
         console.error(`Failed to load ${boardType} posts:`, error);
         setPosts([]);
+        setCategories([]);
+        setActiveCategory('전체');
       } finally {
         setLoading(false);
       }
@@ -80,14 +109,22 @@ export const MiceBoardPage: React.FC<MiceBoardPageProps> = ({ boardType }) => {
   }, [boardType]);
 
   const filteredPosts = useMemo(() => {
-    const keyword = searchTerm.trim().toLowerCase();
-    if (!keyword) return posts;
+    const categoryFilteredPosts = activeCategory === '전체'
+      ? posts
+      : posts.filter((post) => (post.category || '').trim() === activeCategory);
 
-    return posts.filter((post) => {
+    const keyword = searchTerm.trim().toLowerCase();
+    if (!keyword) return categoryFilteredPosts;
+
+    return categoryFilteredPosts.filter((post) => {
       const haystacks = [post.title, post.summary || '', stripGnbContentImages(post.content)];
       return haystacks.some((text) => text.toLowerCase().includes(keyword));
     });
-  }, [posts, searchTerm]);
+  }, [activeCategory, posts, searchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeCategory]);
 
   const totalItems = filteredPosts.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
@@ -117,20 +154,14 @@ export const MiceBoardPage: React.FC<MiceBoardPageProps> = ({ boardType }) => {
       <div className="bg-white min-h-screen pb-20">
         <Container>
           <div className="py-10 md:py-16 text-left">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">{meta.title}</h2>
-            <p className="text-gray-500 whitespace-pre-line text-[14px] md:text-[15px] leading-relaxed break-keep">
+            <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-4">{meta.title}</h2>
+            <p className="text-slate-500 font-medium whitespace-pre-line leading-relaxed break-keep">
               {meta.description}
             </p>
           </div>
 
           <div className="bg-[#f7f8f9] py-6 md:py-8 px-4 md:px-6 flex justify-start items-center mb-10 rounded-sm">
             <div className="flex w-full max-w-2xl bg-white border border-gray-200 shadow-sm">
-              <div className="w-[80px] md:w-[150px] border-r border-gray-200 px-3 md:px-4 py-3 text-sm text-gray-600 flex justify-between items-center bg-white cursor-pointer shrink-0">
-                전체
-                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M1 1L5 5L9 1" stroke="#999" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
               <input
                 type="text"
                 placeholder={meta.placeholder}
@@ -141,18 +172,32 @@ export const MiceBoardPage: React.FC<MiceBoardPageProps> = ({ boardType }) => {
                   setCurrentPage(1);
                 }}
               />
-              <button className="bg-[#222] text-white px-5 md:px-8 py-3 text-sm font-medium hover:bg-black transition-colors shrink-0">
+              <button className="bg-[#001E45] text-white px-5 md:px-8 py-3 text-sm font-medium hover:bg-[#002a5e] transition-colors shrink-0">
                 검색
               </button>
             </div>
           </div>
 
-          <div className="flex justify-between items-end pb-4 border-b border-gray-900 mb-8">
-            <p className="text-sm">
-              <span className="text-gray-500">전체</span> <span className="font-bold text-gray-900">{totalItems}건</span>
-              <span className="mx-3 text-gray-300">|</span>
-              <span className="text-gray-500">현재페이지</span> <span className="font-bold text-gray-900">{currentPage}/{totalPages}</span>
-            </p>
+          <div className="mb-8 border-b border-gray-200">
+            <div className="overflow-x-auto no-scrollbar -mx-[0.8rem] px-[0.8rem] md:mx-0 md:px-0">
+              <div className="flex w-max min-w-full gap-0">
+                {['전체', ...categories].map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setActiveCategory(category)}
+                    className={`
+                      relative inline-flex h-11 min-w-[104px] shrink-0 items-center justify-center whitespace-nowrap px-4 text-center text-[15px] md:h-12 md:min-w-[116px] md:text-[16px] font-semibold transition-colors
+                      ${activeCategory === category
+                        ? 'bg-[#001E45]/[0.04] text-[#001E45] after:content-[""] after:absolute after:left-0 after:right-0 after:bottom-0 after:h-[2px] after:bg-[#001E45]'
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                      }
+                    `}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {loading ? (
@@ -164,8 +209,6 @@ export const MiceBoardPage: React.FC<MiceBoardPageProps> = ({ boardType }) => {
               {currentItems.map((post, index) => {
                 const detailPath = post.id ? `${BOARD_PATH[boardType]}/${post.id}` : BOARD_PATH[boardType];
 
-                const previewText = (post.summary || stripGnbContentImages(post.content) || '').trim();
-
                 return (
                 <Link
                   key={post.id || `${post.title}-${index}`}
@@ -173,7 +216,7 @@ export const MiceBoardPage: React.FC<MiceBoardPageProps> = ({ boardType }) => {
                   className="group block"
                 >
                   <div className="border border-gray-200 rounded-xl overflow-hidden bg-white hover:border-gray-400 transition-colors">
-                    <div className="aspect-[16/18] md:aspect-[16/9] bg-[#f2f4f7] overflow-hidden">
+                    <div className="aspect-[16/9] bg-[#f2f4f7] overflow-hidden">
                       {(post.image_url || post.mobile_image_url) ? (
                         <picture className="block w-full h-full">
                           {post.mobile_image_url && <source media="(max-width: 767px)" srcSet={post.mobile_image_url} />}
@@ -191,11 +234,8 @@ export const MiceBoardPage: React.FC<MiceBoardPageProps> = ({ boardType }) => {
                     </div>
                   </div>
                   <div className="pt-4 px-1">
-                    <h3 className="text-[22px] font-bold text-gray-900 leading-tight break-keep line-clamp-2">{post.title}</h3>
-                    <p className="text-[15px] text-gray-500 mt-3 leading-relaxed break-keep line-clamp-2">
-                      {previewText || '등록된 요약 정보가 없습니다.'}
-                    </p>
-                    <p className="text-[13px] text-gray-400 mt-5">{formatDate(post.created_at)}</p>
+                    <h3 className="text-[18px] font-semibold text-gray-900 leading-tight break-keep line-clamp-2">{post.title}</h3>
+                    <p className="text-[13px] text-gray-400 mt-3">{formatDate(post.created_at)}</p>
                   </div>
                 </Link>
                 );
@@ -237,7 +277,7 @@ export const MiceBoardPage: React.FC<MiceBoardPageProps> = ({ boardType }) => {
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
                     className={`w-8 h-8 flex items-center justify-center border text-[13px] transition-colors ${currentPage === pageNum
-                        ? 'border-[#222] bg-[#222] text-white font-bold'
+                        ? 'border-[#001E45] bg-[#001E45] text-white font-semibold'
                         : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'}`}
                   >
                     {pageNum}
@@ -267,3 +307,4 @@ export const MiceBoardPage: React.FC<MiceBoardPageProps> = ({ boardType }) => {
   );
 };
 
+export default BoardPage;

@@ -110,7 +110,7 @@ const NotificationDropdown = ({
           />
           <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
             <div className="flex items-center justify-between p-3 border-b border-gray-50 bg-gray-50/50">
-              <span className="font-bold text-gray-900 text-sm">알림</span>
+              <span className="font-semibold text-gray-900 text-sm">알림</span>
               {unreadCount > 0 && (
                 <button
                   onClick={onMarkAllRead}
@@ -137,7 +137,7 @@ const NotificationDropdown = ({
                       />
                       <div>
                         <p
-                          className={`text-sm ${!noti.is_read ? "font-bold text-gray-900" : "text-gray-600"}`}
+                          className={`text-sm ${!noti.is_read ? "font-semibold text-gray-900" : "text-gray-600"}`}
                         >
                           {noti.title}
                         </p>

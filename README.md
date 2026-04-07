@@ -57,6 +57,7 @@ cp functions/.env.example functions/.env
 
 ```bash
 npm install
+npm --prefix functions install
 npm run dev
 ```
 
@@ -94,8 +95,30 @@ npm run deploy:prod:all
 주의:
 - `firebase deploy`를 단독으로 실행하지 마세요.
 - 반드시 위 스크립트로 배포하세요.
+- 배포 전에는 아래 검증 명령을 먼저 실행하세요.
 
-## 4) Supabase 초기 스키마 (필수)
+```bash
+npm run check:release
+```
+
+- 프런트와 Firebase Functions 빌드가 모두 통과해야 운영 배포를 진행합니다.
+
+## 4) 공개 오픈 전 확인
+
+- 푸터, 이용약관, 개인정보처리방침의 운영 주체와 연락처 표기가 일치하는지 확인합니다.
+- `VITE_FIREBASE_MEASUREMENT_ID`가 운영 `.env`에 설정되어 페이지뷰 및 전환 이벤트가 수집되는지 확인합니다.
+- 견적 요청 접수 후 운영 알림 메일이 실제 수신되는지 확인합니다.
+- 문의 등록 후 관리자 화면에서 정상 조회되는지 확인합니다.
+- 홈, 상품 상세, 견적 요청, 문의 등록 흐름을 모바일/데스크톱에서 각각 한 번씩 점검합니다.
+
+## 5) 일일 운영 체크
+
+- 신규 견적 요청 접수 여부와 운영 메일 수신 여부를 확인합니다.
+- 신규 1:1 문의와 미답변 문의를 확인합니다.
+- 주요 오류가 분석/예외 이벤트로 들어오는지 확인합니다.
+- 고객센터 연락처, 상담 채널, 사업자 정보가 변경되지 않았는지 확인합니다.
+
+## 6) Supabase 초기 스키마 (필수)
 
 신규 Supabase 프로젝트를 연결했다면 `supabase_bootstrap_schema.sql`을 SQL Editor에서 1회 실행하세요.
 

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container } from '../components/ui/Container';
 import { Loader2 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -137,7 +137,7 @@ export const ProductListPage: React.FC = () => {
     });
 
     return (
-        <div className="pt-8 pb-12 bg-white">
+        <div className="pt-10 md:pt-16 pb-20 bg-white">
             <Helmet>
                 <title>상품목록 | 렌탈어때</title>
                 <meta
@@ -147,28 +147,30 @@ export const ProductListPage: React.FC = () => {
                 <link rel="canonical" href="https://rentalpartner.kr/products" />
             </Helmet>
             <Container>
-                <div className="mb-6">
+                <div className="mb-8 space-y-5 md:space-y-6">
                     {/* Title Logic: Use Current Group Name if available, otherwise URL Title or Active Category */}
-                    <h1 className="text-3xl font-bold text-gray-900">
+                    <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 leading-tight">
                         {currentGroup || urlTitle || (activeCategory !== '전체' ? activeCategory : "모든 상품")}
                     </h1>
-                </div>
 
-                {/* Category Filter */}
-                <div className="flex flex-wrap gap-4 mb-6">
-                    {displayedCategories.map((cat, idx) => (
-                        <button
-                            key={`${cat}-${idx}`}
-                            onClick={() => setActiveCategory(cat)}
-                            className={`h-[40px] min-w-[100px] px-4 rounded-lg text-[14px] md:text-[15px] font-semibold transition-all border
-                                ${activeCategory === cat
-                                    ? 'bg-[#001E45] text-white border-[#001E45] shadow-sm'
-                                    : 'bg-white text-slate-600 border-slate-200 hover:border-[#001E45] hover:text-[#001E45]'
-                                }`}
-                        >
-                            {cat}
-                        </button>
-                    ))}
+                    {/* Category Filter */}
+                    <div className="overflow-x-auto no-scrollbar -mx-[0.8rem] px-[0.8rem] pt-1 pb-1 md:mx-0 md:px-0 md:overflow-visible">
+                        <div className="flex w-max gap-2.5 md:w-auto md:flex-wrap md:gap-3">
+                            {displayedCategories.map((cat, idx) => (
+                                <button
+                                    key={`${cat}-${idx}`}
+                                    onClick={() => setActiveCategory(cat)}
+                                    className={`h-10 shrink-0 whitespace-nowrap rounded-lg border px-4 text-[14px] md:h-[42px] md:text-[15px] font-semibold transition-all
+                                        ${activeCategory === cat
+                                            ? 'bg-[#001E45] text-white border-[#001E45] shadow-sm'
+                                            : 'bg-white text-slate-600 border-slate-200 hover:border-[#001E45] hover:text-[#001E45]'
+                                        }`}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Product Grid */}
@@ -184,7 +186,7 @@ export const ProductListPage: React.FC = () => {
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {filteredProducts.map((product) => (
                             <Link to={`/products/${product.id}`} key={product.id} className="group cursor-pointer">
-                                <div className="relative aspect-square overflow-hidden bg-gray-100 mb-4 rounded-lg">
+                                <div className="relative aspect-square overflow-hidden bg-gray-50 mb-4 rounded-lg border border-gray-100">
                                     <img
                                         src={product.image_url || 'https://picsum.photos/seed/product/400/500'}
                                         alt={product.name}
@@ -193,24 +195,24 @@ export const ProductListPage: React.FC = () => {
                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
                                     {product.stock === 0 && (
                                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                            <span className="text-white font-bold">품절</span>
+                                            <span className="text-white font-semibold">품절</span>
                                         </div>
                                     )}
                                 </div>
 
                                 <div className="space-y-1">
-                                    <h3 className="font-bold text-gray-900 line-clamp-1">{product.name}</h3>
+                                    <h3 className="font-semibold text-gray-900 line-clamp-1">{product.name}</h3>
 
                                     <div className="flex flex-col">
                                         {!priceDisplayLoading && !isInquiryPriceMode(priceDisplayMode) && product.discount_rate && product.discount_rate > 0 && (
-                                            <span className="text-red-600 font-bold text-sm block">
+                                            <span className="text-red-600 font-semibold text-sm block">
                                                 {product.discount_rate}%
                                             </span>
                                         )}
                                         <span className={getPublicPriceClassName({
                                             mode: priceDisplayMode,
                                             loading: priceDisplayLoading,
-                                            visibleClass: 'font-bold text-lg text-gray-900',
+                                            visibleClass: 'font-semibold text-lg text-gray-900',
                                             hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
                                         })}>
                                             {getPublicPriceText({

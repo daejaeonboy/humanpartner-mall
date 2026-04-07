@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import type { BoardPostType } from "./cmsApi";
 
 export interface SiteSetting {
   setting_key: string;
@@ -8,8 +9,33 @@ export interface SiteSetting {
 
 const TABLE_NAME = "site_settings";
 export const PRODUCT_PRICE_DISPLAY_MODE_SETTING_KEY = "product_price_display_mode";
+export const HOME_FEATURED_CATEGORY_TABS_SETTING_KEY = "home_featured_category_tabs";
+export const BOARD_CATEGORY_SETTING_KEYS = {
+  notice: "notice_board_categories",
+  review: "review_board_categories",
+} as const;
 export type ProductPriceDisplayMode = "visible" | "inquiry";
 export const DEFAULT_PRODUCT_PRICE_DISPLAY_MODE: ProductPriceDisplayMode = "visible";
+export type BoardCategoryBoardType = Extract<BoardPostType, "notice" | "review">;
+
+export interface HomeFeaturedCategoryTabSetting {
+  menu_id: string;
+  display_order: number;
+  is_active: boolean;
+}
+
+const normalizeBoardCategories = (value?: string | null): string[] => {
+  const parsed = parseJsonValue(value);
+  if (!Array.isArray(parsed)) return [];
+
+  return Array.from(
+    new Set(
+      parsed
+        .map((item) => (typeof item === "string" ? item.trim() : ""))
+        .filter(Boolean),
+    ),
+  );
+};
 
 export const CS_CENTER_SETTING_KEYS = {
   phone: "cs_center_phone",
@@ -30,6 +56,50 @@ export const DEFAULT_CS_CENTER_SETTINGS: CSCenterSettings = {
   business_hours_text: "고객행복센터(전화): 오전 9시 ~ 오후 6시 운영",
   chat_url: "https://pf.kakao.com/_iRxghX/chat",
   chat_hours_text: "채팅 상담 문의: 24시간 운영",
+};
+
+const parseJsonValue = (value?: string | null): unknown => {
+  if (!value) return null;
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+};
+
+const normalizeHomeFeaturedCategoryTabs = (
+  value?: string | null,
+): HomeFeaturedCategoryTabSetting[] => {
+  const parsed = parseJsonValue(value);
+  if (!Array.isArray(parsed)) return [];
+
+  return parsed
+    .reduce<HomeFeaturedCategoryTabSetting[]>((acc, item) => {
+      if (!item || typeof item !== "object") return acc;
+
+      const menuId =
+        "menu_id" in item && typeof item.menu_id === "string"
+          ? item.menu_id.trim()
+          : "";
+      const displayOrder =
+        "display_order" in item && typeof item.display_order === "number"
+          ? item.display_order
+          : acc.length + 1;
+      const isActive =
+        "is_active" in item ? item.is_active !== false : true;
+
+      if (!menuId) return acc;
+
+      acc.push({
+        menu_id: menuId,
+        display_order: displayOrder,
+        is_active: isActive,
+      });
+
+      return acc;
+    }, [])
+    .sort((a, b) => a.display_order - b.display_order);
 };
 
 export const getSiteSettings = async (
@@ -83,6 +153,63 @@ export const upsertProductPriceDisplayMode = async (
 ): Promise<void> => {
   await upsertSiteSettings({
     [PRODUCT_PRICE_DISPLAY_MODE_SETTING_KEY]: mode,
+  });
+};
+
+export const getHomeFeaturedCategoryTabs = async (): Promise<
+  HomeFeaturedCategoryTabSetting[]
+> => {
+  const settings = await getSiteSettings([HOME_FEATURED_CATEGORY_TABS_SETTING_KEY]);
+  return normalizeHomeFeaturedCategoryTabs(
+    settings[HOME_FEATURED_CATEGORY_TABS_SETTING_KEY],
+  );
+};
+
+export const upsertHomeFeaturedCategoryTabs = async (
+  tabs: HomeFeaturedCategoryTabSetting[],
+): Promise<void> => {
+  const normalized = tabs
+    .filter((tab) => typeof tab.menu_id === "string" && tab.menu_id.trim())
+    .map((tab, index) => ({
+      menu_id: tab.menu_id.trim(),
+      display_order:
+        typeof tab.display_order === "number" ? tab.display_order : index + 1,
+      is_active: tab.is_active !== false,
+    }))
+    .sort((a, b) => a.display_order - b.display_order)
+    .map((tab, index) => ({
+      ...tab,
+      display_order: index + 1,
+    }));
+
+  await upsertSiteSettings({
+    [HOME_FEATURED_CATEGORY_TABS_SETTING_KEY]: JSON.stringify(normalized),
+  });
+};
+
+export const getBoardCategories = async (
+  boardType: BoardCategoryBoardType,
+): Promise<string[]> => {
+  const settingKey = BOARD_CATEGORY_SETTING_KEYS[boardType];
+  const settings = await getSiteSettings([settingKey]);
+  return normalizeBoardCategories(settings[settingKey]);
+};
+
+export const upsertBoardCategories = async (
+  boardType: BoardCategoryBoardType,
+  categories: string[],
+): Promise<void> => {
+  const settingKey = BOARD_CATEGORY_SETTING_KEYS[boardType];
+  const normalized = Array.from(
+    new Set(
+      categories
+        .map((category) => category.trim())
+        .filter(Boolean),
+    ),
+  );
+
+  await upsertSiteSettings({
+    [settingKey]: JSON.stringify(normalized),
   });
 };
 

@@ -10,6 +10,7 @@ import {
 
 export const SectionManager: React.FC = () => {
     const [sections, setSections] = useState<Section[]>([]);
+    const [sectionStats, setSectionStats] = useState<Record<string, { total: number; general: number; package: number }>>({});
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingSection, setEditingSection] = useState<Section | null>(null);
@@ -25,8 +26,33 @@ export const SectionManager: React.FC = () => {
         try {
             const data = await getSections();
             setSections(data);
+
+            const statsEntries = await Promise.all(
+                data
+                    .filter((section) => Boolean(section.id))
+                    .map(async (section) => {
+                        const products = await getProductsBySection(section.id!, { catalogType: 'all' });
+                        const stats = products.reduce(
+                            (acc, product) => {
+                                acc.total += 1;
+                                if ((product.catalog_type || 'general') === 'package') {
+                                    acc.package += 1;
+                                } else {
+                                    acc.general += 1;
+                                }
+                                return acc;
+                            },
+                            { total: 0, general: 0, package: 0 }
+                        );
+
+                        return [section.id!, stats] as const;
+                    })
+            );
+
+            setSectionStats(Object.fromEntries(statsEntries));
         } catch (error) {
             console.error('Failed to load sections:', error);
+            setSectionStats({});
         } finally {
             setLoading(false);
         }
@@ -166,6 +192,10 @@ export const SectionManager: React.FC = () => {
                 </button>
             </div>
 
+            <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+                섹션을 추가하는 것만으로는 메인에 노출되지 않습니다. 상품 관리에서 각 상품의 <span className="font-bold">노출 섹션</span>에 해당 섹션을 체크해야 메인에 표시됩니다.
+            </div>
+
             {/* Section List */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200">
                 {sections.length === 0 ? (
@@ -188,6 +218,22 @@ export const SectionManager: React.FC = () => {
                                         <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
                                             순서: {section.display_order}
                                         </span>
+                                    </div>
+                                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                                        <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">
+                                            연결 상품 {sectionStats[section.id || '']?.total || 0}개
+                                        </span>
+                                        <span className="rounded-full bg-blue-50 px-2.5 py-1 font-medium text-blue-700">
+                                            일반 {sectionStats[section.id || '']?.general || 0}
+                                        </span>
+                                        <span className="rounded-full bg-violet-50 px-2.5 py-1 font-medium text-violet-700">
+                                            패키지 {sectionStats[section.id || '']?.package || 0}
+                                        </span>
+                                        {(sectionStats[section.id || '']?.total || 0) === 0 && (
+                                            <span className="rounded-full bg-amber-50 px-2.5 py-1 font-medium text-amber-700">
+                                                메인 노출 상품 없음
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
 

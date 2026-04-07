@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Plus, Pencil, Trash2, X, Save, Loader2, Upload, Image as ImageIcon, Grid3X3, Bold, Italic, Underline, Eye, EyeOff, Tag } from 'lucide-react';
-import { getProducts, addProduct, updateProduct, deleteProduct, Product, ProductCatalogType } from '../../src/api/productApi';
+import { getProducts, addProduct, updateProduct, deleteProduct, isGeneralBasicProduct, Product, ProductCatalogType } from '../../src/api/productApi';
 import { getSections, getProductSections, setProductSections, Section } from '../../src/api/sectionApi';
 import { getAllNavMenuItems, NavMenuItem } from '../../src/api/cmsApi';
 import {
@@ -105,6 +105,9 @@ const getNormalizedCategoryName = (value?: string | null) =>
 const getCategoryLabel = (value?: string | null) =>
     getNormalizedCategoryName(value) || '미분류';
 
+const sortMenuItems = (items: NavMenuItem[]) =>
+    [...items].sort((a, b) => a.display_order - b.display_order);
+
 export const ProductManager = () => {
     const { mode: priceDisplayMode, loading: priceDisplayLoading, updatePriceDisplayMode } = usePriceDisplay();
     const [products, setProducts] = useState<Product[]>([]);
@@ -124,6 +127,8 @@ export const ProductManager = () => {
     const [viewMode, setViewMode] = useState<'general' | 'package' | 'options'>('general');
     const [selectedParentCategoryFilter, setSelectedParentCategoryFilter] = useState<string | null>(null);
     const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
+    const [packageComponentParentFilter, setPackageComponentParentFilter] = useState<string | null>(null);
+    const [packageComponentCategoryFilter, setPackageComponentCategoryFilter] = useState<string | null>(null);
 
     const [priceDisplaySaving, setPriceDisplaySaving] = useState(false);
     const [showServiceCategoryModal, setShowServiceCategoryModal] = useState(false);
@@ -178,6 +183,8 @@ export const ProductManager = () => {
         setEditingProduct(null);
         setSelectedSections([]);
         setSelectedParentCategory('');
+        setPackageComponentParentFilter(null);
+        setPackageComponentCategoryFilter(null);
         setShowForm(false);
     };
 
@@ -242,6 +249,9 @@ export const ProductManager = () => {
             }
         }
 
+        setPackageComponentParentFilter(null);
+        setPackageComponentCategoryFilter(null);
+
         const s = await getProductSections(product.id!);
         setSelectedSections(s);
         setShowForm(true);
@@ -289,6 +299,59 @@ export const ProductManager = () => {
             alert('삭제에 실패했습니다.');
         }
     };
+
+    const generalBasicProducts = useMemo(
+        () => sortMenuItems(menuItems) && products.filter((product) => isGeneralBasicProduct(product)),
+        [menuItems, products],
+    );
+
+    const generalBasicProductCategories = useMemo(
+        () => new Set(generalBasicProducts.map((product) => getNormalizedCategoryName(product.category)).filter(Boolean) as string[]),
+        [generalBasicProducts],
+    );
+
+    const packageComponentParentMenus = useMemo(
+        () =>
+            sortMenuItems(menuItems)
+                .filter((item) => !item.category)
+                .filter((parent) => {
+                    const childMenus = menuItems.filter((child) => child.category === parent.name);
+                    return childMenus.some((child) => generalBasicProductCategories.has(child.name));
+                }),
+        [generalBasicProductCategories, menuItems],
+    );
+
+    const packageComponentChildMenus = useMemo(
+        () =>
+            packageComponentParentFilter
+                ? sortMenuItems(
+                    menuItems
+                        .filter((item) => item.category === packageComponentParentFilter)
+                        .filter((item) => generalBasicProductCategories.has(item.name)),
+                )
+                : [],
+        [generalBasicProductCategories, menuItems, packageComponentParentFilter],
+    );
+
+    const filteredPackageComponentProducts = useMemo(() => {
+        if (packageComponentCategoryFilter) {
+            return generalBasicProducts.filter(
+                (product) => getNormalizedCategoryName(product.category) === packageComponentCategoryFilter,
+            );
+        }
+
+        if (packageComponentParentFilter) {
+            const childCategoryNames = new Set(packageComponentChildMenus.map((item) => item.name));
+            return generalBasicProducts.filter((product) => childCategoryNames.has(getNormalizedCategoryName(product.category)));
+        }
+
+        return generalBasicProducts;
+    }, [
+        generalBasicProducts,
+        packageComponentCategoryFilter,
+        packageComponentChildMenus,
+        packageComponentParentFilter,
+    ]);
 
     const handleAddServiceCategory = async () => {
         const categoryName = getNormalizedCategoryName(newServiceCategoryName);
@@ -911,16 +974,118 @@ export const ProductManager = () => {
                                             <span className="font-bold text-slate-800 underline decoration-blue-200 underline-offset-4">기본 필수 구성품 (가격 포함)</span>
                                             <button type="button" onClick={() => setFormData({ ...formData, basic_components: [...formData.basic_components, { name: '', quantity: 1 }] })} className="text-xs bg-white border border-slate-300 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-all font-bold">+ 항목 추가</button>
                                         </div>
+                                        {packageComponentParentMenus.length > 0 && (
+                                            <div className="mb-4 space-y-3 rounded-xl border border-slate-200 bg-white p-4">
+                                                <div>
+                                                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">상품 빠르게 찾기</p>
+                                                    <p className="mt-1 text-sm text-slate-600">
+                                                        1차 메뉴 탭과 2차 메뉴 탭으로 후보 상품을 좁힌 뒤 각 구성품을 선택할 수 있습니다.
+                                                    </p>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setPackageComponentParentFilter(null);
+                                                            setPackageComponentCategoryFilter(null);
+                                                        }}
+                                                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${packageComponentParentFilter === null
+                                                            ? 'bg-[#001E45] text-white shadow-sm'
+                                                            : 'bg-slate-50 text-slate-600 border border-slate-200 hover:border-slate-300'
+                                                            }`}
+                                                    >
+                                                        전체 ({generalBasicProducts.length})
+                                                    </button>
+                                                    {packageComponentParentMenus.map((parent) => {
+                                                        const childNames = menuItems
+                                                            .filter((child) => child.category === parent.name)
+                                                            .map((child) => child.name);
+                                                        const count = generalBasicProducts.filter((product) =>
+                                                            childNames.includes(getNormalizedCategoryName(product.category)),
+                                                        ).length;
+
+                                                        return (
+                                                            <button
+                                                                key={parent.id}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setPackageComponentParentFilter(parent.name);
+                                                                    setPackageComponentCategoryFilter(null);
+                                                                }}
+                                                                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${packageComponentParentFilter === parent.name
+                                                                    ? 'bg-[#001E45] text-white shadow-sm'
+                                                                    : 'bg-slate-50 text-slate-600 border border-slate-200 hover:border-slate-300'
+                                                                    }`}
+                                                            >
+                                                                {parent.name} ({count})
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                                {packageComponentParentFilter && packageComponentChildMenus.length > 0 && (
+                                                    <div className="flex flex-wrap gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setPackageComponentCategoryFilter(null)}
+                                                            className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all ${packageComponentCategoryFilter === null
+                                                                ? 'bg-slate-900 text-white'
+                                                                : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-300'
+                                                                }`}
+                                                        >
+                                                            전체
+                                                        </button>
+                                                        {packageComponentChildMenus.map((child) => {
+                                                            const count = generalBasicProducts.filter(
+                                                                (product) => getNormalizedCategoryName(product.category) === child.name,
+                                                            ).length;
+
+                                                            return (
+                                                                <button
+                                                                    key={child.id}
+                                                                    type="button"
+                                                                    onClick={() => setPackageComponentCategoryFilter(child.name)}
+                                                                    className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all ${packageComponentCategoryFilter === child.name
+                                                                        ? 'bg-slate-900 text-white'
+                                                                        : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-300'
+                                                                        }`}
+                                                                >
+                                                                    {child.name} ({count})
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                         <div className="space-y-3">
                                             {formData.basic_components.map((item, idx) => (
                                                 <div key={idx} className="flex gap-2 items-center bg-white p-2.5 rounded-lg border shadow-sm">
                                                     <select value={item.name} onChange={(e) => {
-                                                        const val = e.target.value; const matched = products.find(p => p.name === val);
+                                                        const val = e.target.value;
                                                         const n = [...formData.basic_components]; n[idx].name = val;
                                                         setFormData({ ...formData, basic_components: n });
                                                     }} className="flex-1 text-sm border-slate-200 rounded-md focus:ring-1 focus:ring-blue-400">
-                                                        <option value="">옵션 선택 (등록된 품목)</option>
-                                                        {products.filter(p => p.product_type === 'essential' || p.product_type === 'additional').map(p => <option key={p.id} value={p.name}>{p.name} ({p.price.toLocaleString()}원)</option>)}
+                                                        <option value="">
+                                                            {packageComponentCategoryFilter
+                                                                ? `${packageComponentCategoryFilter} 상품 선택`
+                                                                : packageComponentParentFilter
+                                                                    ? `${packageComponentParentFilter} 상품 선택`
+                                                                    : '일반상품 선택 (등록된 기본상품)'}
+                                                        </option>
+                                                        {[
+                                                            ...filteredPackageComponentProducts,
+                                                            ...generalBasicProducts.filter(
+                                                                (product) =>
+                                                                    product.name === item.name &&
+                                                                    !filteredPackageComponentProducts.some((filtered) => filtered.id === product.id),
+                                                            ),
+                                                        ].map((product) => (
+                                                                <option key={product.id} value={product.name}>
+                                                                    {product.name}
+                                                                    {product.category ? ` / ${product.category}` : ''}
+                                                                    {product.price > 0 ? ` (${product.price.toLocaleString()}원)` : ''}
+                                                                </option>
+                                                            ))}
                                                     </select>
                                                     <input type="number" min="1" value={item.quantity} onChange={(e) => {
                                                         const n = [...formData.basic_components]; n[idx].quantity = Number(e.target.value);

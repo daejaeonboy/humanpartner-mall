@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { X, ChevronRight, Phone, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { NavMenuItem, getAllNavMenuItems } from '../../src/api/cmsApi';
@@ -153,26 +153,26 @@ export const FullMenu: React.FC<FullMenuProps> = ({ onClose, variant = 'mobile',
                                 {user ? (
                                     <>
                                         <div className="mb-4">
-                                            <div className="w-16 h-16 bg-[#001E45]/10 text-[#001E45] rounded-full flex items-center justify-center mx-auto mb-3 font-bold text-xl">
+                                            <div className="w-16 h-16 bg-[#001E45]/10 text-[#001E45] rounded-full flex items-center justify-center mx-auto mb-3 font-semibold text-xl">
                                                 {userProfile?.name?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
                                             </div>
-                                            <h3 className="font-bold text-lg text-slate-800 mb-1">
+                                            <h3 className="font-semibold text-lg text-slate-800 mb-1">
                                                 {userProfile?.name || '사용자'}님, 안녕하세요!
                                             </h3>
                                             <p className="text-xs text-slate-500">렌탈어때와 함께<br />필요한 장비를 빠르게 렌탈해보세요.</p>
                                         </div>
                                         <div className="flex gap-3">
-                                            <Link to="/mypage" onClick={onClose} className="flex-1 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm hover:bg-[#001E45]/10 hover:text-[#001E45] transition-all text-center">마이페이지</Link>
-                                            <Link to="/cs" onClick={onClose} className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-500 font-bold text-sm hover:bg-[#001E45]/5 hover:border-[#001E45]/30 hover:text-[#001E45] transition-all text-center">고객센터</Link>
+                                            <Link to="/mypage" onClick={onClose} className="flex-1 py-3 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-[#001E45]/10 hover:text-[#001E45] transition-all text-center">마이페이지</Link>
+                                            <Link to="/cs" onClick={onClose} className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-500 font-semibold text-sm hover:bg-[#001E45]/5 hover:border-[#001E45]/30 hover:text-[#001E45] transition-all text-center">고객센터</Link>
                                         </div>
                                     </>
                                 ) : (
                                     <>
-                                        <h3 className="font-bold text-lg text-slate-800 mb-1">환영합니다!</h3>
+                                        <h3 className="font-semibold text-lg text-slate-800 mb-1">환영합니다!</h3>
                                         <p className="text-sm text-slate-500 mb-4">로그인하고 더 많은 혜택을 받아보세요.</p>
                                         <div className="flex gap-3">
-                                            <Link to="/login" onClick={onClose} className="flex-1 py-3 rounded-xl bg-[#001E45] text-white font-bold text-sm hover:bg-[#002D66] transition-colors text-center">로그인</Link>
-                                            <Link to="/signup" onClick={onClose} className="flex-1 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm hover:bg-slate-200 transition-colors text-center">회원가입</Link>
+                                            <Link to="/login" onClick={onClose} className="flex-1 py-3 rounded-xl bg-[#001E45] text-white font-semibold text-sm hover:bg-[#002D66] transition-colors text-center">로그인</Link>
+                                            <Link to="/signup" onClick={onClose} className="flex-1 py-3 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 transition-colors text-center">회원가입</Link>
                                         </div>
                                     </>
                                 )}
@@ -193,7 +193,7 @@ export const FullMenu: React.FC<FullMenuProps> = ({ onClose, variant = 'mobile',
                                             onClick={() => toggleSection(group.name)}
                                             className="w-full flex items-center justify-between py-4 text-left"
                                         >
-                                            <span className={`text-base font-bold ${openSections.has(group.name) ? 'text-[#001E45]' : 'text-slate-800'}`}>
+                                            <span className={`text-base font-semibold ${openSections.has(group.name) ? 'text-[#001E45]' : 'text-slate-800'}`}>
                                                 {group.name}
                                             </span>
                                             <ChevronRight
@@ -202,7 +202,7 @@ export const FullMenu: React.FC<FullMenuProps> = ({ onClose, variant = 'mobile',
                                             />
                                         </button>
                                     ) : (
-                                        <h3 className="text-lg font-bold text-slate-900 border-b border-slate-200 pb-2 mb-4">
+                                        <h3 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">
                                             <Link
                                                 to={getGroupLink(group.name)}
                                                 onClick={onClose}

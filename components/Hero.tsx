@@ -1,31 +1,26 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Container } from './ui/Container';
 import { getHeroBanners, Banner } from '../src/api/cmsApi';
 
 export const Hero: React.FC = () => {
-  const [originalSlides, setOriginalSlides] = useState<Banner[]>([]);
   const [slides, setSlides] = useState<Banner[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(1);
-  const [isTransitioning, setIsTransitioning] = useState(true);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<number | null>(null);
+  const dragCurrentRef = useRef<number | null>(null);
+  const suppressSlideClickRef = useRef(false);
+  const suppressResetTimerRef = useRef<number | null>(null);
 
   // Load banners from DB
   useEffect(() => {
     const loadBanners = async () => {
       try {
         const banners = await getHeroBanners();
-        setOriginalSlides(banners);
-        if (banners.length > 0) {
-          // Clone slides for infinite loop: [Last, ...Original, First]
-          setSlides([
-            banners[banners.length - 1],
-            ...banners,
-            banners[0]
-          ]);
-          setCurrentIndex(1);
-        }
+        setSlides(banners);
       } catch (error) {
         console.error('Failed to load banners:', error);
       } finally {
@@ -35,146 +30,240 @@ export const Hero: React.FC = () => {
     loadBanners();
   }, []);
 
-  const handleNext = useCallback(() => {
-    if (!isTransitioning && currentIndex >= slides.length - 1) return;
-    setCurrentIndex((prev) => prev + 1);
-    setIsTransitioning(true);
-  }, [isTransitioning, currentIndex, slides.length]);
-
-  const handlePrev = useCallback(() => {
-    if (!isTransitioning && currentIndex <= 0) return;
-    setCurrentIndex((prev) => prev - 1);
-    setIsTransitioning(true);
-  }, [isTransitioning, currentIndex]);
-
-  // Handle jump for infinite loop
-  useEffect(() => {
-    if (currentIndex === 0) {
-      const timer = setTimeout(() => {
-        setIsTransitioning(false);
-        setCurrentIndex(slides.length - 2);
-      }, 500);
-      return () => clearTimeout(timer);
-    } else if (currentIndex === slides.length - 1) {
-      const timer = setTimeout(() => {
-        setIsTransitioning(false);
-        setCurrentIndex(1);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [currentIndex, slides.length]);
-
   // Auto-slide effect
   useEffect(() => {
-    if (originalSlides.length <= 1 || isPaused) return;
+    if (slides.length === 0 || isPaused) return;
     const timer = setInterval(() => {
-      handleNext();
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, [originalSlides.length, isPaused, handleNext]);
+  }, [slides.length, isPaused]);
 
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.targetTouches[0].clientX);
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  };
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
+
+  const resetDragState = () => {
+    dragStartRef.current = null;
+    dragCurrentRef.current = null;
+    setIsDragging(false);
+  };
+
+  const beginDrag = (clientX: number) => {
+    if (suppressResetTimerRef.current) {
+      window.clearTimeout(suppressResetTimerRef.current);
+      suppressResetTimerRef.current = null;
+    }
+
+    dragStartRef.current = clientX;
+    dragCurrentRef.current = clientX;
+    setIsDragging(true);
+    suppressSlideClickRef.current = false;
+    setIsPaused(true);
+  };
+
+  const updateDrag = (clientX: number) => {
+    if (dragStartRef.current === null) return;
+
+    dragCurrentRef.current = clientX;
+    if (Math.abs(dragStartRef.current - clientX) > 10) {
+      suppressSlideClickRef.current = true;
+    }
+  };
+
+  const endDrag = () => {
+    if (dragStartRef.current === null || dragCurrentRef.current === null) {
+      resetDragState();
+      setIsPaused(false);
+      return;
+    }
+
+    const distance = dragStartRef.current - dragCurrentRef.current;
+    if (distance > 50) nextSlide();
+    else if (distance < -50) prevSlide();
+
+    if (suppressSlideClickRef.current) {
+      suppressResetTimerRef.current = window.setTimeout(() => {
+        suppressSlideClickRef.current = false;
+        suppressResetTimerRef.current = null;
+      }, 0);
+    }
+
+    resetDragState();
+    setIsPaused(false);
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      updateDrag(e.clientX);
+    };
+
+    const handleMouseUp = () => {
+      endDrag();
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
+
+  useEffect(() => {
+    return () => {
+      if (suppressResetTimerRef.current) {
+        window.clearTimeout(suppressResetTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleSlideClick = (e: React.MouseEvent<HTMLElement>) => {
+    if (!suppressSlideClickRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    suppressSlideClickRef.current = false;
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    beginDrag(e.clientX);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    beginDrag(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    updateDrag(e.targetTouches[0].clientX);
   };
 
   const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    if (distance > 50) handleNext();
-    else if (distance < -50) handlePrev();
-    setTouchStart(null);
-    setTouchEnd(null);
+    endDrag();
   };
 
   if (loading) {
     return (
-      <section className="relative w-full h-[300px] md:h-[450px] lg:h-[550px] bg-white flex items-center justify-center">
-        <Loader2 className="animate-spin text-slate-400" size={40} />
+      <section className="relative w-full h-[400px] md:h-[500px] lg:h-[600px] bg-slate-900 flex items-center justify-center">
+        <Loader2 className="animate-spin text-white" size={40} />
       </section>
     );
   }
 
-  if (originalSlides.length === 0) {
+  if (slides.length === 0) {
     return (
-      <section className="relative w-full h-[300px] md:h-[450px] lg:h-[550px] bg-white flex items-center justify-center">
-        <p className="text-slate-400">배너가 없습니다. Admin에서 배너를 추가해주세요.</p>
+      <section className="relative w-full h-[400px] md:h-[500px] lg:h-[600px] bg-slate-900 flex items-center justify-center">
+        <p className="text-white/50">배너가 없습니다. Admin에서 배너를 추가해주세요.</p>
       </section>
     );
   }
-
-  const activeOriginalIndex = 
-    currentIndex === 0 ? originalSlides.length - 1 :
-    currentIndex === slides.length - 1 ? 0 :
-    currentIndex - 1;
 
   return (
-    <section 
-      className="relative w-full bg-white overflow-hidden group [--slide-width:100vw] lg:[--slide-width:1280px]"
+    <section
+      className="relative w-full h-[400px] md:h-[500px] lg:h-[600px] bg-slate-900 overflow-hidden group"
       onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      onMouseLeave={() => {
+        if (!isDragging) {
+          setIsPaused(false);
+        }
+      }}
     >
-      {/* Slider Container */}
-      <div 
-        className={`flex items-center ${isTransitioning ? 'transition-transform duration-500 ease-out' : ''}`}
-        style={{ 
-          // Center logic: 50vw - (slideWidth * (index + 0.5))
-          // For mobile (100vw), this naturally aligns perfectly.
-          transform: `translateX(calc(50vw - (var(--slide-width) * (${currentIndex} + 0.5))))`,
-          width: `calc(var(--slide-width) * ${slides.length})`,
-        }}
+      <div
+        className={`relative h-full select-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+        style={{ touchAction: 'pan-y' }}
       >
+        {/* Slides */}
         {slides.map((slide, index) => {
           const linkHref = slide.target_product_code ? `/p/${slide.target_product_code}` : slide.link || '/';
           const isExternal = linkHref.startsWith('http');
-          const isActive = index === currentIndex;
 
-          const SlideInner = (
-            <div 
-              className={`relative h-[300px] md:h-[450px] lg:h-[550px] lg:rounded-[16px] overflow-hidden transition-all duration-500 ${isActive ? 'opacity-100' : 'opacity-100'}`}
-            >
+          const SlideContent = (
+            <>
               {/* Background Image */}
               <div
-                className="absolute inset-0 w-full h-full bg-cover bg-center"
+                className="absolute inset-0 w-full h-full bg-cover bg-center transition-transform duration-[7000ms] group-hover/slide:scale-105"
                 style={{ backgroundImage: `url(${slide.image_url})` }}
               >
-                <div className="absolute inset-0 bg-black/10 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                <div className="absolute inset-0 bg-black/30 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
               </div>
 
-              {/* Content Overlay */}
-              <div className={`absolute bottom-8 md:bottom-12 left-8 md:left-16 text-white transition-all duration-700 delay-300 ${isActive ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
-                <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4 drop-shadow-md">
-                  {slide.title}
-                </h2>
-                <p className="text-sm md:text-xl text-white/90 font-medium drop-shadow-md">
-                  {slide.subtitle}
-                </p>
-              </div>
-            </div>
+              {/* Content Area */}
+              <Container className="relative h-full flex flex-col justify-center text-white z-20">
+                <div className="max-w-4xl">
+                  {/* Brand Text */}
+                  <div className={`text-white text-[18px] md:text-[20px] font-medium mb-2 md:mb-4 transition-all duration-700
+                    ${index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                  `}>
+                    {slide.brand_text?.trim() || 'Humanpartner'}
+                  </div>
+
+                  {/* Main Title */}
+                  <h1 className={`text-3xl md:text-5xl lg:text-6xl font-semibold leading-[1.1] tracking-tight text-white mb-4 md:mb-6 transition-all duration-1000 delay-300 transform
+                    ${index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+                  `}>
+                    {slide.title}
+                  </h1>
+
+                  {/* Subtitle */}
+                  <p className={`text-[18px] md:text-[22px] font-normal text-white/90 leading-relaxed break-keep max-w-2xl transition-all duration-1000 delay-500 transform
+                    ${index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+                  `}>
+                    {slide.subtitle}
+                  </p>
+
+                  {/* Action CTA */}
+                  <div className={`mt-8 md:mt-10 transition-all duration-1000 delay-700 transform
+                    ${index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+                  `}>
+                    <div className="inline-flex items-center justify-center gap-2 w-[160px] md:w-[220px] h-[44px] md:h-[52px] rounded-lg bg-white text-[#001E45] text-sm md:text-base font-semibold shadow-lg transition-all duration-300 hover:bg-[#f8f9fa] hover:-translate-y-0.5">
+                      {slide.button_text?.trim() || '바로가기'}
+                    </div>
+                  </div>
+                </div>
+              </Container>
+            </>
           );
 
           return (
-            <div 
-              key={`${slide.id}-${index}`} 
-              className="flex-shrink-0 lg:px-3"
-              style={{ width: `var(--slide-width)` }}
+            <div
+              key={slide.id}
+              className={`absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out
+                ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}
+              `}
             >
               {isExternal ? (
-                <a href={linkHref} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
-                  {SlideInner}
+                <a
+                  href={linkHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full h-full relative group/slide cursor-pointer"
+                  onClick={handleSlideClick}
+                >
+                  {SlideContent}
                 </a>
               ) : (
-                <Link to={linkHref} className="block w-full h-full">
-                  {SlideInner}
+                <Link
+                  to={linkHref}
+                  className="block w-full h-full relative group/slide cursor-pointer"
+                  onClick={handleSlideClick}
+                >
+                  {SlideContent}
                 </Link>
               )}
             </div>
@@ -184,32 +273,36 @@ export const Hero: React.FC = () => {
 
       {/* Navigation Arrows */}
       <button
-        onClick={handlePrev}
-        className="absolute left-4 md:left-8 top-[150px] md:top-[225px] lg:top-[275px] -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/40 transition-all opacity-0 group-hover:opacity-100"
+        type="button"
+        onClick={prevSlide}
+        className="absolute left-6 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-white/10 backdrop-blur-md hidden md:flex items-center justify-center text-white hover:bg-white/20 transition-all opacity-0 group-hover:opacity-100"
         aria-label="Previous slide"
       >
-        <ChevronLeft size={24} />
+        <ChevronLeft size={28} />
       </button>
       <button
-        onClick={handleNext}
-        className="absolute right-4 md:right-8 top-[150px] md:top-[225px] lg:top-[275px] -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/40 transition-all opacity-0 group-hover:opacity-100"
+        type="button"
+        onClick={nextSlide}
+        className="absolute right-6 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-white/10 backdrop-blur-md hidden md:flex items-center justify-center text-white hover:bg-white/20 transition-all opacity-0 group-hover:opacity-100"
         aria-label="Next slide"
       >
-        <ChevronRight size={24} />
+        <ChevronRight size={28} />
       </button>
 
-      {/* Indicators (Dots) */}
-      <div className="flex justify-center gap-2 mt-4 mb-2">
-        {originalSlides.map((_, index) => (
+      {/* Indicators */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-3">
+        {slides.map((_, index) => (
           <button
             key={index}
-            onClick={() => {
-              setCurrentIndex(index + 1);
-              setIsTransitioning(true);
-            }}
-            className={`h-1.5 md:h-2 rounded-full transition-all duration-300 ${index === activeOriginalIndex ? 'w-6 md:w-10 bg-[#001E45]' : 'w-1.5 md:w-2 bg-slate-300 hover:bg-slate-400'}`}
+            type="button"
+            onClick={() => goToSlide(index)}
+            className="group py-4"
             aria-label={`Go to slide ${index + 1}`}
-          />
+          >
+            <div className={`h-1 transition-all duration-500 rounded-full
+              ${index === currentSlide ? 'w-10 bg-[#001E45]' : 'w-6 bg-white/30 group-hover:bg-white/50'}
+            `} />
+          </button>
         ))}
       </div>
     </section>

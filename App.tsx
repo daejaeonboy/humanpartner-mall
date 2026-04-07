@@ -5,6 +5,7 @@ import { Footer } from './components/Layout/Footer';
 import { AuthProvider } from './src/context/AuthContext';
 import { PriceDisplayProvider } from './src/context/PriceDisplayContext';
 import { AdminRoute } from './src/components/AdminRoute';
+import { trackException, trackPageView } from './src/utils/analytics';
 
 const lazyPage = <T extends Record<string, unknown>>(
   factory: () => Promise<T>,
@@ -28,8 +29,8 @@ const ProductSearchResult = lazyPage(() => import('./pages/ProductSearchResult')
 const QuoteCartPage = lazyPage(() => import('./pages/QuoteCart'), 'QuoteCartPage');
 const TermsOfService = lazyPage(() => import('./pages/TermsOfService'), 'TermsOfService');
 const PrivacyPolicy = lazyPage(() => import('./pages/PrivacyPolicy'), 'PrivacyPolicy');
-const MiceBoardPage = lazyPage(() => import('./pages/MiceBoardPage'), 'MiceBoardPage');
-const GnbPostDetailPage = lazyPage(() => import('./pages/GnbPostDetailPage'), 'GnbPostDetailPage');
+const BoardPage = lazyPage(() => import('./pages/BoardPage'), 'BoardPage');
+const BoardPostDetailPage = lazyPage(() => import('./pages/GnbPostDetailPage'), 'BoardPostDetailPage');
 const BlankPage = lazyPage(() => import('./pages/BlankPage'), 'BlankPage');
 const NotFound = lazyPage(() => import('./pages/NotFound'), 'NotFound');
 const AdminDashboard = lazyPage(() => import('./pages/admin/AdminDashboard'), 'AdminDashboard');
@@ -70,6 +71,47 @@ const ScrollToTop = () => {
   return null;
 };
 
+const RouteAnalytics = () => {
+  const { pathname, search, hash } = useLocation();
+
+  useEffect(() => {
+    const pagePath = `${pathname}${search}${hash}`;
+    const frameId = window.requestAnimationFrame(() => {
+      trackPageView(pagePath);
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [pathname, search, hash]);
+
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      const detail = event.message || "Unhandled runtime error";
+      trackException(detail, true, "window.error");
+    };
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const reason =
+        event.reason instanceof Error
+          ? event.reason.message
+          : typeof event.reason === "string"
+            ? event.reason
+            : "Unhandled promise rejection";
+
+      trackException(reason, false, "window.unhandledrejection");
+    };
+
+    window.addEventListener("error", handleError);
+    window.addEventListener("unhandledrejection", handleUnhandledRejection);
+
+    return () => {
+      window.removeEventListener("error", handleError);
+      window.removeEventListener("unhandledrejection", handleUnhandledRejection);
+    };
+  }, []);
+
+  return null;
+};
+
 const CompanyRedirect = () => {
   useEffect(() => {
     window.location.replace(COMPANY_SITE_URL);
@@ -91,6 +133,7 @@ function App() {
       <PriceDisplayProvider>
         <Router>
           <ScrollToTop />
+          <RouteAnalytics />
           <Routes>
             {/* Admin Routes - Protected */}
             <Route
@@ -141,12 +184,12 @@ function App() {
                       <Route path="/search" element={<ProductSearchResult />} />
                       <Route path="/quote-cart" element={<QuoteCartPage />} />
                       <Route path="/company" element={<CompanyRedirect />} />
-                      <Route path="/notice" element={<MiceBoardPage boardType="notice" />} />
-                      <Route path="/notice/:id" element={<GnbPostDetailPage boardType="notice" />} />
-                      <Route path="/event" element={<MiceBoardPage boardType="event" />} />
-                      <Route path="/event/:id" element={<GnbPostDetailPage boardType="event" />} />
-                      <Route path="/review" element={<MiceBoardPage boardType="review" />} />
-                      <Route path="/review/:id" element={<GnbPostDetailPage boardType="review" />} />
+                      <Route path="/notice" element={<BoardPage boardType="notice" />} />
+                      <Route path="/notice/:id" element={<BoardPostDetailPage boardType="notice" />} />
+                      <Route path="/event" element={<BoardPage boardType="event" />} />
+                      <Route path="/event/:id" element={<BoardPostDetailPage boardType="event" />} />
+                      <Route path="/review" element={<BoardPage boardType="review" />} />
+                      <Route path="/review/:id" element={<BoardPostDetailPage boardType="review" />} />
                       <Route path="/blank" element={<BlankPage />} />
                       <Route path="/terms" element={<TermsOfService />} />
                       <Route path="/privacy" element={<PrivacyPolicy />} />

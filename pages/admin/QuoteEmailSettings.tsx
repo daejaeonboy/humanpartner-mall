@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Bell,
+  CheckCircle2,
+  Clock3,
+  AlertTriangle,
   Loader2,
   Mail,
   Plus,
@@ -9,6 +12,8 @@ import {
   Trash2,
 } from "lucide-react";
 import {
+  getQuoteEmailSettingsWithDispatches,
+  QuoteEmailDispatchRecord,
   getQuoteEmailSettings,
   QuoteEmailRecipient,
   QuoteEmailSettings,
@@ -40,6 +45,7 @@ const getErrorMessage = (error: unknown, fallback: string) =>
 
 export const QuoteEmailSettingsPage: React.FC = () => {
   const [settings, setSettings] = useState<QuoteEmailSettings>(DEFAULT_SETTINGS);
+  const [dispatches, setDispatches] = useState<QuoteEmailDispatchRecord[]>([]);
   const [savedSnapshot, setSavedSnapshot] = useState(serializeSettings(DEFAULT_SETTINGS));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -53,8 +59,9 @@ export const QuoteEmailSettingsPage: React.FC = () => {
   const loadSettings = async () => {
     try {
       setLoading(true);
-      const data = await getQuoteEmailSettings();
+      const data = await getQuoteEmailSettingsWithDispatches();
       setSettings(data);
+      setDispatches(data.dispatches);
       setSavedSnapshot(serializeSettings(data));
     } catch (error) {
       console.error("Failed to load quote email settings:", error);
@@ -143,6 +150,35 @@ export const QuoteEmailSettingsPage: React.FC = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const formatDispatchStatus = (dispatch: QuoteEmailDispatchRecord) => {
+    if (dispatch.status === "sent") {
+      return {
+        label: "발송 완료",
+        className: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+        icon: CheckCircle2,
+      };
+    }
+
+    if (dispatch.status === "failed") {
+      return {
+        label: "발송 실패",
+        className: "bg-red-50 text-red-700 border border-red-200",
+        icon: AlertTriangle,
+      };
+    }
+
+    return {
+      label:
+        dispatch.reason === "disabled"
+          ? "알림 비활성화"
+          : dispatch.reason === "no_recipients"
+            ? "수신자 없음"
+            : "발송 생략",
+      className: "bg-amber-50 text-amber-700 border border-amber-200",
+      icon: Clock3,
+    };
   };
 
   if (loading) {
@@ -291,6 +327,81 @@ export const QuoteEmailSettingsPage: React.FC = () => {
             </span>
           ) : null}
         </div>
+      </div>
+
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 mt-6">
+        <div className="flex items-center justify-between gap-3 mb-5">
+          <div>
+            <h2 className="text-lg font-bold text-slate-800">최근 견적 메일 발송 이력</h2>
+            <p className="text-sm text-slate-500 mt-1">
+              최근 20건 기준으로 성공, 실패, 생략 사유를 확인할 수 있습니다.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void loadSettings()}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            <Loader2 size={14} className={loading ? "animate-spin" : ""} />
+            새로고침
+          </button>
+        </div>
+
+        {dispatches.length === 0 ? (
+          <div className="rounded-2xl border-2 border-dashed border-slate-200 px-6 py-12 text-center">
+            <Mail size={34} className="mx-auto mb-3 text-slate-300" />
+            <p className="text-slate-500 font-medium">아직 기록된 발송 이력이 없습니다.</p>
+            <p className="text-sm text-slate-400 mt-1">
+              신규 견적 요청이 들어오면 이 화면에서 최근 발송 상태를 확인할 수 있습니다.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {dispatches.map((dispatch) => {
+              const status = formatDispatchStatus(dispatch);
+              const StatusIcon = status.icon;
+
+              return (
+                <div
+                  key={`${dispatch.bookingId}-${dispatch.updatedAt || dispatch.status}`}
+                  className="rounded-2xl border border-slate-200 px-4 py-4"
+                >
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold ${status.className}`}>
+                          <StatusIcon size={14} />
+                          {status.label}
+                        </span>
+                        <span className="text-xs font-medium text-slate-400">
+                          예약 ID: {dispatch.bookingId}
+                        </span>
+                      </div>
+                      <div className="text-sm font-bold text-slate-800 break-all">
+                        {dispatch.productName || "상품 정보 미기록"}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500 flex flex-col gap-1">
+                        <span>
+                          최근 갱신:{" "}
+                          {dispatch.updatedAt
+                            ? new Date(dispatch.updatedAt).toLocaleString("ko-KR")
+                            : "-"}
+                        </span>
+                        {dispatch.recipients && dispatch.recipients.length > 0 ? (
+                          <span>수신 대상: {dispatch.recipients.join(", ")}</span>
+                        ) : null}
+                        {dispatch.reason ? <span>사유: {dispatch.reason}</span> : null}
+                        {dispatch.errorMessage ? (
+                          <span className="text-red-600">오류: {dispatch.errorMessage}</span>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

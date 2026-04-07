@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Container } from '../components/ui/Container';
 
@@ -6,8 +6,8 @@ const policySections: Array<{ title: string; items: string[] }> = [
   {
     title: '1. 총칙',
     items: [
-      '본 개인정보처리방침은 렌탈어때(이하 "플랫폼")의 서비스 이용 과정에서 처리되는 개인정보의 기준을 안내합니다.',
-      '플랫폼은 현재 서비스 준비 단계이며, 향후 "렌탈어때" 법인 설립 이후 해당 법인이 개인정보처리자로서 본 방침을 승계·운영할 수 있습니다.',
+      '본 개인정보처리방침은 휴먼파트너가 운영하는 렌탈어때(이하 "플랫폼")의 서비스 이용 과정에서 처리되는 개인정보의 기준을 안내합니다.',
+      '플랫폼의 개인정보처리자는 휴먼파트너이며, 서비스 운영 및 고객 응대 과정에서 필요한 범위의 개인정보를 처리합니다.',
       '운영 주체 또는 연락처 등 중요한 사항이 변경되는 경우, 시행일 전에 서비스 내 공지사항을 통해 안내합니다.',
     ],
   },
@@ -95,7 +95,7 @@ const policySections: Array<{ title: string; items: string[] }> = [
       '성명: 이기섭',
       '연락처: 010-4074-6967',
       '이메일: micepartner@micepartner.co.kr',
-      '상기 연락처는 법인 설립 전 임시 운영 연락처이며, 렌탈어때 법인 설립 후 변경 시 즉시 고지합니다.',
+      '개인정보 처리와 관련한 문의, 열람, 정정, 삭제 요청은 상기 연락처를 통해 접수하실 수 있습니다.',
     ],
   },
   {
@@ -124,12 +124,12 @@ export const PrivacyPolicy: React.FC = () => {
       </Helmet>
 
       <Container className="max-w-4xl py-20">
-        <h1 className="mb-10 border-b pb-4 text-3xl font-bold text-gray-900">개인정보처리방침</h1>
+        <h1 className="mb-10 border-b pb-4 text-3xl font-semibold text-gray-900">개인정보처리방침</h1>
 
         <div className="space-y-10 text-gray-700">
           {policySections.map((section) => (
             <section key={section.title} className="space-y-3">
-              <h2 className="text-xl font-bold text-gray-900">{section.title}</h2>
+              <h2 className="text-xl font-semibold text-gray-900">{section.title}</h2>
               <ol className="list-decimal space-y-2 pl-6 leading-relaxed marker:text-gray-500">
                 {section.items.map((item) => (
                   <li key={item}>{item}</li>

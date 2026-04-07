@@ -79,7 +79,7 @@ export const MainPage: React.FC = () => {
     return (
         <main>
             <Helmet>
-                <title>렌탈어때 | 사무기기 렌탈 플랫폼</title>
+                <title>렌탈어때 | 종합렌탈 전문 기업</title>
                 <meta name="description" content="복합기, 노트북, 데스크탑 등 사무기기를 합리적인 조건으로 렌탈하세요. 렌탈어때 렌탈 서비스." />
                 <link rel="canonical" href="https://rentalpartner.kr/" />
             </Helmet>

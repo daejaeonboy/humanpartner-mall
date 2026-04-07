@@ -12,6 +12,19 @@ export interface QuoteEmailSettings {
   updatedByEmail?: string;
 }
 
+export interface QuoteEmailDispatchRecord {
+  bookingId: string;
+  status: string;
+  updatedAt?: string;
+  reason?: string;
+  recipients?: string[];
+  productName?: string;
+  userId?: string;
+  sentAt?: string;
+  failedAt?: string;
+  errorMessage?: string;
+}
+
 const SETTINGS_ENDPOINT = "/api/admin/quote-email-settings";
 const QUOTE_REQUEST_NOTIFY_ENDPOINT = "/api/email/quote-request-notify";
 const SETTINGS_FUNCTION_URL =
@@ -22,6 +35,68 @@ const QUOTE_REQUEST_NOTIFY_FUNCTION_URL =
 const DEFAULT_SETTINGS: QuoteEmailSettings = {
   enabled: false,
   recipients: [],
+};
+
+const normalizeDispatchRecord = (payload: unknown): QuoteEmailDispatchRecord | null => {
+  if (!payload || typeof payload !== "object") return null;
+
+  const bookingId =
+    "bookingId" in payload && typeof payload.bookingId === "string"
+      ? payload.bookingId
+      : "";
+  const status =
+    "status" in payload && typeof payload.status === "string"
+      ? payload.status
+      : "unknown";
+
+  if (!bookingId) return null;
+
+  return {
+    bookingId,
+    status,
+    updatedAt:
+      "updatedAt" in payload && typeof payload.updatedAt === "string"
+        ? payload.updatedAt
+        : undefined,
+    reason:
+      "reason" in payload && typeof payload.reason === "string"
+        ? payload.reason
+        : undefined,
+    recipients:
+      "recipients" in payload && Array.isArray(payload.recipients)
+        ? payload.recipients.filter(
+            (recipient): recipient is string => typeof recipient === "string",
+          )
+        : undefined,
+    productName:
+      "productName" in payload && typeof payload.productName === "string"
+        ? payload.productName
+        : undefined,
+    userId:
+      "userId" in payload && typeof payload.userId === "string"
+        ? payload.userId
+        : undefined,
+    sentAt:
+      "sentAt" in payload && typeof payload.sentAt === "string"
+        ? payload.sentAt
+        : undefined,
+    failedAt:
+      "failedAt" in payload && typeof payload.failedAt === "string"
+        ? payload.failedAt
+        : undefined,
+    errorMessage:
+      "errorMessage" in payload && typeof payload.errorMessage === "string"
+        ? payload.errorMessage
+        : undefined,
+  };
+};
+
+const normalizeDispatches = (payload: unknown): QuoteEmailDispatchRecord[] => {
+  if (!Array.isArray(payload)) return [];
+
+  return payload
+    .map((item) => normalizeDispatchRecord(item))
+    .filter((item): item is QuoteEmailDispatchRecord => Boolean(item));
 };
 
 const isLocalhost =
@@ -133,6 +208,33 @@ export const getQuoteEmailSettings = async (): Promise<QuoteEmailSettings> => {
   await assertOk(response);
   const data = await parseJsonResponse(response);
   return normalizeSettings(data);
+};
+
+export const getQuoteEmailSettingsWithDispatches = async (
+  dispatchLimit = 20,
+): Promise<QuoteEmailSettings & { dispatches: QuoteEmailDispatchRecord[] }> => {
+  const headers = await getAuthHeaders();
+  const url = new URL(
+    getApiUrl(SETTINGS_ENDPOINT, SETTINGS_FUNCTION_URL),
+    typeof window !== "undefined" ? window.location.origin : "https://rentalpartner.kr",
+  );
+  url.searchParams.set("includeDispatches", "true");
+  url.searchParams.set("dispatchLimit", String(dispatchLimit));
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    headers,
+  });
+
+  await assertOk(response);
+  const data = await parseJsonResponse(response);
+
+  return {
+    ...normalizeSettings(data),
+    dispatches: normalizeDispatches(
+      data && typeof data === "object" && "dispatches" in data ? data.dispatches : [],
+    ),
+  };
 };
 
 export const updateQuoteEmailSettings = async (

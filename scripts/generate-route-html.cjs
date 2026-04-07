@@ -21,7 +21,7 @@ const BOARD_META = {
 };
 
 const STATIC_ROUTES = [
-  ['/', '렌탈어때 | 사무기기 렌탈 플랫폼', '복합기, 노트북, 데스크탑 등 사무기기를 합리적인 조건으로 렌탈하세요. 렌탈어때 렌탈 서비스.', 'daily', '1.0'],
+  ['/', '렌탈어때 | 종합렌탈 전문 기업', '복합기, 노트북, 데스크탑 등 사무기기를 합리적인 조건으로 렌탈하세요. 렌탈어때 렌탈 서비스.', 'daily', '1.0'],
   ['/products', '상품목록 | 렌탈어때', '복합기, 노트북, 데스크탑 등 렌탈어때의 사무기기 렌탈 상품을 확인해보세요.', 'daily', '0.8'],
   ['/cs', '고객센터 | 렌탈어때', '렌탈어때 고객센터입니다. 자주 묻는 질문부터 실시간 상담까지 도와드립니다.', 'monthly', '0.6'],
   ['/notice', '공지사항 - 렌탈어때', '렌탈어때 공지사항 페이지입니다.', 'daily', '0.7'],
@@ -480,7 +480,7 @@ function buildStaticPages(products, postsByBoard, priceDisplayMode) {
     let structuredData = [];
 
     if (route === '/') {
-      bodyHtml = homeBody(products, postsByBoard, priceDisplayMode);
+      bodyHtml = '';
       structuredData = [
         itemListSchema('렌탈어때 주요 상품', canonical('/products'), products.slice(0, 8).map((product) => ({
           name: product.name,

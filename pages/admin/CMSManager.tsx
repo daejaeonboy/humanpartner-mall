@@ -13,6 +13,25 @@ import { getProducts, Product } from '../../src/api/productApi';
 import { uploadImage } from '../../src/api/storageApi';
 
 type TabType = 'quickmenu' | 'banners' | 'popups' | 'alliance';
+type PopupLinkMode = 'none' | 'link' | 'product';
+
+const getPopupLinkMode = (popup?: { link?: string | null; target_product_code?: string | null }): PopupLinkMode => {
+    if (popup?.target_product_code) return 'product';
+
+    const link = (popup?.link || '').trim();
+    if (link && link !== '/') return 'link';
+
+    return 'none';
+};
+
+const getBannerLinkMode = (banner?: { link?: string | null; target_product_code?: string | null }): PopupLinkMode => {
+    if (banner?.target_product_code) return 'product';
+
+    const link = (banner?.link || '').trim();
+    if (link) return 'link';
+
+    return 'none';
+};
 
 export const CMSManager: React.FC = () => {
     const [activeTab, setActiveTab] = useState<TabType>('quickmenu');
@@ -32,6 +51,8 @@ export const CMSManager: React.FC = () => {
     // Form states
     const [editingItem, setEditingItem] = useState<any>(null);
     const [formData, setFormData] = useState<any>({});
+    const [bannerLinkMode, setBannerLinkMode] = useState<PopupLinkMode>('none');
+    const [popupLinkMode, setPopupLinkMode] = useState<PopupLinkMode>('none');
     const quickMenuCategoryOptions = Array.from(
         new Set(
             products
@@ -79,9 +100,11 @@ export const CMSManager: React.FC = () => {
         if (activeTab === 'quickmenu') {
             setFormData({ name: '', link: '/', category: '', display_order: quickMenuItems.length + 1, is_active: true });
         } else if (activeTab === 'banners') {
-            setFormData({ title: '', subtitle: '', image_url: '', link: '/', button_text: '자세히보기', brand_text: 'Humanpartner', banner_type: 'hero', display_order: banners.length + 1, is_active: true });
+            setFormData({ title: '', subtitle: '', image_url: '', link: '', button_text: '자세히보기', brand_text: 'Humanpartner', banner_type: 'hero', display_order: banners.length + 1, is_active: true });
+            setBannerLinkMode('none');
         } else if (activeTab === 'popups') {
-            setFormData({ title: '', image_url: '', link: '/', start_date: '', end_date: '', display_order: popups.length + 1, is_active: true });
+            setFormData({ title: '', image_url: '', link: '', start_date: '', end_date: '', display_order: popups.length + 1, is_active: true });
+            setPopupLinkMode('none');
         } else if (activeTab === 'alliance') {
             setFormData({ name: '', category1: 'MICE 시설분과', category2: '호텔', address: '', phone: '', logo_url: '', display_order: allianceMembers.length + 1, is_active: true });
         }
@@ -91,6 +114,12 @@ export const CMSManager: React.FC = () => {
     const openEditModal = (item: any) => {
         setEditingItem(item);
         setFormData({ ...item });
+        if (activeTab === 'banners') {
+            setBannerLinkMode(getBannerLinkMode(item));
+        }
+        if (activeTab === 'popups') {
+            setPopupLinkMode(getPopupLinkMode(item));
+        }
         setShowModal(true);
     };
 
@@ -135,7 +164,14 @@ export const CMSManager: React.FC = () => {
                     await addQuickMenuItem(quickMenuPayload);
                 }
             } else if (activeTab === 'banners') {
-                const bannerPayload = { ...formData, banner_type: 'hero', tab_id: null };
+                const normalizedBannerLink = (formData.link || '').trim();
+                const bannerPayload = {
+                    ...formData,
+                    banner_type: 'hero',
+                    tab_id: null,
+                    link: bannerLinkMode === 'link' ? normalizedBannerLink : '',
+                    target_product_code: bannerLinkMode === 'product' ? (formData.target_product_code || null) : null,
+                };
                 if (editingItem) {
                     await updateBanner(editingItem.id, bannerPayload);
                 } else {
@@ -143,8 +179,11 @@ export const CMSManager: React.FC = () => {
                 }
             } else if (activeTab === 'popups') {
                 // Handle empty dates as null
+                const normalizedPopupLink = (formData.link || '').trim();
                 const popupData = {
                     ...formData,
+                    link: popupLinkMode === 'link' ? normalizedPopupLink : '',
+                    target_product_code: popupLinkMode === 'product' ? (formData.target_product_code || null) : null,
                     start_date: formData.start_date || null,
                     end_date: formData.end_date || null
                 };
@@ -330,6 +369,14 @@ export const CMSManager: React.FC = () => {
                                     <span className="text-sm text-slate-400">
                                         {activeTab === 'alliance'
                                             ? item.phone
+                                            : activeTab === 'banners'
+                                                ? item.target_product_code
+                                                    ? `/p/${item.target_product_code}`
+                                                    : (item.link || '연결 안 함')
+                                            : activeTab === 'popups'
+                                                ? item.target_product_code
+                                                    ? `/p/${item.target_product_code}`
+                                                    : (item.link || '연결 안 함')
                                             : activeTab === 'quickmenu' && item.category
                                                 ? `/products?category=${item.category}`
                                                 : item.link}
@@ -570,36 +617,75 @@ export const CMSManager: React.FC = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">링크</label>
-                                        <input
-                                            type="text"
-                                            value={formData.link || ''}
-                                            onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45]"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">연결할 상품 (선택)</label>
-                                        <div className="space-y-2">
-                                            <select
-                                                value={formData.target_product_code || ''}
-                                                onChange={(e) => {
-                                                    setFormData({ ...formData, target_product_code: e.target.value });
-                                                }}
-                                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45]"
-                                            >
-                                                <option value="">상품 선택 없음</option>
-                                                {products.map((product) => (
-                                                    <option key={product.id} value={product.product_code || product.id}>
-                                                        {product.name} ({product.product_code || 'No Code'})
-                                                    </option>
-                                                ))}
-                                            </select>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">연결 방식</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {[
+                                                { id: 'none', label: '연결 안 함' },
+                                                { id: 'link', label: '직접 링크' },
+                                                { id: 'product', label: '상품 연결' },
+                                            ].map((option) => (
+                                                <button
+                                                    key={option.id}
+                                                    type="button"
+                                                    onClick={() => setBannerLinkMode(option.id as PopupLinkMode)}
+                                                    className={`px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                                                        bannerLinkMode === option.id
+                                                            ? 'bg-[#001E45] text-white border-[#001E45]'
+                                                            : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                                                    }`}
+                                                >
+                                                    {option.label}
+                                                </button>
+                                            ))}
                                         </div>
-                                        <p className="text-xs text-slate-500 mt-1">
-                                            선택 시 해당 상품의 상세 페이지로 자동 연결됩니다.
+                                        <p className="text-xs text-slate-500 mt-2">
+                                            배너 클릭 시 이동할 대상을 선택합니다. 직접 링크와 상품 연결은 동시에 사용하지 않습니다.
                                         </p>
                                     </div>
+                                    {bannerLinkMode === 'link' && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">링크 입력</label>
+                                            <input
+                                                type="text"
+                                                value={formData.link || ''}
+                                                onChange={(e) => setFormData({ ...formData, link: e.target.value })}
+                                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45]"
+                                                placeholder="예: https://humanpartner.kr 또는 /products"
+                                            />
+                                            <p className="text-xs text-slate-500 mt-1">
+                                                외부 링크는 `https://`, 내부 페이지는 `/products`처럼 입력해주세요.
+                                            </p>
+                                        </div>
+                                    )}
+                                    {bannerLinkMode === 'product' && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">연결할 상품</label>
+                                            <div className="space-y-2">
+                                                <select
+                                                    value={formData.target_product_code || ''}
+                                                    onChange={(e) => {
+                                                        setFormData({ ...formData, target_product_code: e.target.value });
+                                                    }}
+                                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45]"
+                                                >
+                                                    <option value="">상품 선택</option>
+                                                    {products.map((product) => (
+                                                        <option key={product.id} value={product.product_code || product.id}>
+                                                            {product.name} ({product.product_code || 'No Code'})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <p className="text-xs text-slate-500 mt-1">
+                                                선택한 상품의 상세 페이지로 연결됩니다.
+                                            </p>
+                                        </div>
+                                    )}
+                                    {bannerLinkMode === 'none' && (
+                                        <p className="text-xs text-slate-500">
+                                            현재 배너는 클릭해도 이동하지 않습니다.
+                                        </p>
+                                    )}
                                 </>
                             )}
 
@@ -655,15 +741,73 @@ export const CMSManager: React.FC = () => {
                                         )}
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">링크 (선택)</label>
-                                        <input
-                                            type="text"
-                                            value={formData.link || ''}
-                                            onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45]"
-                                            placeholder="https:// or /products"
-                                        />
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">연결 방식</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {[
+                                                { id: 'none', label: '연결 안 함' },
+                                                { id: 'link', label: '직접 링크' },
+                                                { id: 'product', label: '상품 연결' },
+                                            ].map((option) => (
+                                                <button
+                                                    key={option.id}
+                                                    type="button"
+                                                    onClick={() => setPopupLinkMode(option.id as PopupLinkMode)}
+                                                    className={`px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                                                        popupLinkMode === option.id
+                                                            ? 'bg-[#001E45] text-white border-[#001E45]'
+                                                            : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                                                    }`}
+                                                >
+                                                    {option.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <p className="text-xs text-slate-500 mt-2">
+                                            팝업 클릭 시 이동할 대상을 선택합니다. 직접 링크와 상품 연결은 동시에 사용하지 않습니다.
+                                        </p>
                                     </div>
+                                    {popupLinkMode === 'link' && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">링크 입력</label>
+                                            <input
+                                                type="text"
+                                                value={formData.link || ''}
+                                                onChange={(e) => setFormData({ ...formData, link: e.target.value })}
+                                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45]"
+                                                placeholder="예: https://humanpartner.kr 또는 /products"
+                                            />
+                                            <p className="text-xs text-slate-500 mt-1">
+                                                외부 링크는 `https://`, 내부 페이지는 `/products`처럼 입력해주세요.
+                                            </p>
+                                        </div>
+                                    )}
+                                    {popupLinkMode === 'product' && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">연결할 상품</label>
+                                            <div className="space-y-2">
+                                                <select
+                                                    value={formData.target_product_code || ''}
+                                                    onChange={(e) => {
+                                                        setFormData({
+                                                            ...formData,
+                                                            target_product_code: e.target.value,
+                                                        });
+                                                    }}
+                                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45]"
+                                                >
+                                                    <option value="">상품 선택</option>
+                                                    {products.map((product) => (
+                                                        <option key={product.id} value={product.product_code || product.id}>
+                                                            {product.name} ({product.product_code || 'No Code'})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <p className="text-xs text-slate-500 mt-1">
+                                                선택한 상품의 상세 페이지로 연결됩니다.
+                                            </p>
+                                        </div>
+                                    )}
                                     <div className="flex gap-4">
                                         <div className="flex-1">
                                             <label className="block text-sm font-medium text-slate-700 mb-1">게시 시작일</label>
@@ -683,34 +827,6 @@ export const CMSManager: React.FC = () => {
                                                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45]"
                                             />
                                         </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">연결할 상품 (선택)</label>
-                                        <div className="space-y-2">
-                                            <select
-                                                value={formData.target_product_code || ''}
-                                                onChange={(e) => {
-                                                    // If a product is selected, automatically set the link
-                                                    const selectedProduct = products.find(p => (p.product_code === e.target.value || p.id === e.target.value));
-                                                    setFormData({
-                                                        ...formData,
-                                                        target_product_code: e.target.value,
-                                                        link: selectedProduct ? `/p/${selectedProduct.product_code || selectedProduct.id}` : formData.link
-                                                    });
-                                                }}
-                                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45]"
-                                            >
-                                                <option value="">상품 선택 없음</option>
-                                                {products.map((product) => (
-                                                    <option key={product.id} value={product.product_code || product.id}>
-                                                        {product.name} ({product.product_code || 'No Code'})
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <p className="text-xs text-slate-500 mt-1">
-                                            선택 시 해당 상품의 상세 페이지로 링크가 자동 설정됩니다.
-                                        </p>
                                     </div>
                                 </>
                             )}

@@ -1,9 +1,9 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { Container } from '../components/ui/Container';
-import { getMiceTabPostById, MiceTabPost, MiceTabType } from '../src/api/cmsApi';
+import { getBoardPostById, BoardPost, BoardPostType } from '../src/api/cmsApi';
 import { parseGnbContent, stripGnbContentImages } from '../src/utils/gnbContent';
 import {
   buildArticleJsonLd,
@@ -14,11 +14,11 @@ import {
   toJsonLd,
 } from '../src/utils/seo';
 
-interface GnbPostDetailPageProps {
-  boardType: MiceTabType;
+interface BoardPostDetailPageProps {
+  boardType: BoardPostType;
 }
 
-const BOARD_META: Record<MiceTabType, { title: string; path: string }> = {
+const BOARD_META: Record<BoardPostType, { title: string; path: string }> = {
   notice: { title: '공지사항', path: '/notice' },
   event: { title: '이벤트', path: '/event' },
   review: { title: '설치후기', path: '/review' },
@@ -52,9 +52,9 @@ const renderLinkedText = (text: string) =>
     return <React.Fragment key={`text-${index}`}>{part}</React.Fragment>;
   });
 
-export const GnbPostDetailPage: React.FC<GnbPostDetailPageProps> = ({ boardType }) => {
+export const BoardPostDetailPage: React.FC<BoardPostDetailPageProps> = ({ boardType }) => {
   const { id } = useParams<{ id: string }>();
-  const [post, setPost] = useState<MiceTabPost | null>(null);
+  const [post, setPost] = useState<BoardPost | null>(null);
   const [loading, setLoading] = useState(true);
 
   const meta = BOARD_META[boardType];
@@ -68,7 +68,7 @@ export const GnbPostDetailPage: React.FC<GnbPostDetailPageProps> = ({ boardType 
       }
       setLoading(true);
       try {
-        const data = await getMiceTabPostById(id);
+        const data = await getBoardPostById(id);
         if (!data || data.board_type !== boardType) {
           setPost(null);
           return;
@@ -156,7 +156,7 @@ export const GnbPostDetailPage: React.FC<GnbPostDetailPageProps> = ({ boardType 
           ) : (
             <article className="pb-10">
               <header className="border-b border-gray-200 pb-6 mb-8">
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 break-words [overflow-wrap:anywhere]">{post.title}</h1>
+                <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 break-words [overflow-wrap:anywhere]">{post.title}</h1>
                 <p className="text-sm text-gray-400 mt-4">{formatDate(post.created_at)}</p>
               </header>
 
@@ -221,4 +221,6 @@ export const GnbPostDetailPage: React.FC<GnbPostDetailPageProps> = ({ boardType 
     </>
   );
 };
+
+export default BoardPostDetailPage;
 

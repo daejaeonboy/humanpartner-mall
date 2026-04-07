@@ -4,13 +4,13 @@ import { Container } from './ui/Container';
 import { Loader2 } from 'lucide-react';
 import {
   getTabMenuItems,
-  getMiceTabPosts,
+  getBoardPosts,
   TabMenuItem,
-  MiceTabType,
-  MiceTabPost,
+  BoardPostType,
+  BoardPost,
 } from '../src/api/cmsApi';
 
-const BOARD_PATH: Record<MiceTabType, string> = {
+const BOARD_PATH: Record<BoardPostType, string> = {
   notice: '/notice',
   event: '/event',
   review: '/review',
@@ -18,7 +18,7 @@ const BOARD_PATH: Record<MiceTabType, string> = {
 
 const getTabKey = (tab: TabMenuItem) => tab.id || `${tab.name}-${tab.link}`;
 
-const resolveBoardType = (tab: TabMenuItem): MiceTabType | null => {
+const resolveBoardType = (tab: TabMenuItem): BoardPostType | null => {
   const link = (tab.link || '').toLowerCase();
   if (link.startsWith('/notice')) return 'notice';
   if (link.startsWith('/event')) return 'event';
@@ -34,7 +34,7 @@ const resolveBoardType = (tab: TabMenuItem): MiceTabType | null => {
 
 export const PromoSection: React.FC = () => {
   const [tabs, setTabs] = useState<TabMenuItem[]>([]);
-  const [posts, setPosts] = useState<MiceTabPost[]>([]);
+  const [posts, setPosts] = useState<BoardPost[]>([]);
   const [activeTabKey, setActiveTabKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingPosts, setLoadingPosts] = useState(false);
@@ -71,7 +71,7 @@ export const PromoSection: React.FC = () => {
     const loadPosts = async () => {
       setLoadingPosts(true);
       try {
-        const data = await getMiceTabPosts(boardType);
+        const data = await getBoardPosts(boardType);
         const recentPosts = [...data]
           .sort((a, b) => {
             const bTime = new Date(b.created_at || 0).getTime();
@@ -129,7 +129,7 @@ export const PromoSection: React.FC = () => {
             <button
               key={getTabKey(tab)}
               onClick={() => setActiveTabKey(getTabKey(tab))}
-                className={`flex-1 py-3 md:py-4 text-center text-[16px] font-bold transition-colors duration-300 relative z-10
+                className={`flex-1 py-3 md:py-4 text-center text-[16px] font-semibold transition-colors duration-300 relative z-10
                 ${activeTabKey === getTabKey(tab) ? 'text-white' : 'text-slate-500 hover:text-slate-900'}`}
             >
               {tab.name}

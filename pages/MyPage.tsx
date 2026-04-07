@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Container } from '../components/ui/Container';
 import { Calendar, User, Clock, Loader2, CheckCircle, XCircle, Package, Download, Ban, FileText } from 'lucide-react';
 import {
@@ -79,7 +79,7 @@ export const MyPage: React.FC = () => {
         };
         const { className, icon: Icon, label } = config[status];
         return (
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold shadow-sm ${className}`}>
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold shadow-sm ${className}`}>
                 <Icon size={14} strokeWidth={2.5} />
                 {label}
             </span>
@@ -96,14 +96,14 @@ export const MyPage: React.FC = () => {
     };
 
     const getItemImage = (name: string) => {
-        if (name.includes('노트북') || name.includes('PC') || name.includes('모니터')) return '/comp-notebook.png';
-        if (name.includes('테이블') || name.includes('책상') || name.includes('데스크')) return '/comp-table.png';
-        if (name.includes('의자') || name.includes('소파')) return '/comp-chair.png';
-        if (name.includes('복합기') || name.includes('프린터')) return '/comp-printer.png';
-        if (name.includes('냉장고')) return '/comp-fridge.png';
-        if (name.includes('커피') || name.includes('머신')) return '/comp-coffee.png';
-        if (name.includes('간식') || name.includes('다과')) return '/comp-coffee.png';
-        if (name.includes('배너') || name.includes('현수막')) return '/comp-printer.png';
+        if (name.includes('노트북') || name.includes('PC') || name.includes('모니터')) return '/comp-notebook.svg';
+        if (name.includes('테이블') || name.includes('책상') || name.includes('데스크')) return '/comp-table.svg';
+        if (name.includes('의자') || name.includes('소파')) return '/comp-chair.svg';
+        if (name.includes('복합기') || name.includes('프린터')) return '/comp-printer.svg';
+        if (name.includes('냉장고')) return '/comp-fridge.svg';
+        if (name.includes('커피') || name.includes('머신')) return '/comp-coffee.svg';
+        if (name.includes('간식') || name.includes('다과')) return '/comp-coffee.svg';
+        if (name.includes('배너') || name.includes('현수막')) return '/comp-printer.svg';
         return null;
     };
 
@@ -196,10 +196,10 @@ export const MyPage: React.FC = () => {
                             <div className="w-20 h-20 bg-[#B3C1D4] rounded-full mx-auto mb-4 flex items-center justify-center">
                                 <User size={32} className="text-[#001E45]" />
                             </div>
-                            <h2 className="text-lg font-bold text-gray-900">{userProfile?.name || '고객'} 님</h2>
+                            <h2 className="text-lg font-semibold text-gray-900">{userProfile?.name || '고객'} 님</h2>
                             <p className="text-sm text-gray-500 mb-6">{userProfile?.email || user.email}</p>
                             <div className="text-left space-y-1 border-t border-gray-100 pt-4">
-                                <Link to="/mypage" className="text-sm font-bold text-[#001E45] block w-full text-left py-2 px-2 rounded hover:bg-[#001E45]/5">
+                                <Link to="/mypage" className="text-sm font-semibold text-[#001E45] block w-full text-left py-2 px-2 rounded hover:bg-[#001E45]/5">
                                     대여 신청 내역
                                 </Link>
                                 <Link to="/quote-cart" className="text-sm text-gray-500 block w-full text-left py-2 px-2 rounded hover:bg-gray-50 hover:text-black">
@@ -216,7 +216,7 @@ export const MyPage: React.FC = () => {
                     </div>
 
                     <div className="md:w-3/4">
-                        <h1 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                        <h1 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
                             <Clock size={24} /> 내 대여 신청 내역
                         </h1>
 
@@ -262,7 +262,7 @@ export const MyPage: React.FC = () => {
                                                     </div>
                                                 </div>
                                                 <div className="p-5">
-                                                    <h3 className="font-extrabold text-lg text-gray-900 mb-2 leading-tight">
+                                                    <h3 className="font-semibold text-lg text-gray-900 mb-2 leading-tight">
                                                         {booking.products?.name || '상품'}
                                                     </h3>
                                                     <div className="text-sm text-gray-500 flex items-center gap-2 mb-4">
@@ -288,7 +288,7 @@ export const MyPage: React.FC = () => {
                                                             const el = document.getElementById(`details-${booking.id}`);
                                                             if (el) el.classList.toggle('hidden');
                                                         }}
-                                                        className="w-full h-[48px] bg-[#001E45] text-white rounded-xl text-base font-bold hover:bg-[#002D66] transition-all shadow-md active:scale-[0.98] flex items-center justify-center"
+                                                        className="w-full h-[48px] bg-[#001E45] text-white rounded-xl text-base font-semibold hover:bg-[#002D66] transition-all shadow-md active:scale-[0.98] flex items-center justify-center"
                                                     >
                                                         상세 내역보기
                                                     </button>
@@ -299,7 +299,7 @@ export const MyPage: React.FC = () => {
                                                                 void handleCancelBooking(booking.id);
                                                             }}
                                                             disabled={cancellingId === booking.id}
-                                                            className="w-full mt-3 h-[48px] inline-flex items-center justify-center gap-2 px-4 rounded-xl border-2 border-red-600 bg-white text-red-600 text-base font-bold hover:bg-red-50 transition-all disabled:text-slate-300 disabled:border-slate-200"
+                                                            className="w-full mt-3 h-[48px] inline-flex items-center justify-center gap-2 px-4 rounded-xl border-2 border-red-600 bg-white text-red-600 text-base font-semibold hover:bg-red-50 transition-all disabled:text-slate-300 disabled:border-slate-200"
                                                         >
                                                             {cancellingId === booking.id ? <Loader2 size={18} className="animate-spin" /> : null}
                                                             견적 요청 취소
@@ -329,7 +329,7 @@ export const MyPage: React.FC = () => {
                                                             {getStatusBadge(booking.status)}
                                                             <span className="text-xs text-gray-400 font-medium tracking-tight">접수번호 {booking.id?.slice(0, 8)}</span>
                                                         </div>
-                                                        <h3 className="font-extrabold text-2xl text-gray-900 leading-tight tracking-tight">
+                                                        <h3 className="font-semibold text-2xl text-gray-900 leading-tight tracking-tight">
                                                             {booking.products?.name || '상품'}
                                                         </h3>
                                                         <div className="text-sm text-gray-500 flex items-center gap-2 font-medium">
@@ -361,7 +361,7 @@ export const MyPage: React.FC = () => {
                                                             const el = document.getElementById(`details-${booking.id}`);
                                                             if (el) el.classList.toggle('hidden');
                                                         }}
-                                                        className="w-[160px] h-[48px] bg-[#001E45] text-white rounded-lg text-base font-bold hover:bg-[#002D66] transition-all shadow-sm flex items-center justify-center gap-2"
+                                                        className="w-[160px] h-[48px] bg-[#001E45] text-white rounded-lg text-base font-semibold hover:bg-[#002D66] transition-all shadow-sm flex items-center justify-center gap-2"
                                                     >
                                                         상세 내역보기
                                                     </button>
@@ -372,7 +372,7 @@ export const MyPage: React.FC = () => {
                                                                 void handleCancelBooking(booking.id);
                                                             }}
                                                             disabled={cancellingId === booking.id}
-                                                            className="w-[160px] h-[48px] rounded-lg border-2 border-red-600 bg-white text-red-600 text-base font-bold hover:bg-red-50 transition-all disabled:text-slate-300 disabled:border-slate-200 inline-flex items-center justify-center gap-2"
+                                                            className="w-[160px] h-[48px] rounded-lg border-2 border-red-600 bg-white text-red-600 text-base font-semibold hover:bg-red-50 transition-all disabled:text-slate-300 disabled:border-slate-200 inline-flex items-center justify-center gap-2"
                                                         >
                                                             {cancellingId === booking.id ? <Loader2 size={18} className="animate-spin" /> : null}
                                                             견적 요청 취소
@@ -385,7 +385,7 @@ export const MyPage: React.FC = () => {
                                                 <div className="relative p-6 md:p-8 space-y-8 bg-white">
                                                     <div className="bg-white p-2">
                                                         <div className="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-gray-100">
-                                                            <h4 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                                            <h4 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
                                                                 <FileText size={20} className="text-[#001E45]" />
                                                                 견적 요청 요약
                                                             </h4>
@@ -395,32 +395,32 @@ export const MyPage: React.FC = () => {
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-12">
                                                             <div className="flex justify-between items-center py-1">
                                                                 <span className="text-sm text-slate-500 font-medium">상품명</span>
-                                                                <span className="text-sm font-bold text-slate-900">{booking.products?.name || '상품'}</span>
+                                                                <span className="text-sm font-semibold text-slate-900">{booking.products?.name || '상품'}</span>
                                                             </div>
                                                             <div className="flex justify-between items-center py-1">
                                                                 <span className="text-sm text-slate-500 font-medium">접수번호</span>
-                                                                <span className="text-sm font-bold text-slate-900">{booking.id?.slice(0, 8) || '-'}</span>
+                                                                <span className="text-sm font-semibold text-slate-900">{booking.id?.slice(0, 8) || '-'}</span>
                                                             </div>
                                                             <div className="flex justify-between items-center py-1">
                                                                 <span className="text-sm text-slate-500 font-medium">접수일</span>
-                                                                <span className="text-sm font-bold text-slate-900">{formatDate(booking.created_at)}</span>
+                                                                <span className="text-sm font-semibold text-slate-900">{formatDate(booking.created_at)}</span>
                                                             </div>
                                                             <div className="flex justify-between items-center py-1">
                                                                 <span className="text-sm text-slate-500 font-medium">대여 기간</span>
-                                                                <span className="text-sm font-bold text-slate-900">{formatDate(booking.start_date)} ~ {formatDate(booking.end_date)}</span>
+                                                                <span className="text-sm font-semibold text-slate-900">{formatDate(booking.start_date)} ~ {formatDate(booking.end_date)}</span>
                                                             </div>
                                                             <div className="flex justify-between items-center py-1">
                                                                 <span className="text-sm text-slate-500 font-medium">예상 금액</span>
                                                                 <span className={getPublicPriceClassName({
                                                                     mode: priceDisplayMode,
                                                                     loading: priceDisplayLoading,
-                                                                    visibleClass: 'text-base font-bold text-[#001E45]',
+                                                                    visibleClass: 'text-base font-semibold text-[#001E45]',
                                                                     hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
                                                                 })}>{formatCustomerPrice(booking.total_price)}</span>
                                                             </div>
                                                             <div className="flex justify-between items-center py-1">
                                                                 <span className="text-sm text-slate-500 font-medium">구성 현황</span>
-                                                                <span className="text-sm font-bold text-slate-900">기본 {basicCount}건 / 옵션 {optionCount}건</span>
+                                                                <span className="text-sm font-semibold text-slate-900">기본 {basicCount}건 / 옵션 {optionCount}건</span>
                                                             </div>
                                                         </div>
 
@@ -428,7 +428,7 @@ export const MyPage: React.FC = () => {
                                                             <button
                                                                 onClick={() => handleDownloadQuote(booking)}
                                                                 disabled={!booking.id || downloadingId === booking.id}
-                                                                className="inline-flex items-center justify-center gap-2 px-6 h-[48px] rounded-xl bg-[#001E45] text-white text-base font-bold hover:bg-[#002D66] transition-all disabled:bg-slate-300 shadow-md"
+                                                                className="inline-flex items-center justify-center gap-2 px-6 h-[48px] rounded-xl bg-[#001E45] text-white text-base font-semibold hover:bg-[#002D66] transition-all disabled:bg-slate-300 shadow-md"
                                                             >
                                                                 {downloadingId === booking.id ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
                                                                 {documentButtonText}
@@ -449,7 +449,7 @@ export const MyPage: React.FC = () => {
                                                     {basicCount > 0 && (
                                                         <div>
                                                             <div className="flex items-center justify-between mb-4">
-                                                                <h4 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+                                                                <h4 className="text-xl font-semibold text-gray-900 flex items-center gap-3">
                                                                     <span className="w-1.5 h-6 bg-slate-800 inline-block rounded-sm"></span>
                                                                     기본 패키지 구성
                                                                 </h4>
@@ -475,10 +475,10 @@ export const MyPage: React.FC = () => {
                                                                                 <div className="flex-1 min-w-0">
                                                                                     <div className="flex justify-between items-start">
                                                                                         <div>
-                                                                                            <p className="font-bold text-gray-800 text-lg leading-tight">{comp.name}</p>
+                                                                                            <p className="font-semibold text-gray-800 text-lg leading-tight">{comp.name}</p>
                                                                                             {comp.model_name && <p className="text-xs text-gray-400 mt-1">{comp.model_name}</p>}
                                                                                         </div>
-                                                                                        <span className="text-lg font-bold text-[#001E45] whitespace-nowrap ml-2">{comp.quantity}개</span>
+                                                                                        <span className="text-lg font-semibold text-[#001E45] whitespace-nowrap ml-2">{comp.quantity}개</span>
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
@@ -492,11 +492,11 @@ export const MyPage: React.FC = () => {
                                                     {optionCount > 0 && (
                                                         <div>
                                                             <div className="flex items-center justify-between mb-4">
-                                                                <h4 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+                                                                <h4 className="text-xl font-semibold text-gray-900 flex items-center gap-3">
                                                                     <span className="w-1.5 h-6 bg-[#001E45] inline-block rounded-sm"></span>
                                                                     내가 추가한 유료 옵션
                                                                 </h4>
-                                                                <span className="text-sm text-[#001E45] font-bold">{optionCount}개 선택</span>
+                                                                <span className="text-sm text-[#001E45] font-semibold">{optionCount}개 선택</span>
                                                             </div>
 
                                                             <div className="border-t-2 border-[#001E45] pt-6">
@@ -518,9 +518,9 @@ export const MyPage: React.FC = () => {
                                                                                 <div className="flex-1 min-w-0">
                                                                                     <div className="flex justify-between items-start">
                                                                                         <div>
-                                                                                            <p className="font-bold text-gray-800 text-lg leading-tight">{opt.name}</p>
+                                                                                            <p className="font-semibold text-gray-800 text-lg leading-tight">{opt.name}</p>
                                                                                         </div>
-                                                                                        <span className="text-lg font-bold text-[#001E45] whitespace-nowrap ml-2">{opt.quantity}개</span>
+                                                                                        <span className="text-lg font-semibold text-[#001E45] whitespace-nowrap ml-2">{opt.quantity}개</span>
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
@@ -541,63 +541,63 @@ export const MyPage: React.FC = () => {
                                                             >
                                                                 <div className="p-8 bg-white" style={{ fontFamily: 'Malgun Gothic, sans-serif' }}>
                                                                     <div className="text-center mb-8">
-                                                                        <h1 className="text-3xl font-bold tracking-widest text-gray-900 border-b-4 border-double border-gray-900 pb-4 inline-block px-8">
+                                                                        <h1 className="text-3xl font-semibold tracking-widest text-gray-900 border-b-4 border-double border-gray-900 pb-4 inline-block px-8">
                                                                             {documentTitle}
                                                                         </h1>
                                                                     </div>
                                                                     <table className="w-full border-collapse mb-6" style={{ fontSize: '12px' }}>
                                                                         <tbody>
                                                                             <tr>
-                                                                                <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-bold w-24 text-center">문서번호</td>
+                                                                                <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-semibold w-24 text-center">문서번호</td>
                                                                                 <td className="border border-gray-400 px-3 py-2 w-48">Q-{booking.id.slice(0, 8)}</td>
-                                                                                <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-bold w-24 text-center">발행일자</td>
+                                                                                <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-semibold w-24 text-center">발행일자</td>
                                                                                 <td className="border border-gray-400 px-3 py-2">{formatDate(booking.created_at)}</td>
                                                                             </tr>
                                                                             <tr>
-                                                                                <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-bold text-center">유효기간</td>
+                                                                                <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-semibold text-center">유효기간</td>
                                                                                 <td className="border border-gray-400 px-3 py-2">발행일로부터 30일</td>
-                                                                                <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-bold text-center">담당자</td>
+                                                                                <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-semibold text-center">담당자</td>
                                                                                 <td className="border border-gray-400 px-3 py-2">영업팀</td>
                                                                             </tr>
                                                                         </tbody>
                                                                     </table>
                                                                     <div className="grid grid-cols-2 gap-4 mb-6">
                                                                         <div>
-                                                                            <p className="font-bold text-sm mb-2 border-b border-gray-900 pb-1">【 수 신 】</p>
+                                                                            <p className="font-semibold text-sm mb-2 border-b border-gray-900 pb-1">【 수 신 】</p>
                                                                             <table className="w-full border-collapse" style={{ fontSize: '11px' }}>
                                                                                 <tbody>
                                                                                     <tr>
-                                                                                        <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-bold w-16 text-center">상호명</td>
+                                                                                        <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-semibold w-16 text-center">상호명</td>
                                                                                         <td className="border border-gray-400 px-2 py-1">{userProfile?.company_name || '(미기재)'}</td>
                                                                                     </tr>
                                                                                     <tr>
-                                                                                        <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-bold text-center">담당자</td>
+                                                                                        <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-semibold text-center">담당자</td>
                                                                                         <td className="border border-gray-400 px-2 py-1">{userProfile?.manager_name || userProfile?.name || '(미기재)'}</td>
                                                                                     </tr>
                                                                                     <tr>
-                                                                                        <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-bold text-center">연락처</td>
+                                                                                        <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-semibold text-center">연락처</td>
                                                                                         <td className="border border-gray-400 px-2 py-1">{userProfile?.phone || '(미기재)'}</td>
                                                                                     </tr>
                                                                                 </tbody>
                                                                             </table>
                                                                         </div>
                                                                         <div>
-                                                                            <p className="font-bold text-sm mb-2 border-b border-gray-900 pb-1">【 발 신 】</p>
+                                                                            <p className="font-semibold text-sm mb-2 border-b border-gray-900 pb-1">【 발 신 】</p>
                                                                             <table className="w-full border-collapse" style={{ fontSize: '11px' }}>
                                                                                 <tbody>
                                                                                     <tr>
-                                                                                        <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-bold w-16 text-center">상호명</td>
+                                                                                        <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-semibold w-16 text-center">상호명</td>
                                                                                         <td className="border border-gray-400 px-2 py-1 relative">
                                                                                             렌탈어때
-                                                                                            <span className="absolute right-2 top-0 text-[#001E45] text-[10px] font-bold">[인]</span>
+                                                                                            <span className="absolute right-2 top-0 text-[#001E45] text-[10px] font-semibold">[인]</span>
                                                                                         </td>
                                                                                     </tr>
                                                                                     <tr>
-                                                                                        <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-bold text-center">대표자</td>
+                                                                                        <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-semibold text-center">대표자</td>
                                                                                         <td className="border border-gray-400 px-2 py-1">이기섭</td>
                                                                                     </tr>
                                                                                     <tr>
-                                                                                        <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-bold text-center">연락처</td>
+                                                                                        <td className="border border-gray-400 bg-gray-100 px-2 py-1 font-semibold text-center">연락처</td>
                                                                                         <td className="border border-gray-400 px-2 py-1">010-4074-6967</td>
                                                                                     </tr>
                                                                                 </tbody>
@@ -607,23 +607,23 @@ export const MyPage: React.FC = () => {
                                                                     <table className="w-full border-collapse mb-6" style={{ fontSize: '12px' }}>
                                                                         <tbody>
                                                                             <tr>
-                                                                                <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-bold w-24 text-center">대여기간</td>
+                                                                                <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-semibold w-24 text-center">대여기간</td>
                                                                                 <td className="border border-gray-400 px-3 py-2">{formatDate(booking.start_date)} ~ {formatDate(booking.end_date)} ({rentalDays}일간)</td>
-                                                                                <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-bold w-24 text-center">진행 상태</td>
+                                                                                <td className="border border-gray-400 bg-gray-100 px-3 py-2 font-semibold w-24 text-center">진행 상태</td>
                                                                                 <td className="border border-gray-400 px-3 py-2 w-32">{getBookingStatusLabel(booking.status)}</td>
                                                                             </tr>
                                                                         </tbody>
                                                                     </table>
-                                                                    <p className="font-bold text-sm mb-2">■ 견적 내역</p>
+                                                                    <p className="font-semibold text-sm mb-2">■ 견적 내역</p>
                                                                     <table className="w-full border-collapse mb-4" style={{ fontSize: '11px' }}>
                                                                         <thead>
                                                                             <tr className="bg-gray-800 text-white">
-                                                                                <th className="border border-gray-600 px-3 py-2 text-center font-bold w-12">No</th>
-                                                                                <th className="border border-gray-600 px-3 py-2 text-left font-bold">품목</th>
-                                                                                <th className="border border-gray-600 px-3 py-2 text-center font-bold w-16">수량</th>
-                                                                                <th className="border border-gray-600 px-3 py-2 text-right font-bold w-24">단가</th>
-                                                                                <th className="border border-gray-600 px-3 py-2 text-right font-bold w-28">금액</th>
-                                                                                <th className="border border-gray-600 px-3 py-2 text-center font-bold w-20">비고</th>
+                                                                                <th className="border border-gray-600 px-3 py-2 text-center font-semibold w-12">No</th>
+                                                                                <th className="border border-gray-600 px-3 py-2 text-left font-semibold">품목</th>
+                                                                                <th className="border border-gray-600 px-3 py-2 text-center font-semibold w-16">수량</th>
+                                                                                <th className="border border-gray-600 px-3 py-2 text-right font-semibold w-24">단가</th>
+                                                                                <th className="border border-gray-600 px-3 py-2 text-right font-semibold w-28">금액</th>
+                                                                                <th className="border border-gray-600 px-3 py-2 text-center font-semibold w-20">비고</th>
                                                                             </tr>
                                                                         </thead>
                                                                         <tbody>
@@ -688,32 +688,32 @@ export const MyPage: React.FC = () => {
                                                                     <table className="w-full border-collapse mb-8" style={{ fontSize: '12px' }}>
                                                                         <tbody>
                                                                             <tr>
-                                                                                <td className="border-2 border-gray-800 bg-gray-100 px-4 py-3 font-bold text-center w-24 whitespace-nowrap">공급가액</td>
+                                                                                <td className="border-2 border-gray-800 bg-gray-100 px-4 py-3 font-semibold text-center w-24 whitespace-nowrap">공급가액</td>
                                                                                 <td className={`border-2 border-gray-800 px-4 py-3 text-right font-medium whitespace-nowrap ${getPublicPriceClassName({
                                                                                     mode: priceDisplayMode,
                                                                                     loading: priceDisplayLoading,
                                                                                     visibleClass: '',
                                                                                     hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
                                                                                 })}`}>{formatCustomerPrice(Math.round(booking.total_price / 1.1))}</td>
-                                                                                <td className="border-2 border-gray-800 bg-gray-100 px-4 py-3 font-bold text-center w-20 whitespace-nowrap">부가세</td>
+                                                                                <td className="border-2 border-gray-800 bg-gray-100 px-4 py-3 font-semibold text-center w-20 whitespace-nowrap">부가세</td>
                                                                                 <td className={`border-2 border-gray-800 px-4 py-3 text-right font-medium whitespace-nowrap ${getPublicPriceClassName({
                                                                                     mode: priceDisplayMode,
                                                                                     loading: priceDisplayLoading,
                                                                                     visibleClass: '',
                                                                                     hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
                                                                                 })}`}>{formatCustomerPrice(Math.round(booking.total_price - booking.total_price / 1.1))}</td>
-                                                                                <td className="border-2 border-gray-800 bg-gray-800 text-white px-4 py-3 font-bold text-center w-24 whitespace-nowrap">합계금액</td>
+                                                                                <td className="border-2 border-gray-800 bg-gray-800 text-white px-4 py-3 font-semibold text-center w-24 whitespace-nowrap">합계금액</td>
                                                                                 <td className={`border-2 border-gray-800 px-4 py-3 text-right whitespace-nowrap ${getPublicPriceClassName({
                                                                                     mode: priceDisplayMode,
                                                                                     loading: priceDisplayLoading,
-                                                                                    visibleClass: 'font-bold text-lg text-[#001E45]',
+                                                                                    visibleClass: 'font-semibold text-lg text-[#001E45]',
                                                                                     hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
                                                                                 })}`}>{formatCustomerPrice(booking.total_price)}</td>
                                                                             </tr>
                                                                         </tbody>
                                                                     </table>
                                                                     <div className="mb-6">
-                                                                        <p className="font-bold text-sm mb-2">■ 유의사항</p>
+                                                                        <p className="font-semibold text-sm mb-2">■ 유의사항</p>
                                                                         <div className="border border-gray-400 p-3" style={{ fontSize: '11px', lineHeight: '1.7' }}>
                                                                             <ul className="list-disc pl-4 space-y-1.5 text-gray-700">
                                                                                 <li>본 {isInquiryMode ? '견적 요청서' : '견적서'}의 유효기간은 발행일로부터 30일입니다.</li>

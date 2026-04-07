@@ -1,3 +1,5 @@
+import type { ProductCatalogType } from "../api/productApi";
+
 export interface QuoteCartOption {
   name: string;
   quantity: number;
@@ -15,6 +17,7 @@ export interface QuoteCartItem {
   product_id: string;
   product_name: string;
   product_image_url?: string;
+  product_catalog_type?: ProductCatalogType;
   start_date: string;
   end_date: string;
   expected_people: number;

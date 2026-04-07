@@ -1,11 +1,13 @@
 {
-  "name": "partner-mice-booking",
+  "name": "rentalpartner",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build && node scripts/generate-route-html.cjs",
+    "build:functions": "npm --prefix functions run build",
+    "check:release": "npm run build && npm run build:functions",
     "preview": "vite preview",
     "deploy:prod": "npm run build && firebase deploy --project humanpartner-mall --only hosting:humanpartner-mall",
     "deploy:prod:functions": "firebase deploy --project humanpartner-mall --only functions:sendEmailVerification,functions:manageQuoteEmailSettings,functions:sendQuoteRequestNotification",

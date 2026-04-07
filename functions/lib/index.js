@@ -307,6 +307,42 @@ const getDispatchRecord = async (bookingId) => { var _a; return parseJsonRecord(
 const saveDispatchRecord = async (bookingId, payload) => {
     await upsertSiteSetting(getDispatchSettingKey(bookingId), JSON.stringify(Object.assign(Object.assign({}, payload), { updatedAt: new Date().toISOString() })));
 };
+const toQuoteEmailDispatchRecord = (row) => {
+    const data = parseJsonRecord(row.setting_value);
+    const rawBookingId = typeof data.bookingId === "string"
+        ? data.bookingId
+        : row.setting_key.startsWith(QUOTE_EMAIL_DISPATCH_KEY_PREFIX)
+            ? row.setting_key.slice(QUOTE_EMAIL_DISPATCH_KEY_PREFIX.length)
+            : "";
+    if (!rawBookingId) {
+        return null;
+    }
+    return {
+        bookingId: rawBookingId,
+        status: typeof data.status === "string" ? data.status : "unknown",
+        updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : row.updated_at,
+        reason: typeof data.reason === "string" ? data.reason : undefined,
+        recipients: Array.isArray(data.recipients)
+            ? data.recipients.filter((recipient) => typeof recipient === "string")
+            : undefined,
+        productName: typeof data.productName === "string" ? data.productName : undefined,
+        userId: typeof data.userId === "string" ? data.userId : undefined,
+        sentAt: typeof data.sentAt === "string" ? data.sentAt : undefined,
+        failedAt: typeof data.failedAt === "string" ? data.failedAt : undefined,
+        errorMessage: typeof data.errorMessage === "string" ? data.errorMessage : undefined,
+    };
+};
+const getRecentQuoteEmailDispatches = async (limit = 20) => {
+    const rows = await supabaseSelect("site_settings", {
+        select: "setting_key,setting_value,updated_at",
+        setting_key: `like.${QUOTE_EMAIL_DISPATCH_KEY_PREFIX}*`,
+        order: "updated_at.desc",
+        limit: String(limit),
+    });
+    return rows
+        .map((row) => toQuoteEmailDispatchRecord(row))
+        .filter((record) => Boolean(record && record.bookingId));
+};
 const getActiveRecipientEmails = (settings) => settings.recipients
     .filter((recipient) => recipient.enabled)
     .map((recipient) => recipient.email);
@@ -495,7 +531,20 @@ exports.manageQuoteEmailSettings = functions.https.onRequest((req, res) => {
             const { decodedToken, profile } = await requireAdminUser(req);
             if (req.method === "GET") {
                 const settings = await getQuoteEmailSettings();
-                res.status(200).json(settings);
+                const includeDispatches = typeof req.query.includeDispatches === "string" &&
+                    req.query.includeDispatches === "true";
+                const rawLimit = typeof req.query.dispatchLimit === "string"
+                    ? parseInt(req.query.dispatchLimit, 10)
+                    : 20;
+                const dispatchLimit = Number.isFinite(rawLimit) && rawLimit > 0
+                    ? Math.min(rawLimit, 50)
+                    : 20;
+                if (!includeDispatches) {
+                    res.status(200).json(settings);
+                    return;
+                }
+                const dispatches = await getRecentQuoteEmailDispatches(dispatchLimit);
+                res.status(200).json(Object.assign(Object.assign({}, settings), { dispatches }));
                 return;
             }
             const payload = buildQuoteEmailSettingsPayload(req.body, decodedToken.uid, profile.email || decodedToken.email);

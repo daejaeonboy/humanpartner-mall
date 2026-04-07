@@ -5,7 +5,7 @@ import {
 
 export const HIDDEN_PRICE_TEXT = "가격문의";
 export const PRICE_LOADING_TEXT = "가격 확인 중";
-export const INQUIRY_PRICE_TEXT_CLASS = "text-base font-semibold text-rose-600";
+export const INQUIRY_PRICE_TEXT_CLASS = "text-[15px] font-semibold text-rose-600";
 export const HIDDEN_PRICE_TEXT_CLASS = "text-rose-600";
 
 const formatNumber = (amount: number) => new Intl.NumberFormat("ko-KR").format(amount);

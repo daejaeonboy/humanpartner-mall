@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { generateVerificationCode, sendVerificationEmail } from '../src/utils/email';
 import { Container } from '../components/ui/Container';
 import { Link, useNavigate } from 'react-router-dom';
@@ -13,7 +13,7 @@ import { getAuthErrorMessage } from '../src/utils/authErrors';
 
 // 약관 내용
 const TERMS_CONTENT = `제1조 (목적)
-본 약관은 렌탈어때 플랫폼(이하 "서비스")의 이용과 관련하여 운영 주체와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
+본 약관은 휴먼파트너(이하 "운영 주체")가 운영하는 렌탈어때 플랫폼(이하 "서비스")의 이용과 관련하여 운영 주체와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
 
 제2조 (정의)
 1. "이용자"란 본 약관에 따라 서비스를 이용하는 회원 및 비회원을 말합니다.
@@ -27,7 +27,7 @@ const TERMS_CONTENT = `제1조 (목적)
 3. 이용자에게 불리한 변경은 사전에 공지하며, 계속 이용 시 변경 약관에 동의한 것으로 봅니다.
 
 제4조 (회원가입 및 계정관리)
-1. 회원가입은 이용자가 약관에 동의하고 가입 절차를 완료한 후 승인됨으로써 성립합니다.
+1. 회원가입은 이용자가 약관에 동의하고 가입 절차를 완료함으로써 성립합니다.
 2. 이용자는 정확한 정보를 제공해야 하며, 계정 관리 책임은 회원 본인에게 있습니다.
 3. 계정 도용 등 이상 징후 발견 시 즉시 운영 주체에 통지해야 합니다.
 
@@ -51,8 +51,8 @@ const TERMS_CONTENT = `제1조 (목적)
 본 약관은 2026년 2월 6일부터 시행합니다.`;
 
 const PRIVACY_CONTENT = `1. 총칙
-본 개인정보처리방침은 렌탈어때 플랫폼의 서비스 이용 과정에서 처리되는 개인정보의 기준을 안내합니다.
-플랫폼은 현재 서비스 준비 단계이며, 향후 "렌탈어때" 법인 설립 이후 해당 법인이 개인정보처리자로서 본 방침을 승계·운영할 수 있습니다.
+본 개인정보처리방침은 휴먼파트너가 운영하는 렌탈어때 플랫폼의 서비스 이용 과정에서 처리되는 개인정보의 기준을 안내합니다.
+플랫폼의 개인정보처리자는 휴먼파트너이며, 서비스 운영 및 고객 응대 과정에서 필요한 범위의 개인정보를 처리합니다.
 
 2. 수집하는 개인정보 항목
 - 회원가입 및 계정관리: 이름, 이메일, 비밀번호, 휴대전화번호
@@ -95,7 +95,7 @@ const PRIVACY_CONTENT = `1. 총칙
 - 성명: 이기섭
 - 연락처: 010-4074-6967
 - 이메일: micepartner@micepartner.co.kr
-상기 연락처는 법인 설립 전 임시 운영 연락처이며, 렌탈어때 법인 설립 후 변경 시 즉시 고지합니다.
+개인정보 처리와 관련한 문의, 열람, 정정, 삭제 요청은 상기 연락처를 통해 접수하실 수 있습니다.
 
 10. 고지의 의무
 본 방침의 내용 추가, 삭제 및 수정이 있는 경우 시행일 최소 7일 전에 공지합니다.
@@ -388,14 +388,14 @@ export const SignUp: React.FC = () => {
                 business_license_url: memberType === 'business' ? (formData.businessLicenseUrl || undefined) : undefined,
                 member_type: memberType,
                 manager_name: memberType === 'public' ? formData.managerName : undefined,
-                is_approved: false,
+                is_approved: true,
                 agreed_terms: agreements.terms,
                 agreed_privacy: agreements.privacy,
                 agreed_marketing: agreements.marketing
             });
 
-            alert('가입 신청이 완료되었습니다. 관리자 승인 후 이용 가능합니다.');
-            navigate('/login');
+            alert('회원가입이 완료되었습니다. 바로 서비스를 이용하실 수 있습니다.');
+            navigate('/');
         } catch (error: any) {
             console.error('Sign up failed', error);
             const message = getAuthErrorMessage(error.code);
@@ -416,7 +416,7 @@ export const SignUp: React.FC = () => {
             <Container>
                 <div className="max-w-lg mx-auto bg-white p-4 md:p-8 rounded-2xl shadow-sm border border-gray-100">
                     <div className="text-center mb-8">
-                        <h1 className="text-2xl font-bold text-gray-900">회원가입</h1>
+                        <h1 className="text-2xl font-semibold text-gray-900">회원가입</h1>
                         <p className="text-gray-500 text-sm mt-2">렌탈어때의 회원이 되어 다양한 혜택을 누리세요.</p>
                     </div>
 
@@ -433,7 +433,7 @@ export const SignUp: React.FC = () => {
                                 }`}
                             >
                                 <div className="text-lg mb-1">🏢</div>
-                                <div className="text-sm font-bold">일반 기업</div>
+                                <div className="text-sm font-semibold">일반 기업</div>
                                 <div className="text-xs text-gray-400 mt-0.5">B2B 고객</div>
                             </button>
                             <button
@@ -446,7 +446,7 @@ export const SignUp: React.FC = () => {
                                 }`}
                             >
                                 <div className="text-lg mb-1">🏛️</div>
-                                <div className="text-sm font-bold">공공기관</div>
+                                <div className="text-sm font-semibold">공공기관</div>
                                 <div className="text-xs text-gray-400 mt-0.5">관공서/공기업</div>
                             </button>
                         </div>
@@ -489,7 +489,7 @@ export const SignUp: React.FC = () => {
                                         type="button"
                                         onClick={handleSendVerification}
                                         disabled={verifying || isCodeSent}
-                                        className={`w-full mt-2 py-3 rounded-lg font-bold text-sm transition-all border ${isCodeSent
+                                        className={`w-full mt-2 py-3 rounded-lg font-semibold text-sm transition-all border ${isCodeSent
                                             ? 'bg-gray-100 text-gray-400 border-gray-200'
                                             : 'bg-white text-[#001E45] border-[#001E45] hover:bg-[#001E45] hover:text-white'
                                             }`}
@@ -798,7 +798,7 @@ export const SignUp: React.FC = () => {
                         <button
                             type="submit"
                             disabled={loading || !allRequiredAgreed}
-                            className={`w-full py-4 rounded-lg font-bold transition-all mt-6 flex items-center justify-center gap-2 ${loading || !allRequiredAgreed
+                            className={`w-full py-4 rounded-lg font-semibold transition-all mt-6 flex items-center justify-center gap-2 ${loading || !allRequiredAgreed
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 : 'bg-[#001E45] text-white hover:bg-[#002d66]'
                                 }`}
@@ -809,7 +809,7 @@ export const SignUp: React.FC = () => {
                     </form>
 
                     <div className="mt-6 text-center text-sm text-gray-500">
-                        이미 계정이 있으신가요? <Link to="/login" className="text-[#001E45] font-bold hover:underline">로그인</Link>
+                        이미 계정이 있으신가요? <Link to="/login" className="text-[#001E45] font-semibold hover:underline">로그인</Link>
                     </div>
                 </div>
             </Container>

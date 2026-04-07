@@ -1,41 +1,47 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Edit2, Eye, EyeOff, Image as ImageIcon, Loader2, Plus, Save, Trash2, Upload, X } from 'lucide-react';
 import {
-    addMiceTabPost,
+    addBoardPost,
     addTabMenuItem,
-    deleteMiceTabPost,
+    deleteBoardPost,
     deleteTabMenuItem,
-    getAllMiceTabPosts,
+    getAllBoardPosts,
     getAllTabMenuItems,
-    MiceTabPost,
-    MiceTabType,
+    BoardPost,
+    BoardPostType,
     TabMenuItem,
     updateTabMenuItem,
-    updateMiceTabPost
+    updateBoardPost
 } from '../../src/api/cmsApi';
 import { uploadImage } from '../../src/api/storageApi';
+import {
+    BoardCategoryBoardType,
+    getBoardCategories,
+    upsertBoardCategories
+} from '../../src/api/siteSettingsApi';
 import {
     buildGnbContentImageToken,
     extractGnbContentImageUrls,
     stripGnbContentImages
 } from '../../src/utils/gnbContent';
 
-type FilterType = 'all' | MiceTabType;
+type FilterType = 'all' | BoardPostType;
 
-const TAB_LABEL: Record<MiceTabType, string> = {
+const TAB_LABEL: Record<BoardPostType, string> = {
     notice: '공지사항',
     event: '이벤트',
     review: '설치후기'
 };
 
-const TAB_BADGE_STYLE: Record<MiceTabType, string> = {
+const TAB_BADGE_STYLE: Record<BoardPostType, string> = {
     notice: 'bg-blue-50 text-blue-700 border-blue-200',
     event: 'bg-orange-50 text-orange-700 border-orange-200',
     review: 'bg-emerald-50 text-emerald-700 border-emerald-200'
 };
 
 interface FormData {
-    board_type: MiceTabType;
+    board_type: BoardPostType;
+    category: string;
     title: string;
     summary: string;
     content: string;
@@ -54,6 +60,7 @@ interface TabFormData {
 
 const EMPTY_FORM: FormData = {
     board_type: 'notice',
+    category: '',
     title: '',
     summary: '',
     content: '',
@@ -77,21 +84,73 @@ const TAB_PRESETS = [
     { name: '고객센터', link: '/cs' },
 ];
 
+const BOARD_CATEGORY_TYPES: BoardCategoryBoardType[] = ['notice', 'review'];
+
+const normalizeCategoryValue = (value: unknown) => {
+    if (typeof value !== 'string') return '';
+    return value.trim();
+};
+
+const normalizeCategoryList = (value: unknown): string[] => {
+    if (!Array.isArray(value)) return [];
+
+    return Array.from(
+        new Set(
+            value
+                .map((item) => normalizeCategoryValue(item))
+                .filter((item) => Boolean(item)),
+        ),
+    );
+};
+
+const serializeBoardCategorySettings = (
+    settings: Record<BoardCategoryBoardType, string[]>,
+) =>
+    JSON.stringify({
+        notice: settings.notice,
+        review: settings.review,
+    });
+
+const resolveBoardCategorySelection = (
+    boardType: BoardPostType,
+    currentCategory: string,
+    categories: Record<BoardCategoryBoardType, string[]>,
+) => {
+    if (boardType === 'event') return '';
+
+    const nextCategories = categories[boardType];
+    const normalizedCurrent = normalizeCategoryValue(currentCategory);
+
+    if (normalizedCurrent && nextCategories.includes(normalizedCurrent)) {
+        return normalizedCurrent;
+    }
+
+    return nextCategories[0] || normalizedCurrent;
+};
+
 export const GnbSectionManager = () => {
     const [gnbTabs, setGnbTabs] = useState<TabMenuItem[]>([]);
-    const [posts, setPosts] = useState<MiceTabPost[]>([]);
+    const [posts, setPosts] = useState<BoardPost[]>([]);
+    const [boardCategories, setBoardCategories] = useState<Record<BoardCategoryBoardType, string[]>>({
+        notice: [],
+        review: [],
+    });
+    const [savedBoardCategorySnapshot, setSavedBoardCategorySnapshot] = useState('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [tabSaving, setTabSaving] = useState(false);
+    const [categorySaving, setCategorySaving] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [filterType, setFilterType] = useState<FilterType>('all');
+    const [selectedCategoryBoardType, setSelectedCategoryBoardType] = useState<BoardCategoryBoardType>('notice');
+    const [newCategoryName, setNewCategoryName] = useState('');
 
     const [showTabModal, setShowTabModal] = useState(false);
     const [editingTab, setEditingTab] = useState<TabMenuItem | null>(null);
     const [tabFormData, setTabFormData] = useState<TabFormData>(EMPTY_TAB_FORM);
 
     const [showModal, setShowModal] = useState(false);
-    const [editingPost, setEditingPost] = useState<MiceTabPost | null>(null);
+    const [editingPost, setEditingPost] = useState<BoardPost | null>(null);
     const [formData, setFormData] = useState<FormData>(EMPTY_FORM);
     const thumbnailFileInputRef = useRef<HTMLInputElement>(null);
     const contentFileInputRef = useRef<HTMLInputElement>(null);
@@ -101,12 +160,21 @@ export const GnbSectionManager = () => {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [postData, tabData] = await Promise.all([
-                getAllMiceTabPosts(),
-                getAllTabMenuItems()
+            const [postData, tabData, noticeCategories, reviewCategories] = await Promise.all([
+                getAllBoardPosts(),
+                getAllTabMenuItems(),
+                getBoardCategories('notice'),
+                getBoardCategories('review'),
             ]);
-            setPosts(postData);
+            const categorySettings: Record<BoardCategoryBoardType, string[]> = {
+                notice: normalizeCategoryList(noticeCategories),
+                review: normalizeCategoryList(reviewCategories),
+            };
+
+            setPosts(postData as BoardPost[]);
             setGnbTabs(tabData);
+            setBoardCategories(categorySettings);
+            setSavedBoardCategorySnapshot(serializeBoardCategorySettings(categorySettings));
         } catch (error) {
             console.error('Failed to load GNB tab posts:', error);
             alert('GNB 탭 데이터를 불러오지 못했습니다.');
@@ -124,6 +192,14 @@ export const GnbSectionManager = () => {
         return posts.filter((post) => post.board_type === filterType);
     }, [posts, filterType]);
     const contentImageUrls = useMemo(() => extractGnbContentImageUrls(formData.content), [formData.content]);
+    const categoryFormOptions = formData.board_type === 'event'
+        ? []
+        : boardCategories[formData.board_type as BoardCategoryBoardType] || [];
+    const categoryFormHasOptions = categoryFormOptions.length > 0;
+    const categorySettingsDirty = useMemo(
+        () => serializeBoardCategorySettings(boardCategories) !== savedBoardCategorySnapshot,
+        [boardCategories, savedBoardCategorySnapshot],
+    );
 
     const openAddTabModal = () => {
         setEditingTab(null);
@@ -195,21 +271,33 @@ export const GnbSectionManager = () => {
     const openAddModal = () => {
         const inferredType = filterType === 'all' ? 'notice' : filterType;
         const nextOrder = posts.filter((p) => p.board_type === inferredType).length + 1;
+        const nextCategory = resolveBoardCategorySelection(
+            inferredType,
+            '',
+            boardCategories,
+        );
         setEditingPost(null);
         setContentSelection({ start: 0, end: 0 });
         setFormData({
             ...EMPTY_FORM,
             board_type: inferredType,
+            category: nextCategory,
             display_order: nextOrder
         });
         setShowModal(true);
     };
 
-    const openEditModal = (post: MiceTabPost) => {
+    const openEditModal = (post: BoardPost) => {
         setEditingPost(post);
         setContentSelection({ start: 0, end: 0 });
+        const nextCategory = resolveBoardCategorySelection(
+            post.board_type,
+            post.category || '',
+            boardCategories,
+        );
         setFormData({
             board_type: post.board_type,
+            category: nextCategory,
             title: post.title || '',
             summary: post.summary || '',
             content: post.content || '',
@@ -232,6 +320,7 @@ export const GnbSectionManager = () => {
         setSaving(true);
         const payload = {
             board_type: formData.board_type,
+            category: formData.board_type === 'event' ? '' : formData.category,
             title: formData.title,
             summary: formData.summary,
             content: formData.content,
@@ -239,13 +328,13 @@ export const GnbSectionManager = () => {
             link: formData.link,
             display_order: formData.display_order,
             is_active: formData.is_active
-        };
+        } as any;
 
         try {
             if (editingPost?.id) {
-                await updateMiceTabPost(editingPost.id, payload);
+                await updateBoardPost(editingPost.id, payload);
             } else {
-                await addMiceTabPost(payload);
+                await addBoardPost(payload);
             }
             await loadData();
             closeModal();
@@ -255,6 +344,65 @@ export const GnbSectionManager = () => {
         } finally {
             setSaving(false);
         }
+    };
+
+    const handleCategoryAdd = () => {
+        const nextName = normalizeCategoryValue(newCategoryName);
+        if (!nextName) return;
+
+        setBoardCategories((prev) => {
+            const current = prev[selectedCategoryBoardType] || [];
+            if (current.includes(nextName)) return prev;
+
+            return {
+                ...prev,
+                [selectedCategoryBoardType]: [...current, nextName],
+            };
+        });
+        setNewCategoryName('');
+    };
+
+    const handleCategoryRemove = (categoryName: string) => {
+        setBoardCategories((prev) => ({
+            ...prev,
+            [selectedCategoryBoardType]: (prev[selectedCategoryBoardType] || []).filter(
+                (category) => category !== categoryName,
+            ),
+        }));
+    };
+
+    const handleCategorySave = async () => {
+        setCategorySaving(true);
+        try {
+            await Promise.all(
+                BOARD_CATEGORY_TYPES.map((boardType) =>
+                    upsertBoardCategories(boardType, boardCategories[boardType]),
+                ),
+            );
+            setSavedBoardCategorySnapshot(serializeBoardCategorySettings(boardCategories));
+            alert('게시판 카테고리가 저장되었습니다.');
+        } catch (error) {
+            console.error('Failed to save board categories:', error);
+            alert('게시판 카테고리 저장에 실패했습니다.');
+        } finally {
+            setCategorySaving(false);
+        }
+    };
+
+    const handleBoardTypeChange = (nextBoardType: BoardPostType) => {
+        setFormData((prev) => {
+            const nextCategory = resolveBoardCategorySelection(
+                nextBoardType,
+                prev.category,
+                boardCategories,
+            );
+
+            return {
+                ...prev,
+                board_type: nextBoardType,
+                category: nextBoardType === 'event' ? '' : nextCategory,
+            };
+        });
     };
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -339,7 +487,7 @@ export const GnbSectionManager = () => {
         if (!confirm('이 항목을 삭제하시겠습니까?')) return;
 
         try {
-            await deleteMiceTabPost(id);
+            await deleteBoardPost(id);
             await loadData();
         } catch (error) {
             console.error('Failed to delete GNB tab post:', error);
@@ -347,10 +495,10 @@ export const GnbSectionManager = () => {
         }
     };
 
-    const toggleActive = async (post: MiceTabPost) => {
+    const toggleActive = async (post: BoardPost) => {
         if (!post.id) return;
         try {
-            await updateMiceTabPost(post.id, { is_active: !post.is_active });
+            await updateBoardPost(post.id, { is_active: !post.is_active });
             await loadData();
         } catch (error) {
             console.error('Failed to toggle active:', error);
@@ -467,6 +615,98 @@ export const GnbSectionManager = () => {
                             </p>
                         </div>
                     </div>
+
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3">
+                            <div>
+                                <h2 className="font-bold text-slate-800 flex items-center gap-2">
+                                    <div className="p-1.5 bg-white rounded-lg border border-slate-200">
+                                        <Save size={14} className="text-[#001E45]" />
+                                    </div>
+                                    게시판 카테고리
+                                </h2>
+                                <p className="text-[11px] text-slate-400 mt-1">공지사항과 설치후기만 카테고리를 관리합니다.</p>
+                            </div>
+                            <button
+                                onClick={handleCategorySave}
+                                disabled={categorySaving || !categorySettingsDirty}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#001E45] text-white text-xs font-bold disabled:opacity-50"
+                            >
+                                {categorySaving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
+                                저장
+                            </button>
+                        </div>
+
+                        <div className="p-4 space-y-4">
+                            <div className="flex gap-2">
+                                {BOARD_CATEGORY_TYPES.map((boardType) => (
+                                    <button
+                                        key={boardType}
+                                        type="button"
+                                        onClick={() => setSelectedCategoryBoardType(boardType)}
+                                        className={`px-3 py-2 rounded-lg text-sm font-bold border transition-colors ${selectedCategoryBoardType === boardType
+                                                ? 'bg-[#001E45] text-white border-[#001E45]'
+                                                : 'bg-white text-slate-600 border-slate-200 hover:border-[#001E45]/30'
+                                            }`}
+                                    >
+                                        {TAB_LABEL[boardType]}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                                <div className="flex flex-wrap gap-2 min-h-10">
+                                    {boardCategories[selectedCategoryBoardType].length === 0 ? (
+                                        <span className="text-xs text-slate-400">등록된 카테고리가 없습니다.</span>
+                                    ) : (
+                                        boardCategories[selectedCategoryBoardType].map((category) => (
+                                            <span
+                                                key={category}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-semibold text-slate-700"
+                                            >
+                                                {category}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleCategoryRemove(category)}
+                                                    className="text-slate-400 hover:text-red-500"
+                                                    aria-label={`${category} 삭제`}
+                                                >
+                                                    <X size={12} />
+                                                </button>
+                                            </span>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={newCategoryName}
+                                    onChange={(e) => setNewCategoryName(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleCategoryAdd();
+                                        }
+                                    }}
+                                    placeholder={`${TAB_LABEL[selectedCategoryBoardType]} 카테고리 추가`}
+                                    className="flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#001E45]"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleCategoryAdd}
+                                    className="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm font-bold hover:bg-slate-200"
+                                >
+                                    추가
+                                </button>
+                            </div>
+
+                            <p className="text-[11px] text-slate-400 leading-relaxed">
+                                * 메인 노출용 섹션과는 별개로, 공지사항/설치후기 게시글에 붙일 분류명만 관리합니다.
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Right Side: Post Management (Main Content) */}
@@ -482,7 +722,7 @@ export const GnbSectionManager = () => {
                         >
                             전체보기
                         </button>
-                        {(Object.keys(TAB_LABEL) as MiceTabType[]).map((type) => (
+                        {(Object.keys(TAB_LABEL) as BoardPostType[]).map((type) => (
                             <button
                                 key={type}
                                 onClick={() => setFilterType(type)}
@@ -540,10 +780,15 @@ export const GnbSectionManager = () => {
 
                                             {/* Content Area */}
                                             <div className="flex-1 min-w-0 pr-12">
-                                                <div className="flex items-center gap-2 mb-1.5">
+                                                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                                                     <span className="text-[11px] font-black text-slate-300 uppercase tracking-widest">ORDER No.{post.display_order}</span>
                                                     {post.mobile_image_url && (
                                                         <span className="text-[10px] bg-indigo-50 text-indigo-600 border border-indigo-100 px-1.5 py-0.5 rounded-md font-bold">MOBILE ONLY</span>
+                                                    )}
+                                                    {(post.board_type === 'notice' || post.board_type === 'review') && post.category && (
+                                                        <span className="text-[10px] bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded-md font-bold">
+                                                            {post.category}
+                                                        </span>
                                                     )}
                                                     {!post.is_active && (
                                                         <span className="text-[10px] bg-slate-100 text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded-md font-bold">HIDDEN</span>
@@ -730,10 +975,10 @@ export const GnbSectionManager = () => {
                                     <label className="block text-sm font-medium text-slate-700 mb-1">탭 종류</label>
                                     <select
                                         value={formData.board_type}
-                                        onChange={(e) => setFormData({ ...formData, board_type: e.target.value as MiceTabType })}
+                                        onChange={(e) => handleBoardTypeChange(e.target.value as BoardPostType)}
                                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45]"
                                     >
-                                        {(Object.keys(TAB_LABEL) as MiceTabType[]).map((type) => (
+                                        {(Object.keys(TAB_LABEL) as BoardPostType[]).map((type) => (
                                             <option key={type} value={type}>{TAB_LABEL[type]}</option>
                                         ))}
                                     </select>
@@ -749,6 +994,34 @@ export const GnbSectionManager = () => {
                                     />
                                 </div>
                             </div>
+
+                            {formData.board_type !== 'event' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">카테고리</label>
+                                    <select
+                                        value={formData.category}
+                                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45] mb-2"
+                                    >
+                                        <option value="">카테고리 선택</option>
+                                        {boardCategories[formData.board_type as BoardCategoryBoardType].map((category) => (
+                                            <option key={category} value={category}>
+                                                {category}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <input
+                                        type="text"
+                                        value={formData.category}
+                                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                        placeholder="직접 입력하거나 위 목록에서 선택"
+                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45]"
+                                    />
+                                    <p className="text-[11px] text-slate-500 mt-1">
+                                        새 분류를 쓰려면 왼쪽 카테고리 관리에서 먼저 추가한 뒤 선택하는 편이 안전합니다.
+                                    </p>
+                                </div>
+                            )}
 
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">제목</label>

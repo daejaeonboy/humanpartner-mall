@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { searchProducts, Product } from '../src/api/productApi';
 import { Container } from '../components/ui/Container';
@@ -46,7 +46,7 @@ export const ProductSearchResult: React.FC = () => {
             <Container>
                 {/* Search Header */}
                 <div className="mb-8">
-                    <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                    <h1 className="text-2xl font-semibold text-slate-800 flex items-center gap-2">
                         <Search className="text-[#001E45]" />
                         <span>'{query}' 검색 결과</span>
                         <span className="text-sm font-medium text-slate-500 bg-white px-3 py-1 rounded-full border ml-2">
@@ -68,7 +68,7 @@ export const ProductSearchResult: React.FC = () => {
                         <div className="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
                             <Search className="text-slate-400" size={32} />
                         </div>
-                        <h3 className="text-lg font-bold text-slate-800 mb-2">검색 결과가 없습니다</h3>
+                        <h3 className="text-lg font-semibold text-slate-800 mb-2">검색 결과가 없습니다</h3>
                         <p className="text-slate-500 mb-6">다른 검색어로 다시 시도해보세요.</p>
                         <div className="flex gap-2 justify-center">
                             <span className="px-3 py-1 bg-slate-100 text-sm text-slate-600 rounded-lg">#의자</span>
@@ -103,7 +103,7 @@ export const ProductSearchResult: React.FC = () => {
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </div>
                                 <div className="p-4">
-                                    <h3 className="font-bold text-slate-800 mb-1 truncate group-hover:text-[#001E45] transition-colors">
+                                    <h3 className="font-semibold text-slate-800 mb-1 truncate group-hover:text-[#001E45] transition-colors">
                                         {product.name}
                                     </h3>
                                     <p className="text-xs text-slate-500 mb-2 line-clamp-1 h-4">
@@ -113,7 +113,7 @@ export const ProductSearchResult: React.FC = () => {
                                         <span className={getPublicPriceClassName({
                                             mode: priceDisplayMode,
                                             loading: priceDisplayLoading,
-                                            visibleClass: 'text-lg font-extrabold text-[#001E45]',
+                                            visibleClass: 'text-lg font-semibold text-[#001E45]',
                                             hiddenClass: INQUIRY_PRICE_TEXT_CLASS,
                                         })}>
                                             {getPublicPriceText({

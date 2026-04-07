@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container } from '../components/ui/Container';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -95,7 +95,7 @@ export const Login: React.FC = () => {
             <Container>
                 <div className="w-full max-w-xl md:max-w-3xl mx-auto bg-white p-6 md:p-16 rounded-3xl shadow-lg border border-gray-100 mb-20">
                     <div className="text-center mb-6 md:mb-10">
-                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">로그인</h1>
+                        <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">로그인</h1>
                         <p className="text-gray-500 text-sm md:text-base mt-2 md:mt-3">렌탈어때 서비스 이용을 위해 로그인해주세요.</p>
                     </div>
 
@@ -165,14 +165,14 @@ export const Login: React.FC = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full text-white py-3 md:py-4 rounded-lg font-bold transition-all mt-4 md:mt-6 ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#001E45] hover:bg-[#002D66]'}`}
+                            className={`w-full text-white py-3 md:py-4 rounded-lg font-semibold transition-all mt-4 md:mt-6 ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#001E45] hover:bg-[#002D66]'}`}
                         >
                             {loading ? '로그인 중...' : '로그인하기'}
                         </button>
                     </form>
 
                     <div className="mt-6 text-center text-sm text-gray-500">
-                        계정이 없으신가요? <Link to="/signup" className="text-[#001E45] font-bold hover:underline">회원가입</Link>
+                        계정이 없으신가요? <Link to="/signup" className="text-[#001E45] font-semibold hover:underline">회원가입</Link>
                     </div>
                 </div>
             </Container>
