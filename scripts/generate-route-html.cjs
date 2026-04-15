@@ -209,7 +209,7 @@ const productSeoDescription = (product) =>
   `${product.name} 렌탈 서비스입니다. 렌탈어때에서 합리적인 조건으로 상담받아보세요.`;
 
 const postSeoDescription = (post, sectionTitle) =>
-  seoDescription(post.summary, postPlainText(post.content)) || `${sectionTitle} 상세 페이지입니다.`;
+  seoDescription(postPlainText(post.content)) || `${sectionTitle} 상세 페이지입니다.`;
 
 const genericBody = (title, description) => `
       <main class="mx-auto max-w-4xl px-4 py-12 md:px-6 md:py-16">
@@ -318,7 +318,7 @@ function productListBody(products, priceDisplayMode) {
 function boardListBody(boardType, posts) {
   const meta = BOARD_META[boardType];
   const cards = posts.slice(0, 12).map((post) => `
-      <a href="${escapeHtml(`${meta.route}/${post.id}`)}" class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+      <a href="${escapeHtml(`${meta.route}/${post.id}`)}" class="overflow-hidden border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
         <div class="aspect-[16/10] overflow-hidden bg-slate-100"><img src="${escapeHtml(absUrl(post.image_url || post.mobile_image_url))}" alt="${escapeHtml(post.title)}" class="h-full w-full object-cover" /></div>
         <div class="space-y-3 p-5">
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">${escapeHtml(displayDate(post.created_at) || meta.title)}</p>
@@ -346,7 +346,7 @@ function productBody(product, priceDisplayMode) {
       <main class="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-14">
         <nav class="mb-6 text-sm text-slate-500"><a href="/">홈</a><span class="mx-2">/</span><a href="/products">상품목록</a><span class="mx-2">/</span><span>${escapeHtml(product.name)}</span></nav>
         <article class="grid gap-8 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] md:p-8">
-          <div class="overflow-hidden rounded-2xl border border-slate-100 bg-slate-50"><img src="${escapeHtml(absUrl(product.image_url))}" alt="${escapeHtml(product.name)}" class="h-full w-full object-cover" /></div>
+          <div class="flex items-center justify-center overflow-hidden rounded-2xl border border-slate-100 bg-slate-50"><img src="${escapeHtml(absUrl(product.image_url))}" alt="${escapeHtml(product.name)}" class="block h-auto w-full max-h-[420px] object-contain md:max-h-[560px] lg:max-h-[680px]" /></div>
           <div class="flex flex-col justify-center">
             <p class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">${escapeHtml(product.category || '사무기기')}</p>
             <h1 class="mt-3 text-3xl font-black text-slate-900 md:text-4xl">${escapeHtml(product.name)}</h1>
@@ -367,7 +367,7 @@ function postBody(post) {
   const blocks = parsePostBlocks(post.content);
   const body = blocks.map((block, index) =>
     block.type === 'image'
-      ? `<figure class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"><img src="${escapeHtml(block.value)}" alt="${escapeHtml(`${post.title} 이미지 ${index + 1}`)}" class="h-auto w-full object-contain" /></figure>`
+      ? `<figure class="overflow-hidden border border-slate-200 bg-slate-50"><img src="${escapeHtml(block.value)}" alt="${escapeHtml(`${post.title} 이미지 ${index + 1}`)}" class="h-auto w-full object-contain" /></figure>`
       : `<p class="text-base leading-8 text-slate-700">${escapeHtml(block.value)}</p>`
   ).join('');
 
@@ -380,8 +380,7 @@ function postBody(post) {
             <h1 class="mt-3 text-3xl font-black text-slate-900 md:text-4xl">${escapeHtml(post.title)}</h1>
             <p class="mt-4 text-sm text-slate-500">${escapeHtml(displayDate(post.created_at) || '')}</p>
           </header>
-          <div class="mt-8 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50"><img src="${escapeHtml(absUrl(post.image_url || post.mobile_image_url))}" alt="${escapeHtml(post.title)}" class="h-auto w-full object-contain" /></div>
-          ${post.summary ? `<p class="mt-6 rounded-2xl bg-slate-50 p-5 text-base leading-7 text-slate-700">${escapeHtml(post.summary)}</p>` : ''}
+          <div class="mt-8 overflow-hidden border border-slate-100 bg-slate-50"><img src="${escapeHtml(absUrl(post.image_url || post.mobile_image_url))}" alt="${escapeHtml(post.title)}" class="h-auto w-full object-contain" /></div>
           <div class="mt-8 space-y-6">${body || '<p class="text-base leading-8 text-slate-700">등록된 상세 내용이 없습니다.</p>'}</div>
         </article>
       </main>

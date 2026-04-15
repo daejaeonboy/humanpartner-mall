@@ -117,7 +117,7 @@ export const BoardPage: React.FC<BoardPageProps> = ({ boardType }) => {
     if (!keyword) return categoryFilteredPosts;
 
     return categoryFilteredPosts.filter((post) => {
-      const haystacks = [post.title, post.summary || '', stripGnbContentImages(post.content)];
+      const haystacks = [post.title, stripGnbContentImages(post.content)];
       return haystacks.some((text) => text.toLowerCase().includes(keyword));
     });
   }, [activeCategory, posts, searchTerm]);
@@ -188,8 +188,8 @@ export const BoardPage: React.FC<BoardPageProps> = ({ boardType }) => {
                     className={`
                       relative inline-flex h-11 min-w-[104px] shrink-0 items-center justify-center whitespace-nowrap px-4 text-center text-[15px] md:h-12 md:min-w-[116px] md:text-[16px] font-semibold transition-colors
                       ${activeCategory === category
-                        ? 'bg-[#001E45]/[0.04] text-[#001E45] after:content-[""] after:absolute after:left-0 after:right-0 after:bottom-0 after:h-[2px] after:bg-[#001E45]'
-                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                        ? 'text-[#001E45] after:content-[""] after:absolute after:left-0 after:right-0 after:bottom-0 after:h-[2px] after:bg-[#001E45]'
+                        : 'text-slate-500 hover:text-slate-700'
                       }
                     `}
                   >
@@ -215,7 +215,7 @@ export const BoardPage: React.FC<BoardPageProps> = ({ boardType }) => {
                   to={detailPath}
                   className="group block"
                 >
-                  <div className="border border-gray-200 rounded-xl overflow-hidden bg-white hover:border-gray-400 transition-colors">
+                  <div className="border border-gray-200 overflow-hidden bg-white hover:border-gray-400 transition-colors">
                     <div className="aspect-[16/9] bg-[#f2f4f7] overflow-hidden">
                       {(post.image_url || post.mobile_image_url) ? (
                         <picture className="block w-full h-full">

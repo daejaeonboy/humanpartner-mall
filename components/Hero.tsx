@@ -155,7 +155,7 @@ export const Hero: React.FC = () => {
 
   if (loading) {
     return (
-      <section className="relative w-full h-[400px] md:h-[500px] lg:h-[600px] bg-slate-900 flex items-center justify-center">
+      <section className="relative w-full aspect-[4/3] md:aspect-auto md:h-[500px] lg:h-[600px] bg-slate-900 flex items-center justify-center">
         <Loader2 className="animate-spin text-white" size={40} />
       </section>
     );
@@ -163,7 +163,7 @@ export const Hero: React.FC = () => {
 
   if (slides.length === 0) {
     return (
-      <section className="relative w-full h-[400px] md:h-[500px] lg:h-[600px] bg-slate-900 flex items-center justify-center">
+      <section className="relative w-full aspect-[4/3] md:aspect-auto md:h-[500px] lg:h-[600px] bg-slate-900 flex items-center justify-center">
         <p className="text-white/50">배너가 없습니다. Admin에서 배너를 추가해주세요.</p>
       </section>
     );
@@ -171,7 +171,7 @@ export const Hero: React.FC = () => {
 
   return (
     <section
-      className="relative w-full h-[400px] md:h-[500px] lg:h-[600px] bg-slate-900 overflow-hidden group"
+      className="relative w-full aspect-[4/3] md:aspect-auto md:h-[500px] lg:h-[600px] bg-slate-900 overflow-hidden group"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => {
         if (!isDragging) {
@@ -200,35 +200,28 @@ export const Hero: React.FC = () => {
                 className="absolute inset-0 w-full h-full bg-cover bg-center transition-transform duration-[7000ms] group-hover/slide:scale-105"
                 style={{ backgroundImage: `url(${slide.image_url})` }}
               >
-                <div className="absolute inset-0 bg-black/30 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/24 to-black/10 md:from-black/70 md:via-black/10 md:to-transparent"></div>
               </div>
 
               {/* Content Area */}
-              <Container className="relative h-full flex flex-col justify-center text-white z-20">
-                <div className="max-w-4xl">
-                  {/* Brand Text */}
-                  <div className={`text-white text-[18px] md:text-[20px] font-medium mb-2 md:mb-4 transition-all duration-700
-                    ${index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
-                  `}>
-                    {slide.brand_text?.trim() || 'Humanpartner'}
-                  </div>
-
+              <Container className="relative h-full flex flex-col justify-end md:justify-center text-white z-20 px-5 md:px-6">
+                <div className="max-w-4xl pb-7 md:pb-0">
                   {/* Main Title */}
-                  <h1 className={`text-3xl md:text-5xl lg:text-6xl font-semibold leading-[1.1] tracking-tight text-white mb-4 md:mb-6 transition-all duration-1000 delay-300 transform
+                  <h1 className={`max-w-[240px] md:max-w-none text-[30px] md:text-5xl lg:text-6xl font-semibold leading-[1.14] tracking-[-0.03em] text-white mb-2 md:mb-6 transition-all duration-1000 delay-300 transform
                     ${index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
                   `}>
                     {slide.title}
                   </h1>
 
                   {/* Subtitle */}
-                  <p className={`text-[18px] md:text-[22px] font-normal text-white/90 leading-relaxed break-keep max-w-2xl transition-all duration-1000 delay-500 transform
+                  <p className={`max-w-[240px] md:max-w-2xl text-[16px] md:text-[22px] font-normal text-white/80 leading-[1.45] md:leading-relaxed break-keep transition-all duration-1000 delay-500 transform
                     ${index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
                   `}>
                     {slide.subtitle}
                   </p>
 
                   {/* Action CTA */}
-                  <div className={`mt-8 md:mt-10 transition-all duration-1000 delay-700 transform
+                  <div className={`hidden md:block mt-8 md:mt-10 transition-all duration-1000 delay-700 transform
                     ${index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
                   `}>
                     <div className="inline-flex items-center justify-center gap-2 w-[160px] md:w-[220px] h-[44px] md:h-[52px] rounded-lg bg-white text-[#001E45] text-sm md:text-base font-semibold shadow-lg transition-all duration-300 hover:bg-[#f8f9fa] hover:-translate-y-0.5">
@@ -290,17 +283,19 @@ export const Hero: React.FC = () => {
       </button>
 
       {/* Indicators */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-3">
+      <div className="absolute left-5 top-5 z-30 flex gap-2 md:left-1/2 md:top-auto md:bottom-8 md:-translate-x-1/2 md:gap-3">
         {slides.map((_, index) => (
           <button
             key={index}
             type="button"
             onClick={() => goToSlide(index)}
-            className="group py-4"
+            className="group rounded-full p-1 md:py-4 md:px-0"
             aria-label={`Go to slide ${index + 1}`}
           >
-            <div className={`h-1 transition-all duration-500 rounded-full
-              ${index === currentSlide ? 'w-10 bg-[#001E45]' : 'w-6 bg-white/30 group-hover:bg-white/50'}
+            <div className={`transition-all duration-500 rounded-full
+              ${index === currentSlide
+                ? 'w-2.5 h-2.5 bg-white md:h-1 md:w-10 md:rounded-full md:bg-white'
+                : 'w-2.5 h-2.5 bg-slate-300/90 group-hover:bg-slate-200 md:h-1 md:w-6 md:rounded-full md:bg-slate-300/85 md:group-hover:bg-slate-200'}
             `} />
           </button>
         ))}

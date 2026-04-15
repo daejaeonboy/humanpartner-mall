@@ -43,7 +43,6 @@ interface FormData {
     board_type: BoardPostType;
     category: string;
     title: string;
-    summary: string;
     content: string;
     image_url: string;
     link: string;
@@ -62,7 +61,6 @@ const EMPTY_FORM: FormData = {
     board_type: 'notice',
     category: '',
     title: '',
-    summary: '',
     content: '',
     image_url: '',
     link: '',
@@ -299,7 +297,6 @@ export const GnbSectionManager = () => {
             board_type: post.board_type,
             category: nextCategory,
             title: post.title || '',
-            summary: post.summary || '',
             content: post.content || '',
             image_url: post.image_url || post.mobile_image_url || '',
             link: post.link || '',
@@ -322,7 +319,7 @@ export const GnbSectionManager = () => {
             board_type: formData.board_type,
             category: formData.board_type === 'event' ? '' : formData.category,
             title: formData.title,
-            summary: formData.summary,
+            summary: '',
             content: formData.content,
             image_url: formData.image_url,
             link: formData.link,
@@ -538,202 +535,110 @@ export const GnbSectionManager = () => {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                {/* Left Side: GNB Tab Menu Management (Sticky) */}
-                <div className="lg:col-span-4 space-y-6">
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden sticky top-6">
-                        <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                            <div>
-                                <h2 className="font-bold text-slate-800 flex items-center gap-2">
-                                    <div className="p-1.5 bg-white rounded-lg border border-slate-200">
-                                        <Plus size={14} className="text-[#001E45]" />
-                                    </div>
-                                    GNB 탭 관리
-                                </h2>
-                            </div>
-                            <button
-                                onClick={openAddTabModal}
-                                className="text-xs font-bold text-[#001E45] hover:underline"
-                            >
-                                추가하기
-                            </button>
-                        </div>
-
-                        <div className="p-2">
-                            {gnbTabs.length === 0 ? (
-                                <div className="p-8 text-center text-slate-400 text-sm italic">등록된 탭이 없습니다.</div>
-                            ) : (
-                                <div className="space-y-1">
-                                    {gnbTabs.sort((a, b) => (a.display_order || 0) - (b.display_order || 0)).map((tab) => (
-                                        <div
-                                            key={tab.id}
-                                            className={`group p-3 rounded-xl flex items-center justify-between transition-all ${tab.is_active ? 'hover:bg-slate-50' : 'bg-slate-50/50 opacity-60'
-                                                }`}
-                                        >
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-400 group-hover:text-[#001E45] group-hover:border-[#001E45]/20 transition-colors">
-                                                    {tab.display_order}
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className={`font-bold text-sm truncate ${tab.is_active ? 'text-slate-800' : 'text-slate-500'}`}>
-                                                        {tab.name}
-                                                    </p>
-                                                    <p className="text-[10px] text-slate-400 truncate tracking-tight">{tab.link}</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => toggleTabActive(tab)}
-                                                    className={`p-1.5 rounded-md ${tab.is_active ? 'text-green-600 hover:bg-green-50' : 'text-slate-400 hover:bg-slate-100'}`}
-                                                    title={tab.is_active ? '비활성화' : '활성화'}
-                                                >
-                                                    {tab.is_active ? <Eye size={14} /> : <EyeOff size={14} />}
-                                                </button>
-                                                <button
-                                                    onClick={() => openEditTabModal(tab)}
-                                                    className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-md"
-                                                >
-                                                    <Edit2 size={14} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteTab(tab.id)}
-                                                    className="p-1.5 text-red-400 hover:bg-red-50 rounded-md"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                        <div className="p-4 bg-slate-50 border-t border-slate-100">
-                            <p className="text-[11px] text-slate-400 leading-relaxed text-center">
-                                * 탭 순서는 숫자가 작을수록 앞에 노출됩니다.<br />
-                                * 비활성화된 탭은 사용자에게 보이지 않습니다.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3">
-                            <div>
-                                <h2 className="font-bold text-slate-800 flex items-center gap-2">
-                                    <div className="p-1.5 bg-white rounded-lg border border-slate-200">
-                                        <Save size={14} className="text-[#001E45]" />
-                                    </div>
-                                    게시판 카테고리
-                                </h2>
-                                <p className="text-[11px] text-slate-400 mt-1">공지사항과 설치후기만 카테고리를 관리합니다.</p>
-                            </div>
-                            <button
-                                onClick={handleCategorySave}
-                                disabled={categorySaving || !categorySettingsDirty}
-                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#001E45] text-white text-xs font-bold disabled:opacity-50"
-                            >
-                                {categorySaving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
-                                저장
-                            </button>
-                        </div>
-
-                        <div className="p-4 space-y-4">
-                            <div className="flex gap-2">
-                                {BOARD_CATEGORY_TYPES.map((boardType) => (
-                                    <button
-                                        key={boardType}
-                                        type="button"
-                                        onClick={() => setSelectedCategoryBoardType(boardType)}
-                                        className={`px-3 py-2 rounded-lg text-sm font-bold border transition-colors ${selectedCategoryBoardType === boardType
-                                                ? 'bg-[#001E45] text-white border-[#001E45]'
-                                                : 'bg-white text-slate-600 border-slate-200 hover:border-[#001E45]/30'
-                                            }`}
-                                    >
-                                        {TAB_LABEL[boardType]}
-                                    </button>
-                                ))}
-                            </div>
-
-                            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-                                <div className="flex flex-wrap gap-2 min-h-10">
-                                    {boardCategories[selectedCategoryBoardType].length === 0 ? (
-                                        <span className="text-xs text-slate-400">등록된 카테고리가 없습니다.</span>
-                                    ) : (
-                                        boardCategories[selectedCategoryBoardType].map((category) => (
-                                            <span
-                                                key={category}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-semibold text-slate-700"
-                                            >
-                                                {category}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleCategoryRemove(category)}
-                                                    className="text-slate-400 hover:text-red-500"
-                                                    aria-label={`${category} 삭제`}
-                                                >
-                                                    <X size={12} />
-                                                </button>
-                                            </span>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    value={newCategoryName}
-                                    onChange={(e) => setNewCategoryName(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault();
-                                            handleCategoryAdd();
-                                        }
-                                    }}
-                                    placeholder={`${TAB_LABEL[selectedCategoryBoardType]} 카테고리 추가`}
-                                    className="flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#001E45]"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={handleCategoryAdd}
-                                    className="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm font-bold hover:bg-slate-200"
+            <div className="flex flex-col gap-8">
+                {/* GNB Tabs Management - Matched with Filter Design */}
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                    <div className="bg-slate-100/80 p-1 rounded-2xl inline-flex flex-nowrap gap-1 border border-slate-200/50">
+                        {gnbTabs.length === 0 ? (
+                            <span className="text-xs text-slate-400 italic px-4 py-2">등록된 메뉴가 없습니다.</span>
+                        ) : (
+                            gnbTabs.sort((a, b) => (a.display_order || 0) - (b.display_order || 0)).map((tab) => (
+                                <div
+                                    key={tab.id}
+                                    className={`group relative px-5 py-2.5 rounded-xl transition-all flex-shrink-0 flex items-center gap-4 ${
+                                        tab.is_active 
+                                            ? 'bg-white text-[#001E45] shadow-sm' 
+                                            : 'text-slate-500 hover:bg-white/50'
+                                    }`}
                                 >
-                                    추가
-                                </button>
-                            </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className={`text-[10px] font-black ${tab.is_active ? 'text-[#001E45]/40' : 'text-slate-300'}`}>
+                                            {String(tab.display_order).padStart(2, '0')}
+                                        </span>
+                                        <span className="text-sm font-bold whitespace-nowrap">
+                                            {tab.name}
+                                        </span>
+                                    </div>
+                                    
+                                    {/* Action Buttons inside the tab-like item */}
+                                    <div className="flex items-center gap-0.5 ml-1 border-l border-slate-200/50 pl-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={() => toggleTabActive(tab)}
+                                            className={`p-1.5 rounded-lg transition-colors ${tab.is_active ? 'text-green-500 hover:bg-green-50' : 'text-slate-400 hover:bg-slate-100'}`}
+                                            title={tab.is_active ? '비활성화' : '활성화'}
+                                        >
+                                            {tab.is_active ? <Eye size={18} /> : <EyeOff size={18} />}
+                                        </button>
+                                        <button
+                                            onClick={() => openEditTabModal(tab)}
+                                            className="p-1.5 text-slate-400 hover:text-[#001E45] hover:bg-slate-100 rounded-lg transition-colors"
+                                            title="수정"
+                                        >
+                                            <Edit2 size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteTab(tab.id)}
+                                            className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                            title="삭제"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                    
+                    <button
+                        onClick={openAddTabModal}
+                        className="flex-shrink-0 w-11 h-11 rounded-xl border-2 border-dashed border-slate-200 text-slate-400 hover:text-[#001E45] hover:border-[#001E45] hover:bg-white transition-all flex items-center justify-center ml-1"
+                        title="새 메뉴 추가"
+                    >
+                        <Plus size={20} />
+                    </button>
+                </div>
 
-                            <p className="text-[11px] text-slate-400 leading-relaxed">
-                                * 메인 노출용 섹션과는 별개로, 공지사항/설치후기 게시글에 붙일 분류명만 관리합니다.
-                            </p>
-                        </div>
+                {/* Divider with Label */}
+                <div className="relative py-2">
+                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div className="w-full border-t border-slate-100"></div>
+                    </div>
+                    <div className="relative flex justify-center">
+                        <span className="bg-[#f8fafc] px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">게시글 목록 및 관리</span>
                     </div>
                 </div>
 
-                {/* Right Side: Post Management (Main Content) */}
-                <div className="lg:col-span-8 space-y-6">
-                    {/* Filter Navigation */}
-                    <div className="bg-slate-100/50 p-1.5 rounded-2xl inline-flex flex-wrap gap-1 border border-slate-200/50">
-                        <button
-                            onClick={() => setFilterType('all')}
-                            className={`px-5 py-2 rounded-xl text-sm font-bold transition-all ${filterType === 'all'
-                                    ? 'bg-white text-[#001E45] shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'
-                                }`}
-                        >
-                            전체보기
-                        </button>
-                        {(Object.keys(TAB_LABEL) as BoardPostType[]).map((type) => (
+                {/* Bottom Section: Post Management (Main Content) */}
+                <div className="space-y-6">
+                    {/* Filter & Action Area */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="bg-slate-100/80 p-1 rounded-xl inline-flex gap-1 border border-slate-200/50">
                             <button
-                                key={type}
-                                onClick={() => setFilterType(type)}
-                                className={`px-5 py-2 rounded-xl text-sm font-bold transition-all ${filterType === type
+                                onClick={() => setFilterType('all')}
+                                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'all'
                                         ? 'bg-white text-[#001E45] shadow-sm'
                                         : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'
                                     }`}
                             >
-                                {TAB_LABEL[type]}
+                                전체보기
                             </button>
-                        ))}
+                            {(Object.keys(TAB_LABEL) as BoardPostType[]).map((type) => (
+                                <button
+                                    key={type}
+                                    onClick={() => setFilterType(type)}
+                                    className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${filterType === type
+                                            ? 'bg-white text-[#001E45] shadow-sm'
+                                            : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'
+                                        }`}
+                                >
+                                    {TAB_LABEL[type]}
+                                </button>
+                            ))}
+                        </div>
+                        
+                        <div className="text-right">
+                            <span className="text-xs font-bold text-slate-400 mr-2">총 {filteredPosts.length}개의 게시글</span>
+                        </div>
                     </div>
 
                     {/* Posts Grid/List */}
@@ -799,7 +704,7 @@ export const GnbSectionManager = () => {
                                                     {post.title}
                                                 </h4>
                                                 <p className="text-sm text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                                                    {(post.summary || stripGnbContentImages(post.content) || '').trim() || '입력된 상세 내용이 없습니다.'}
+                                                    {(stripGnbContentImages(post.content) || '').trim() || '입력된 상세 내용이 없습니다.'}
                                                 </p>
                                                 {post.link && (
                                                     <div className="mt-2 flex items-center gap-1.5 text-[#001E45] text-xs font-semibold overflow-hidden">
@@ -996,30 +901,120 @@ export const GnbSectionManager = () => {
                             </div>
 
                             {formData.board_type !== 'event' && (
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">카테고리</label>
-                                    <select
-                                        value={formData.category}
-                                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45] mb-2"
-                                    >
-                                        <option value="">카테고리 선택</option>
-                                        {boardCategories[formData.board_type as BoardCategoryBoardType].map((category) => (
-                                            <option key={category} value={category}>
-                                                {category}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <input
-                                        type="text"
-                                        value={formData.category}
-                                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        placeholder="직접 입력하거나 위 목록에서 선택"
-                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45]"
-                                    />
-                                    <p className="text-[11px] text-slate-500 mt-1">
-                                        새 분류를 쓰려면 왼쪽 카테고리 관리에서 먼저 추가한 뒤 선택하는 편이 안전합니다.
-                                    </p>
+                                <div className="space-y-4 pt-4 border-t border-slate-100">
+                                    <div className="flex items-center justify-between px-1">
+                                        <h3 className="text-sm font-bold text-slate-800">카테고리 설정</h3>
+                                        <button 
+                                            type="button"
+                                            onClick={handleCategorySave}
+                                            disabled={categorySaving || !categorySettingsDirty}
+                                            className="flex items-center gap-1.5 text-[11px] font-bold text-[#001E45] hover:underline disabled:opacity-30 disabled:no-underline"
+                                        >
+                                            {categorySaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                                            설정 저장
+                                        </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="block text-sm font-medium text-slate-700 ml-1">분류 선택</label>
+                                            <select
+                                                value={formData.category}
+                                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                                className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#001E45]/20 focus:border-[#001E45] transition-all"
+                                            >
+                                                <option value="">분류를 선택하세요</option>
+                                                {(boardCategories[formData.board_type as BoardCategoryBoardType] || []).map((category) => (
+                                                    <option key={category} value={category}>
+                                                        {category}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <div className="flex items-center justify-between ml-1">
+                                                <label className="text-sm font-medium text-slate-700">새 분류 추가</label>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    id="modal-new-category"
+                                                    placeholder="분류 이름 입력"
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            e.preventDefault();
+                                                            const input = e.currentTarget;
+                                                            const val = input.value.trim();
+                                                            if (val) {
+                                                                const bType = formData.board_type as BoardCategoryBoardType;
+                                                                setBoardCategories(prev => {
+                                                                    if (prev[bType].includes(val)) return prev;
+                                                                    return { ...prev, [bType]: [...prev[bType], val] };
+                                                                });
+                                                                setFormData(prev => ({ ...prev, category: val }));
+                                                                input.value = '';
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="flex-1 px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#001E45]/20 focus:border-[#001E45] transition-all"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const input = document.getElementById('modal-new-category') as HTMLInputElement;
+                                                        const val = input?.value.trim();
+                                                        if (val) {
+                                                            const bType = formData.board_type as BoardCategoryBoardType;
+                                                            setBoardCategories(prev => {
+                                                                if (prev[bType].includes(val)) return prev;
+                                                                return { ...prev, [bType]: [...prev[bType], val] };
+                                                            });
+                                                            setFormData(prev => ({ ...prev, category: val }));
+                                                            input.value = '';
+                                                        }
+                                                    }}
+                                                    className="px-4 py-2.5 bg-slate-800 text-white text-sm font-bold rounded-xl hover:bg-slate-700 transition-colors shadow-sm"
+                                                >
+                                                    추가
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="px-1 pt-1">
+                                        <p className="text-sm font-bold text-slate-800 mb-2.5">등록된 분류 목록 관리</p>
+                                        <div className="flex flex-wrap gap-x-4 gap-y-2">
+                                            {(boardCategories[formData.board_type as BoardCategoryBoardType] || []).map((category) => (
+                                                <div
+                                                    key={category}
+                                                    className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-[#001E45] transition-colors group"
+                                                >
+                                                    <span className="text-slate-300 group-hover:text-[#001E45]">#</span>
+                                                    {category}
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const bType = formData.board_type as BoardCategoryBoardType;
+                                                            setBoardCategories(prev => ({
+                                                                ...prev,
+                                                                [bType]: prev[bType].filter(c => c !== category)
+                                                            }));
+                                                            if (formData.category === category) {
+                                                                setFormData(prev => ({ ...prev, category: '' }));
+                                                            }
+                                                        }} 
+                                                        className="text-slate-300 hover:text-red-500 ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <X size={12} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            {(!boardCategories[formData.board_type as BoardCategoryBoardType] || boardCategories[formData.board_type as BoardCategoryBoardType].length === 0) && (
+                                                <span className="text-sm text-slate-400 italic">등록된 분류가 없습니다.</span>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 
@@ -1031,17 +1026,6 @@ export const GnbSectionManager = () => {
                                     value={formData.title}
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45]"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">요약</label>
-                                <input
-                                    type="text"
-                                    value={formData.summary}
-                                    onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
-                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#001E45]"
-                                    placeholder="목록에 노출될 짧은 설명"
                                 />
                             </div>
 

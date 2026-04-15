@@ -1102,14 +1102,14 @@ export const ProductDetailPage: React.FC = () => {
             {/* LEFT COLUMN */}
             <div className="lg:col-span-2 space-y-6">
               {/* Product Image */}
-              <div className="aspect-square bg-gray-200 rounded-2xl overflow-hidden border border-gray-100 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+              <div className="flex items-center justify-center bg-gray-200 rounded-2xl overflow-hidden border border-gray-100 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
                 <img
                   src={
                     product.image_url ||
                     "https://picsum.photos/seed/product/800/600"
                   }
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="block w-full h-auto max-h-[420px] object-contain md:max-h-[560px] lg:max-h-[680px]"
                 />
               </div>
 

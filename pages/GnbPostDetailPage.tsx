@@ -91,8 +91,7 @@ export const BoardPostDetailPage: React.FC<BoardPostDetailPageProps> = ({ boardT
   const contentBlocks = useMemo(() => parseGnbContent(post?.content), [post?.content]);
   const plainContent = useMemo(() => stripGnbContentImages(post?.content), [post?.content]);
   const canonicalUrl = `${SITE_URL}${meta.path}${id ? `/${id}` : ''}`;
-  const seoDescription =
-    buildSeoDescription(post?.summary, plainContent) || `${meta.title} 상세 페이지입니다.`;
+  const seoDescription = buildSeoDescription(plainContent) || `${meta.title} 상세 페이지입니다.`;
   const seoImage = toAbsoluteUrl(post?.image_url || post?.mobile_image_url);
   const articleStructuredData = post
     ? toJsonLd({
@@ -161,7 +160,7 @@ export const BoardPostDetailPage: React.FC<BoardPostDetailPageProps> = ({ boardT
               </header>
 
               {(post.image_url || post.mobile_image_url) && (
-                <div className="mb-10 rounded-xl overflow-hidden border border-gray-100">
+                <div className="mb-10 overflow-hidden border border-gray-100">
                   <picture className="block w-full">
                     {post.mobile_image_url && <source media="(max-width: 767px)" srcSet={post.mobile_image_url} />}
                     <img src={post.image_url || post.mobile_image_url} alt={post.title} className="w-full h-auto object-contain bg-slate-50" />
@@ -169,17 +168,11 @@ export const BoardPostDetailPage: React.FC<BoardPostDetailPageProps> = ({ boardT
                 </div>
               )}
 
-              {post.summary && (
-                <div className="mb-6 p-5 bg-slate-50 rounded-xl border border-slate-100 text-slate-700 leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-                  {post.summary}
-                </div>
-              )}
-
               {contentBlocks.length > 0 ? (
                 <div className="max-w-full space-y-6">
                   {contentBlocks.map((block, index) => (
                     block.type === 'image' ? (
-                      <div key={`${block.type}-${index}`} className="rounded-xl overflow-hidden border border-slate-100 bg-slate-50">
+                      <div key={`${block.type}-${index}`} className="overflow-hidden border border-slate-100 bg-slate-50">
                         <img
                           src={block.value}
                           alt={`${post.title} 본문 이미지 ${index + 1}`}
